@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit.components.v1 import html
 
-from translator import TRANS_LANG2KEY
+from translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, DEFAULT_BATCH_SIZE, DEFAULT_MODEL_SIZE
 
 
 def update_lang(side: str):
@@ -84,12 +84,6 @@ COLORS_PLOTLY = {
 
 
 def set_general_session_keys():
-    if "no_cuda" not in st.session_state:  # Can be set via the command-line. Parsed in 01__mateo .
-        st.session_state["no_cuda"] = False
-
-    if "transl_batch_size" not in st.session_state:  # Can be set via the command-line. Parsed in 01__mateo .
-        st.session_state["transl_batch_size"] = 4
-
     if "src_lang" not in st.session_state:
         st.session_state["src_lang"] = "English"
     elif st.session_state["src_lang"] not in TRANS_LANG2KEY:
@@ -111,3 +105,14 @@ def set_general_session_keys():
 
     if "other_hyps" not in st.session_state:
         st.session_state["other_hyps"] = []
+
+
+@st.cache(allow_output_mutation=True, suppress_st_warning=True)
+def get_cli_args():
+    import argparse
+    cparser = argparse.ArgumentParser()
+    cparser.add_argument("--transl_no_cuda", action="store_true", help="whether to disable CUDA for translation")
+    cparser.add_argument("--transl_batch_size", type=int, default=DEFAULT_BATCH_SIZE, help="batch size for translating")
+    cparser.add_argument("--transl_model_size", choices=list(TRANS_SIZE2MODEL.keys()), default=DEFAULT_MODEL_SIZE,
+                         help="model size to use")
+    return cparser.parse_args()

@@ -1,15 +1,14 @@
 from copy import copy
 from io import StringIO
 from math import ceil
-from typing import Optional
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 
-from utils import set_general_session_keys, update_lang
+from utils import set_general_session_keys, update_lang, get_cli_args
 from css import add_custom_translation_style, add_custom_base_style
-from translator import TRANS_LANG2KEY, Translator, batch_translate
+from translator import TRANS_LANG2KEY, Translator, batch_translate, DEFAULT_MODEL_SIZE, TRANS_SIZE2MODEL, DEFAULT_BATCH_SIZE
 
 
 def _init():
@@ -18,20 +17,28 @@ def _init():
     add_custom_translation_style()
 
     set_general_session_keys()
+    args = get_cli_args()
     if "translator" not in st.session_state:
         st.session_state["translator"] = None
 
+    if "transl_no_cuda" not in st.session_state:
+        st.session_state["transl_no_cuda"] = args.transl_no_cuda
+
+    if "transl_batch_size" not in st.session_state:
+        st.session_state["transl_batch_size"] = args.transl_batch_size
+
+    if "transl_model_size" not in st.session_state:
+        st.session_state["transl_model_size"] = args.transl_model_size
+
     if "text" not in st.session_state:
         st.session_state["text"] = None
-
-    if "stop_translating" not in st.session_state:
-        st.session_state["stop_translating"] = False
 
     st.title("💯 Translate")
     st.markdown(
         "To provide quick access to multilingual translation, including for low-resource languages, we here provide"
         " access to Meta AI's open-source and open-access model [No Language Left Behind](https://ai.facebook.com/research/no-language-left-behind/)"
-        " ([paper](https://arxiv.org/abs/2207.04672)). It enables translation to and from 200 languages."
+        " ([paper](https://arxiv.org/abs/2207.04672)). It enables translation to and from 200 languages. In this"
+        f" interface, we specifically use [{st.session_state['transl_model_size']}](https://huggingface.co/{TRANS_SIZE2MODEL[st.session_state['transl_model_size']]})."
     )
 
 
@@ -56,7 +63,7 @@ def _model_selection():
     )
 
     load_info = st.info(
-        f"(Down)loading a translation model for"
+        f"(Down)loading model {st.session_state['transl_model_size']} for"
         f" {st.session_state['src_lang']} → {st.session_state['tgt_lang']}."
         f"\nThis may take a while the first time..."
     )
@@ -66,14 +73,16 @@ def _model_selection():
             st.session_state["translator"] = Translator(
                 src_lang=st.session_state["src_lang"],
                 tgt_lang=st.session_state["tgt_lang"],
-                no_cuda=st.session_state["no_cuda"],
+                model_size=st.session_state["transl_model_size"],
+                no_cuda=st.session_state["transl_no_cuda"],
             )
         except KeyError as exc:
             load_info.error(str(exc))
 
-    if "translator" in st.session_state:
+    if "translator" in st.session_state and st.session_state["translator"] is not None:
         load_info.success(
-            f"Translation model for {st.session_state['src_lang']} → {st.session_state['tgt_lang']} loaded!"
+            f"Translation model {st.session_state['translator'].model_name.split('/')[-1]} loaded for"
+            f" {st.session_state['src_lang']} → {st.session_state['tgt_lang']}!"
         )
 
 
@@ -123,7 +132,8 @@ def _translate():
                                             batch_size=st.session_state["transl_batch_size"]):
             all_translations.extend(translations)
 
-            df = pd.DataFrame(list(zip(sentences, all_translations)), columns=["src", "mt"])
+            df = pd.DataFrame(list(zip(sentences, all_translations)),
+                              columns=["src", f"mt: {st.session_state['translator'].model_name.split('/')[-1]}"])
             df.index = np.arange(1, len(df) + 1)  # Index starting at number 1
             transl_ct.table(df)
             percent_done += increment

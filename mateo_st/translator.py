@@ -9,12 +9,15 @@ from torch.nn import Parameter
 
 from transformers import PreTrainedModel, PreTrainedTokenizer, AutoModelForSeq2SeqLM, AutoTokenizer
 
+DEFAULT_MODEL_SIZE = "distilled-1.3B"
+DEFAULT_BATCH_SIZE = 4
+
 
 @dataclass
 class Translator:
     src_lang: str
     tgt_lang: str
-    model_size: str = "distilled-1.3B"
+    model_size: str = DEFAULT_MODEL_SIZE
     no_cuda: bool = False
     max_length: int = 256
     num_beams: int = 5
@@ -73,7 +76,7 @@ def get_translator_hash(translator: Translator):
     )
 
 
-def batch_translate(translator, sentences: Union[str, List[str]], batch_size: int = 4):
+def batch_translate(translator, sentences: Union[str, List[str]], batch_size: int = DEFAULT_BATCH_SIZE):
     if isinstance(sentences, str):
         sentences = [sentences]
 

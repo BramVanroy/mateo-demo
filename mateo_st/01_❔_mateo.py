@@ -5,7 +5,6 @@ from css import add_custom_base_style
 def main():
     st.set_page_config(page_title="MATEO: MAchine Translation Evaluation Online", page_icon="💯")
     add_custom_base_style()
-    st.markdown("<style>#MainMenu {visibility: hidden;}</style>", unsafe_allow_html=True)
 
     st.title("💯 MATEO: MAchine Translation Evaluation Online")
 
@@ -53,13 +52,4 @@ Is there anything else you would like to see included? [Get in touch](#contact)!
 
 
 if __name__ == "__main__":
-    import argparse
-    cparser = argparse.ArgumentParser()
-    cparser.add_argument("--no_cuda", action="store_true", help="whether to disable all CUDA")
-    cparser.add_argument("--transl_batch_size", type=int, default=4, help="batch size for translating")
-    cargs = vars(cparser.parse_args())
-
-    for k, v in cargs.items():
-        st.session_state[k] = v
-
     main()
