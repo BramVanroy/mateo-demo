@@ -191,6 +191,21 @@ def add_custom_metrics_style():
         unsafe_allow_html=True,
     )
 
+def add_custom_translation_style():
+    st.markdown(
+        """
+    <style>
+        .translations-wrapper {
+            border: 1px solid;
+            border-radius: 0.25rem;
+            padding: 0.48em 0.48em;
+            margin-bottom: 1em;
+        }
+    </style>
+      """,
+        unsafe_allow_html=True,
+    )
+
 
 def set_session_keys():
     if "translator" not in st.session_state:
@@ -198,6 +213,9 @@ def set_session_keys():
 
     if "no_cuda" not in st.session_state:  # Can be set via the command-line. Parsed in 01__mateo .
         st.session_state["no_cuda"] = False
+
+    if "transl_batch_size" not in st.session_state:  # Can be set via the command-line. Parsed in 01__mateo .
+        st.session_state["transl_batch_size"] = 4
 
     if "src_lang" not in st.session_state:
         st.session_state["src_lang"] = "English"

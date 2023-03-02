@@ -1,9 +1,14 @@
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import List, Union, Dict
 
 import streamlit as st
-import torch as torch
+import torch
+from torch.quantization import quantize_dynamic
+from torch import nn, qint8, Tensor
+from torch.nn import Parameter
 from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
+
+from transformers import PreTrainedModel, PreTrainedTokenizer
 
 
 @dataclass
@@ -67,39 +72,50 @@ def get_translator_hash(translator: Translator):
     )
 
 
-@st.cache(
-    allow_output_mutation=True,
-    suppress_st_warning=False,
-    show_spinner=False,
-    hash_funcs={Translator: get_translator_hash},
-)
-def translate(translator, sentences: Union[str, List[str]]):
+def batch_translate(translator, sentences: Union[str, List[str]], batch_size: int = 4):
     if isinstance(sentences, str):
         sentences = [sentences]
-    encoded = translator.tokenizer(sentences, return_tensors="pt", padding=True)
-    if not translator.no_cuda:
-        encoded = encoded.to("cuda")
 
-    try:
-        generated_tokens = translator.model.generate(
-            **encoded,
-            forced_bos_token_id=translator.tokenizer.get_lang_id(translator.tgt_lang_key),
-            max_length=translator.max_length,
-            num_beams=5,
-        )
-    except RuntimeError:
-        # Out-of-memory; switch to CPU
-        translator.no_cuda = True
-        translator.model = translator.model.to("cpu")
-        encoded = encoded.to("cpu")
-        generated_tokens = translator.model.generate(
-            **encoded,
-            forced_bos_token_id=translator.tokenizer.get_lang_id(translator.tgt_lang_key),
-            max_length=translator.max_length,
-            num_beams=5,
-        )
+    for batch in batchify(sentences, batch_size):
+        encoded = translator.tokenizer(batch, return_tensors="pt", padding=True)
+        if not translator.no_cuda:
+            encoded = encoded.to("cuda")
 
-    return translator.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
+        try:
+            generated_tokens = _translate(translator, encoded)
+        except RuntimeError:
+            # Out-of-memory; switch to CPU
+            translator.no_cuda = True
+            translator.model = translator.model.to("cpu")
+            encoded = encoded.to("cpu")
+            generated_tokens = _translate(translator, encoded)
+
+        yield translator.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+
+
+# @st.cache(
+#     allow_output_mutation=True,
+#     suppress_st_warning=False,
+#     show_spinner=False,
+#     hash_funcs={Translator: get_translator_hash,
+#                 PreTrainedModel: lambda model: model.name_or_path,
+#                 PreTrainedTokenizer: lambda tokenizer: tokenizer.name_or_path,
+#                 Parameter: lambda parameter: parameter.data,
+#                 Tensor: lambda tensor: tensor.cpu()},
+# )
+def _translate(translator, encoded: Dict[str, int]):
+    return translator.model.generate(
+        **encoded,
+        forced_bos_token_id=translator.tokenizer.get_lang_id(translator.tgt_lang_key),
+        max_length=translator.max_length,
+        num_beams=5,
+    )
+
+def batchify(sentences: List[str], batch_size: int):
+    """Yields batches of size 'batch_size' from the given list of sentences"""
+    num_sents = len(sentences)
+    for idx in range(0, num_sents, batch_size):
+        yield sentences[idx:idx + batch_size]
 
 
 @st.cache(allow_output_mutation=True, suppress_st_warning=False, show_spinner=False)
