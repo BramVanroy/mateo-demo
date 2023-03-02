@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit.components.v1 import html
 
-from functions.translator import TRANS_LANG2KEY
+from translator import TRANS_LANG2KEY
 
 
 def update_lang(side: str):
@@ -83,10 +83,7 @@ COLORS_PLOTLY = {
 }
 
 
-def set_session_keys():
-    if "translator" not in st.session_state:
-        st.session_state["translator"] = None
-
+def set_general_session_keys():
     if "no_cuda" not in st.session_state:  # Can be set via the command-line. Parsed in 01__mateo .
         st.session_state["no_cuda"] = False
 
@@ -102,9 +99,9 @@ def set_session_keys():
         st.session_state["src_lang_key"] = TRANS_LANG2KEY[st.session_state["src_lang"]]
 
     if "tgt_lang" not in st.session_state:
-        st.session_state["tgt_lang"] = "Dutch; Flemish"
+        st.session_state["tgt_lang"] = "Dutch"
     elif st.session_state["tgt_lang"] not in TRANS_LANG2KEY:
-        st.session_state["tgt_lang"] = "Dutch; Flemish"
+        st.session_state["tgt_lang"] = "Dutch"
 
     if "tgt_lang_key" not in st.session_state:
         st.session_state["tgt_lang_key"] = TRANS_LANG2KEY[st.session_state["tgt_lang"]]

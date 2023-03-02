@@ -11,7 +11,7 @@ import tensorflow as tf
 import torch
 
 from .metrics_constants import BASELINE_METRICS, METRIC_BEST_ARROW, METRICS
-from .utils import COLORS_PLOTLY
+from utils import COLORS_PLOTLY
 
 
 try:
