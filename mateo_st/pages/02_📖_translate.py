@@ -5,9 +5,9 @@ from typing import Optional
 
 import streamlit as st
 
-from functions.utils import set_session_keys, update_lang
+from utils import set_general_session_keys, update_lang
 from css import add_custom_translation_style, add_custom_base_style
-from functions.translator import TRANS_LANG2KEY, Translator, batch_translate
+from translator import TRANS_LANG2KEY, Translator, batch_translate
 
 
 def _init():
@@ -15,23 +15,26 @@ def _init():
     add_custom_base_style()
     add_custom_translation_style()
 
-    set_session_keys()
+    set_general_session_keys()
+    if "translator" not in st.session_state:
+        st.session_state["translator"] = None
+
+    if "text" not in st.session_state:
+        st.session_state["text"] = None
+
     st.title("💯 Translate")
+    st.markdown(
+        "To provide quick access to multilingual translation, including for low-resource languages, we here provide"
+        " access to Meta AI's open-source and open-access model [No Language Left Behind](https://ai.facebook.com/research/no-language-left-behind/)"
+        " ([paper](https://arxiv.org/abs/2207.04672)). It enables translation to and from 200 languages."
+    )
 
 
 def _model_selection():
-    st.markdown("## ✨ Translation model and language selection")
-    st.markdown(
-        "We will translate your source text automatically using Facebook's multilingual translation model"
-        " [M2M100](https://ai.facebook.com/blog/introducing-many-to-many-multilingual-machine-translation/)"
-        " behind the scenes. You can choose between two sizes, 418M (smaller) and 1.2B (larger, slower, better)."
-    )
-    st.markdown(
-        "Even if you do not wish to make use of the automatic translation provided here, make sure to select"
-        " the appropriate **source and target language**. Those will be used for evaluation too!"
-    )
+    st.markdown("## ✨ Language selection")
 
     def _swap_languages():
+        st.session_state["text"] = None
         old_src_lang = copy(st.session_state["src_lang"])
         st.session_state["src_lang"] = copy(st.session_state["tgt_lang"])
         st.session_state["tgt_lang"] = old_src_lang
@@ -80,13 +83,12 @@ def _data_input():
         uploaded_file = st.file_uploader("Text file")
         if uploaded_file is not None:
             stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-            text = stringio.read()
+            st.session_state["text"] = stringio.read()
         else:
-            text = None
+            st.session_state["text"] = None
     else:
-        text = st.text_area(label="Sentences to translate")
+        st.session_state["text"] = st.text_area(label="Sentences to translate")
 
-    return text
 
 def _get_increment_size(num_sents) -> int:
     if st.session_state["transl_batch_size"] >= num_sents:
@@ -95,14 +97,14 @@ def _get_increment_size(num_sents) -> int:
         return ceil(100 / (num_sents / st.session_state["transl_batch_size"]))
 
 
-def _translate(text: Optional[str]):
-    if not text:
+def _translate():
+    if "text" not in st.session_state or not st.session_state["text"]:
         return None
     elif "translator" in st.session_state and st.session_state["translator"]:
         st.markdown("## Translations")
         transl_info = st.info("Translating...")
         pbar = st.progress(0)
-        sentences = [s.strip() for s in text.splitlines() if s.strip()]
+        sentences = [s.strip() for s in st.session_state["text"].splitlines() if s.strip()]
 
         increment = _get_increment_size(len(sentences))
         percent_done = 0
@@ -120,7 +122,7 @@ def _translate(text: Optional[str]):
             pbar.progress(min(percent_done, 100))
 
         download_btn_ct.download_button(
-            "Download TXT",
+            "Download translations",
             "\n".join(all_translations) + "\n",
             "translations.txt",
             "text",
@@ -134,8 +136,8 @@ def _translate(text: Optional[str]):
 def main():
     _init()
     _model_selection()
-    text = _data_input()
-    _translate(text)
+    _data_input()
+    _translate()
 
 
 if __name__ == "__main__":
