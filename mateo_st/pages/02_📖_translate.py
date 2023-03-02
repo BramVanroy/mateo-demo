@@ -5,20 +5,18 @@ from typing import Optional
 
 import streamlit as st
 
-from functions.utils import set_session_keys, add_custom_base_style, add_custom_translation_style
-
+from functions.utils import set_session_keys, update_lang
+from css import add_custom_translation_style, add_custom_base_style
 from functions.translator import TRANS_LANG2KEY, Translator, batch_translate
-from functions.utils import add_custom_input_style, update_lang
 
 
 def _init():
     st.set_page_config(page_title="Translate | MATEO", page_icon="💯")
     add_custom_base_style()
+    add_custom_translation_style()
+
     set_session_keys()
     st.title("💯 Translate")
-
-    add_custom_translation_style()
-    add_custom_input_style()  # To make sure the swap button is aligned to the bottom
 
 
 def _model_selection():
@@ -107,7 +105,6 @@ def _translate(text: Optional[str]):
         sentences = [s.strip() for s in text.splitlines() if s.strip()]
 
         increment = _get_increment_size(len(sentences))
-        print(len(sentences), st.session_state["transl_batch_size"], increment)
         percent_done = 0
         all_translations = []
 
@@ -130,6 +127,8 @@ def _translate(text: Optional[str]):
             key="download-txt",
             help="Download your translated text"
         )
+        pbar.empty()
+        transl_info.empty()
 
 
 def main():

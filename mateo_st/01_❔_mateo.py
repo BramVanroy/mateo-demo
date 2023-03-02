@@ -1,5 +1,5 @@
 import streamlit as st
-from functions.utils import add_custom_base_style
+from css import add_custom_base_style
 
 
 def main():
@@ -56,6 +56,7 @@ if __name__ == "__main__":
     import argparse
     cparser = argparse.ArgumentParser()
     cparser.add_argument("--no_cuda", action="store_true", help="whether to disable all CUDA")
+    cparser.add_argument("--transl_batch_size", type=int, default=4, help="batch size for translating")
     cargs = vars(cparser.parse_args())
 
     for k, v in cargs.items():

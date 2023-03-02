@@ -1,6 +1,6 @@
 import streamlit as st
 from functions.metrics_constants import METRICS_META, SUPPORTED_LANGS
-from functions.utils import add_custom_base_style, add_custom_metrics_style
+from css import add_custom_base_style, add_custom_metrics_style
 
 
 def main():
