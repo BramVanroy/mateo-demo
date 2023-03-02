@@ -3,6 +3,7 @@ from io import StringIO
 from math import ceil
 from typing import Optional
 
+import pandas as pd
 import streamlit as st
 
 from utils import set_general_session_keys, update_lang
@@ -21,6 +22,9 @@ def _init():
 
     if "text" not in st.session_state:
         st.session_state["text"] = None
+
+    if "stop_translating" not in st.session_state:
+        st.session_state["stop_translating"] = False
 
     st.title("💯 Translate")
     st.markdown(
@@ -80,14 +84,14 @@ def _data_input():
 
     st.markdown("Make sure that the file or text box contains **one sentence per line**. Empty lines will be removed.")
     if fupload_check:
-        uploaded_file = st.file_uploader("Text file")
+        uploaded_file = st.file_uploader("Text file", label_visibility="hidden")
         if uploaded_file is not None:
             stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
             st.session_state["text"] = stringio.read()
         else:
             st.session_state["text"] = None
     else:
-        st.session_state["text"] = st.text_area(label="Sentences to translate")
+        st.session_state["text"] = st.text_area(label="Sentences to translate", label_visibility="hidden")
 
 
 def _get_increment_size(num_sents) -> int:
@@ -103,10 +107,11 @@ def _translate():
     elif "translator" in st.session_state and st.session_state["translator"]:
         st.markdown("## Translations")
         transl_info = st.info("Translating...")
+
         pbar = st.progress(0)
         sentences = [s.strip() for s in st.session_state["text"].splitlines() if s.strip()]
-
-        increment = _get_increment_size(len(sentences))
+        num_sentences = len(sentences)
+        increment = _get_increment_size(num_sentences)
         percent_done = 0
         all_translations = []
 
@@ -116,8 +121,9 @@ def _translate():
                                             sentences,
                                             batch_size=st.session_state["transl_batch_size"]):
             all_translations.extend(translations)
-            transl_ct.markdown(f'<div className="translations-wrapper">{"<br>".join(all_translations)}</div>',
-                               unsafe_allow_html=True)
+
+            df = pd.DataFrame(list(zip(sentences, all_translations)), columns=["src", "mt"])
+            transl_ct.table(df)
             percent_done += increment
             pbar.progress(min(percent_done, 100))
 
@@ -130,7 +136,7 @@ def _translate():
             help="Download your translated text"
         )
         pbar.empty()
-        transl_info.empty()
+        transl_info.info("Done translating! You can download the translations at the end of this page.")
 
 
 def main():
