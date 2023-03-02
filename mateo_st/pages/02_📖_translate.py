@@ -3,6 +3,7 @@ from io import StringIO
 from math import ceil
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -123,6 +124,7 @@ def _translate():
             all_translations.extend(translations)
 
             df = pd.DataFrame(list(zip(sentences, all_translations)), columns=["src", "mt"])
+            df.index = np.arange(1, len(df) + 1)  # Index starting at number 1
             transl_ct.table(df)
             percent_done += increment
             pbar.progress(min(percent_done, 100))
