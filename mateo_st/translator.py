@@ -1,13 +1,13 @@
 from dataclasses import dataclass, field
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 import streamlit as st
 import torch
+from optimum.bettertransformer import BetterTransformer
+from torch import nn, qint8
 from torch.quantization import quantize_dynamic
-from torch import nn, qint8, Tensor
-from torch.nn import Parameter
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
-from transformers import PreTrainedModel, PreTrainedTokenizer, AutoModelForSeq2SeqLM, AutoTokenizer
 
 DEFAULT_MODEL_SIZE = "distilled-1.3B"
 DEFAULT_BATCH_SIZE = 4
@@ -19,6 +19,7 @@ class Translator:
     tgt_lang: str
     model_size: str = DEFAULT_MODEL_SIZE
     no_cuda: bool = False
+    quantize: bool = True
     max_length: int = 256
     num_beams: int = 5
     model: PreTrainedModel = field(default=None, init=False)
@@ -35,18 +36,9 @@ class Translator:
         if not torch.cuda.is_available():
             self.no_cuda = True
 
-        self.model, self.tokenizer = init_model(self.model_name)
+        self.model, self.tokenizer, self.no_cuda = init_model(self.model_name, self.no_cuda, self.quantize)
         self.set_src_lang(self.src_lang)
         self.set_tgt_lang(self.tgt_lang)
-
-        if not self.no_cuda:
-            try:
-                self.model = self.model.to("cuda")
-            except RuntimeError:
-                # In case of out-of-memory on the GPU when moving model to GPU,
-                # just stay on CPU and disable CUDA
-                self.no_cuda = True
-
         self.model.eval()
 
     def set_src_lang(self, src_lang):
@@ -110,15 +102,26 @@ def batchify(sentences: List[str], batch_size: int):
     """Yields batches of size 'batch_size' from the given list of sentences"""
     num_sents = len(sentences)
     for idx in range(0, num_sents, batch_size):
-        yield sentences[idx:idx + batch_size]
+        yield sentences[idx : idx + batch_size]
 
 
 @st.cache(allow_output_mutation=True, suppress_st_warning=False, show_spinner=False)
-def init_model(model_name: str):
+def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    model = BetterTransformer.transform(model, keep_original_model=False)
+    if torch.cuda.is_available() and not no_cuda:
+        try:
+            model = model.to("cuda")
+        except RuntimeError:
+            # In case of out-of-memory on the GPU when moving model to GPU,
+            # just stay on CPU and disable CUDA
+            no_cuda = True
+    elif quantize:  # Quantization not supported on CUDA
+        model = quantize_dynamic(model, {nn.Linear, nn.Dropout, nn.LayerNorm}, dtype=qint8)
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    return model, tokenizer
+    return model, tokenizer, no_cuda
 
 
 TRANS_LANG2KEY = {
@@ -325,7 +328,7 @@ TRANS_LANG2KEY = {
     "Chinese (Simplified)": "zho_Hans",
     "Chinese (Traditional)": "zho_Hant",
     "Standard Malay": "zsm_Latn",
-    "Zulu": "zul_Latn"
+    "Zulu": "zul_Latn",
 }
 
 TRANS_KEY2LANG = {v: k for k, v in TRANS_LANG2KEY.items()}
