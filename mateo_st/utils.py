@@ -1,7 +1,11 @@
+import base64
+from io import BytesIO
+from typing import Union
+
+import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import html
-
-from translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, DEFAULT_BATCH_SIZE, DEFAULT_MODEL_SIZE
+from translator import DEFAULT_BATCH_SIZE, DEFAULT_MODEL_SIZE, TRANS_LANG2KEY, TRANS_SIZE2MODEL
 
 
 def update_lang(side: str):
@@ -110,9 +114,31 @@ def set_general_session_keys():
 @st.cache(allow_output_mutation=True, suppress_st_warning=True)
 def get_cli_args():
     import argparse
+
     cparser = argparse.ArgumentParser()
     cparser.add_argument("--transl_no_cuda", action="store_true", help="whether to disable CUDA for translation")
-    cparser.add_argument("--transl_batch_size", type=int, default=DEFAULT_BATCH_SIZE, help="batch size for translating")
-    cparser.add_argument("--transl_model_size", choices=list(TRANS_SIZE2MODEL.keys()), default=DEFAULT_MODEL_SIZE,
-                         help="model size to use")
+    cparser.add_argument(
+        "--transl_batch_size", type=int, default=DEFAULT_BATCH_SIZE, help="batch size for translating"
+    )
+    cparser.add_argument(
+        "--transl_model_size",
+        choices=list(TRANS_SIZE2MODEL.keys()),
+        default=DEFAULT_MODEL_SIZE,
+        help="model size to use",
+    )
     return cparser.parse_args()
+
+
+def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download"):
+    if isinstance(data, pd.DataFrame):
+        # Write the DataFrame to an in-memory bytes object
+        bytes_io = BytesIO()
+        with pd.ExcelWriter(bytes_io, "xlsxwriter") as writer:
+            data.to_excel(writer, index=False)
+
+        # Retrieve the bytes from the bytes object
+        b64 = base64.b64encode(bytes_io.getvalue()).decode("utf-8")
+        return f'<a download="{filename}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" title="Download">{link_text}</a>'
+    elif isinstance(data, str):
+        b64 = base64.b64encode(data.encode("utf-8")).decode("utf-8")
+        return f'<a download="{filename}" href="data:file/txt;base64,{b64}" title="Download">{link_text}</a>'
