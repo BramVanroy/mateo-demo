@@ -5,10 +5,10 @@ from math import ceil
 import numpy as np
 import pandas as pd
 import streamlit as st
-
-from utils import set_general_session_keys, update_lang, get_cli_args
-from css import add_custom_translation_style, add_custom_base_style
-from translator import TRANS_LANG2KEY, Translator, batch_translate, DEFAULT_MODEL_SIZE, TRANS_SIZE2MODEL, DEFAULT_BATCH_SIZE
+from css import add_custom_base_style, add_custom_translation_style
+from translator import (DEFAULT_BATCH_SIZE, DEFAULT_MODEL_SIZE, TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator,
+                        batch_translate)
+from utils import create_download_link, get_cli_args, set_general_session_keys, update_lang
 
 
 def _init():
@@ -18,9 +18,6 @@ def _init():
 
     set_general_session_keys()
     args = get_cli_args()
-    if "translator" not in st.session_state:
-        st.session_state["translator"] = None
-
     if "transl_no_cuda" not in st.session_state:
         st.session_state["transl_no_cuda"] = args.transl_no_cuda
 
@@ -30,15 +27,20 @@ def _init():
     if "transl_model_size" not in st.session_state:
         st.session_state["transl_model_size"] = args.transl_model_size
 
+    if "translator" not in st.session_state:
+        st.session_state["translator"] = None
+
     if "text" not in st.session_state:
         st.session_state["text"] = None
 
     st.title("💯 Translate")
     st.markdown(
         "To provide quick access to multilingual translation, including for low-resource languages, we here provide"
-        " access to Meta AI's open-source and open-access model [No Language Left Behind](https://ai.facebook.com/research/no-language-left-behind/)"
-        " ([paper](https://arxiv.org/abs/2207.04672)). It enables translation to and from 200 languages. In this"
-        f" interface, we specifically use [{st.session_state['transl_model_size']}](https://huggingface.co/{TRANS_SIZE2MODEL[st.session_state['transl_model_size']]})."
+        " access to Meta AI's open-source and open-access model "
+        "[No Language Left Behind](https://ai.facebook.com/research/no-language-left-behind/)"
+        " ([paper](https://arxiv.org/abs/2207.04672)). It enables machine translation to and from 200 languages."
+        " In this interface, we specifically use"
+        f" [{st.session_state['transl_model_size']}](https://huggingface.co/{TRANS_SIZE2MODEL[st.session_state['transl_model_size']]})."
     )
 
 
@@ -117,6 +119,7 @@ def _translate():
     elif "translator" in st.session_state and st.session_state["translator"]:
         st.markdown("## Translations")
         transl_info = st.info("Translating...")
+        download_info = st.empty()
 
         pbar = st.progress(0)
         sentences = [s.strip() for s in st.session_state["text"].splitlines() if s.strip()]
@@ -126,29 +129,37 @@ def _translate():
         all_translations = []
 
         transl_ct = st.empty()
-        download_btn_ct = st.empty()
-        for translations in batch_translate(st.session_state["translator"],
-                                            sentences,
-                                            batch_size=st.session_state["transl_batch_size"]):
+        df = pd.DataFrame()
+        for translations in batch_translate(
+            st.session_state["translator"], sentences, batch_size=st.session_state["transl_batch_size"]
+        ):
             all_translations.extend(translations)
 
-            df = pd.DataFrame(list(zip(sentences, all_translations)),
-                              columns=["src", f"mt: {st.session_state['translator'].model_name.split('/')[-1]}"])
+            df = pd.DataFrame(
+                list(zip(sentences, all_translations)),
+                columns=[
+                    f"src ({st.session_state['src_lang_key']})",
+                    f"mt ({st.session_state['tgt_lang_key']}):"
+                    f" {st.session_state['translator'].model_name.split('/')[-1]}",
+                ],
+            )
             df.index = np.arange(1, len(df) + 1)  # Index starting at number 1
             transl_ct.table(df)
             percent_done += increment
             pbar.progress(min(percent_done, 100))
 
-        download_btn_ct.download_button(
-            "Download translations",
-            "\n".join(all_translations) + "\n",
-            "translations.txt",
-            "text",
-            key="download-txt",
-            help="Download your translated text"
-        )
         pbar.empty()
-        transl_info.info("Done translating! You can download the translations at the end of this page.")
+        transl_info.success("Done translating!")
+
+        xlsx_download_html = create_download_link(df, "translations.xlsx", "Download Excel")
+        txt_download_html = create_download_link(
+            "\n".join(all_translations) + "\n", "translations.txt", "Download text"
+        )
+        download_info.markdown(
+            f"- <strong>{xlsx_download_html}</strong>: parallel source/MT sentences as Excel file;\n"
+            f"- <strong>{txt_download_html}</strong>: only translations, as a plain text file.",
+            unsafe_allow_html=True,
+        )
 
 
 def main():
