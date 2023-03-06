@@ -6,7 +6,7 @@ def main():
     st.set_page_config(page_title="MATEO: MAchine Translation Evaluation Online", page_icon="💯")
     add_custom_base_style()
 
-    st.title("💯 MATEO: MAchine Translation Evaluation Online")
+    st.title("🎈 MATEO: MAchine Translation Evaluation Online")
 
     st.markdown(
         "[MATEO](https://research.flw.ugent.be/projects/mateo-machine-translation-evaluation-online)"
@@ -15,7 +15,7 @@ def main():
         " Association for Machine Translation and CLARIN.eu and will run until July 2023. It aims to bring automatic"
         " machine translation evaluation to the masses."
     )
-    st.markdown("## 🎈 Goals of the project")
+    st.markdown("## Goals of the project")
 
     st.markdown(
         """
