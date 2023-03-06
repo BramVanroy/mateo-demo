@@ -58,16 +58,6 @@ class Translator:
         self.tokenizer.tgt_lang = self.tgt_lang_key
 
 
-def get_translator_hash(translator: Translator):
-    return (
-        translator.src_lang,
-        translator.tgt_lang,
-        translator.model_size,
-        translator.model_name,
-        translator.max_length,
-    )
-
-
 def batch_translate(translator, sentences: Union[str, List[str]], batch_size: int = DEFAULT_BATCH_SIZE):
     if isinstance(sentences, str):
         sentences = [sentences]
