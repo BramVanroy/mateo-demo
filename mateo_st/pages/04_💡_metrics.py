@@ -8,17 +8,16 @@ def main():
     add_custom_metrics_style()
     add_custom_base_style()
 
-    st.title("💯 Metrics in MATEO")
+    st.title("💡 Metrics in MATEO")
     st.markdown(
         "We currently support the following evaluation metrics. A short description is given alongside"
         " references to their paper 📝, and the original underlying implementation 💻. We use"
-        " [`evaluate`](https://github.com/huggingface/evaluate) as the main evaluation framework. In the future,"
-        " more metrics will be added! If no supported languages are listed for a language, there is no restriction."
+        " [`evaluate`](https://github.com/huggingface/evaluate) as the main evaluation framework."
     )
     st.markdown(
         """
-- 💡 baseline metric (fast, lower correlation with quality judgment by humans);
-- 🚀 neural metric (slow, higher correlation).
+- 💡 baseline metric (faster, lower correlation with quality judgment by humans);
+- 🚀 neural metric (slower, higher correlation).
 """
     )
 

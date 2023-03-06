@@ -33,7 +33,7 @@ def _init():
     if "text" not in st.session_state:
         st.session_state["text"] = None
 
-    st.title("💯 Translate")
+    st.title("📖 Translate")
     st.markdown(
         "To provide quick access to multilingual translation, including for low-resource languages, we here provide"
         " access to Meta AI's open-source and open-access model "
