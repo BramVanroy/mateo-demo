@@ -8,7 +8,7 @@ plotly==5.13.0
 sacrebleu==2.3.1
 scikit-learn==1.2.1
 sentencepiece==0.1.97
-streamlit
+streamlit==1.19.0
 tensorflow==2.11.0
 torch==1.13.1
 transformers==4.26.0
