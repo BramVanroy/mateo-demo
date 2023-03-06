@@ -1,21 +1,25 @@
 import streamlit as st
-from functions.utils import add_custom_base_style
-from sections.evaluate.input_section import get_input_content
-from sections.evaluate.metrics_section import get_metrics_content
-from utils import set_general_session_keys
+from css import add_custom_base_style
+from utils import get_cli_args, set_general_session_keys
+
+
+def _init():
+    st.set_page_config(page_title="Evaluate | MATEO", page_icon="💯")
+    add_custom_base_style()
+
+    set_general_session_keys()
+    args = get_cli_args()
+
+    # ... set undefined session state vars here
+
+    st.title("📏 Evaluate")
+    st.markdown(
+        "First specify the metrics and metric options to use, and then upload your data."
+    )
 
 
 def main():
-    st.set_page_config(page_title="Evaluate | MATEO", page_icon="💯")
-    add_custom_base_style()
-    set_general_session_keys()
-    st.title("💯 Evaluate")
-
-    # Section: Input
-    get_input_content()
-
-    # Section: metrics
-    get_metrics_content()
+    _init()
 
 
 if __name__ == "__main__":
