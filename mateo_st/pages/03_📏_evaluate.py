@@ -2,7 +2,6 @@ import streamlit as st
 from functions.utils import add_custom_base_style
 from sections.evaluate.input_section import get_input_content
 from sections.evaluate.metrics_section import get_metrics_content
-
 from utils import set_general_session_keys
 
 
@@ -17,7 +16,6 @@ def main():
 
     # Section: metrics
     get_metrics_content()
-
 
 
 if __name__ == "__main__":

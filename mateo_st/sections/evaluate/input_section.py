@@ -4,7 +4,6 @@ import streamlit as st
 from functions.utils import add_custom_input_style
 
 
-
 def get_input_content():
     add_custom_input_style()
 

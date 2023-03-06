@@ -17,7 +17,8 @@ def main():
     )
     st.markdown("## 🎈 Goals of the project")
 
-    st.markdown("""
+    st.markdown(
+        """
 - Create an accessible website to evaluate machine translation for both experts and non-experts
 - Create a Python package that focuses on machine translation that incorporates both baseline and state-of-the-art machine translation evaluation metrics
 - Include research-focused functionality such as custom metric options, batch processing, exporting the results to formats such as LaTeX and Excel, and visualizing results in meaningful graphs
@@ -33,7 +34,8 @@ The current demo is a very first (alpha) indication of the direction that we are
 - Integration in CLARIN infrastructure
 
 Is there anything else you would like to see included? [Get in touch](#contact)!
-""")
+"""
+    )
 
     st.markdown("## 🏆 Funding")
 

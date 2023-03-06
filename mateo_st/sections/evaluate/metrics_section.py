@@ -30,7 +30,9 @@ def get_metrics_content():
     # Make sure that we only allow/show metrics that are compatible. This means that:
     # - either the metric is not in the supported_lang dictionary (all the baseline metrics); or
     # - the target language key has to be in the list of the supported metrics, and in the case of comet also the src
-    metric_options = [m for m in METRICS.keys()
+    metric_options = [
+        m
+        for m in METRICS.keys()
         if m not in SUPPORTED_LANGS_REV
         or (
             st.session_state["tgt_lang_key"] in SUPPORTED_LANGS_REV[m]

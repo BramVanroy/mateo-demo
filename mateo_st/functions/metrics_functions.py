@@ -9,9 +9,9 @@ import plotly.express as px
 import streamlit as st
 import tensorflow as tf
 import torch
+from utils import COLORS_PLOTLY
 
 from .metrics_constants import BASELINE_METRICS, METRIC_BEST_ARROW, METRICS
-from utils import COLORS_PLOTLY
 
 
 try:
@@ -179,8 +179,9 @@ def draw(results, fig_ct, df_ct, download_btn_tsv_ct):
 
     # Hide NANs from display
     numeric_col_names = rounded_df.columns[1:].tolist()
-    styled_df = rounded_df.style.highlight_null(props="color: transparent;").format("{:,.2f}", na_rep="",
-                                                                            subset=numeric_col_names)
+    styled_df = rounded_df.style.highlight_null(props="color: transparent;").format(
+        "{:,.2f}", na_rep="", subset=numeric_col_names
+    )
     df_ct.dataframe(styled_df)
 
     # Let users download the unrounded data
@@ -195,4 +196,3 @@ def draw(results, fig_ct, df_ct, download_btn_tsv_ct):
         """,
         unsafe_allow_html=True,
     )
-
