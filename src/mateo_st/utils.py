@@ -4,8 +4,14 @@ from typing import Union
 
 import pandas as pd
 import streamlit as st
-from mateo_st.translator import DEFAULT_BATCH_SIZE, DEFAULT_MODEL_SIZE, TRANS_LANG2KEY, TRANS_SIZE2MODEL, \
-    DEFAULT_NUM_BEAMS, DEFAULT_MAX_LENGTH
+from mateo_st.translator import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_MAX_LENGTH,
+    DEFAULT_MODEL_SIZE,
+    DEFAULT_NUM_BEAMS,
+    TRANS_LANG2KEY,
+    TRANS_SIZE2MODEL,
+)
 
 
 def update_translator_lang(side: str):
@@ -35,9 +41,10 @@ def cli_args():
         "--transl_batch_size", type=int, default=DEFAULT_BATCH_SIZE, help="batch size for translating"
     )
     cparser.add_argument(
-        "--transl_no_quantize", action="store_true",
+        "--transl_no_quantize",
+        action="store_true",
         help="whether to disable CUDA torch quantization of the translation model. Quantization makes the model smaller"
-             " and faster but may result in lower quality. This option will disable quantization."
+        " and faster but may result in lower quality. This option will disable quantization.",
     )
     cparser.add_argument(
         "--transl_model_size",
@@ -115,7 +122,10 @@ def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_tex
 
         # Retrieve the bytes from the bytes object
         b64 = base64.b64encode(bytes_io.getvalue()).decode("utf-8")
-        return f'<a download="{filename}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" title="Download">{link_text}</a>'
+        return (
+            f'<a download="{filename}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml'
+            f'.sheet;base64,{b64}" title="Download">{link_text}</a>'
+        )
     elif isinstance(data, str):
         b64 = base64.b64encode(data.encode("utf-8")).decode("utf-8")
         return f'<a download="{filename}" href="data:file/txt;base64,{b64}" title="Download">{link_text}</a>'

@@ -4,6 +4,7 @@ import sacrebleu
 from sacrebleu import BLEU
 from sacrebleu.metrics.bleu import _TOKENIZERS as SBTOKENIZERS
 
+
 METRICS_META = {
     "bleu": {
         "name": "BLEU",
@@ -24,7 +25,7 @@ METRICS_META = {
             "smooth_method": {
                 "description": "Smoothing method to use",
                 "default": "exp",
-                "choices": ("floor", "add-k", "exp", "none")
+                "choices": ("floor", "add-k", "exp", "none"),
             },
             "smooth_value": {
                 "description": "Smoothing value for `floor` and `add-k` methods. An empty value falls back to the default value",
@@ -32,18 +33,14 @@ METRICS_META = {
                 "type": int,
                 # Because we need to allow empty values in the interface. Therefore, we need to explicitly cast to int
                 # when using the resulting session_state variable!
-                "force_str": True
+                "force_str": True,
             },
-            "lowercase": {
-                "description": "Whether to lowercase the data",
-                "default": False,
-                "type": bool
-            },
+            "lowercase": {"description": "Whether to lowercase the data", "default": False, "type": bool},
             "tokenize": {
                 "description": "Tokenizer to use",
                 "default": BLEU.TOKENIZER_DEFAULT,
-                "choices": tuple(SBTOKENIZERS.keys())
-            }
+                "choices": tuple(SBTOKENIZERS.keys()),
+            },
         },
         "requires_source": False,
     },

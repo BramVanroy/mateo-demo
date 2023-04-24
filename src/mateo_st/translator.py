@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Union
+from typing import List, Union
 
 import streamlit as st
 import torch

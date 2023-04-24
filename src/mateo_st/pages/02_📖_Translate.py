@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from mateo_st.css import add_custom_base_style, add_custom_translation_style
-from mateo_st.translator import (TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator)
-from mateo_st.utils import create_download_link, set_general_session_keys, update_translator_lang, cli_args
+from mateo_st.translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator
+from mateo_st.utils import cli_args, create_download_link, set_general_session_keys, update_translator_lang
 
 
 def _init():
@@ -49,11 +49,19 @@ def _model_selection():
 
     src_lang_col, swap_btn_col, tgt_lang_col = st.columns((4, 1, 4))
     src_lang_col.selectbox(
-        "Source language", tuple(TRANS_LANG2KEY.keys()), key="src_lang", on_change=update_translator_lang, args=("src",)
+        "Source language",
+        tuple(TRANS_LANG2KEY.keys()),
+        key="src_lang",
+        on_change=update_translator_lang,
+        args=("src",),
     )
     swap_btn_col.button("⇄", on_click=_swap_languages)
     tgt_lang_col.selectbox(
-        "Target language", tuple(TRANS_LANG2KEY.keys()), key="tgt_lang", on_change=update_translator_lang, args=("tgt",)
+        "Target language",
+        tuple(TRANS_LANG2KEY.keys()),
+        key="tgt_lang",
+        on_change=update_translator_lang,
+        args=("tgt",),
     )
 
     load_info = st.info(
@@ -88,8 +96,10 @@ def _data_input():
 
     fupload_check = input_col.checkbox("File upload?")
 
-    st.markdown("Make sure that the file or text in the text box contains **one sentence per line**. Empty lines will"
-                " be removed.")
+    st.markdown(
+        "Make sure that the file or text in the text box contains **one sentence per line**. Empty lines will"
+        " be removed."
+    )
     if fupload_check:
         uploaded_file = st.file_uploader("Text file", label_visibility="hidden")
         if uploaded_file is not None:
@@ -126,7 +136,7 @@ def _translate():
         transl_ct = st.empty()
         df = pd.DataFrame()
         for translations in st.session_state["translator"].batch_translate(
-                sentences, batch_size=st.session_state["transl_batch_size"]
+            sentences, batch_size=st.session_state["transl_batch_size"]
         ):
             all_translations.extend(translations)
 

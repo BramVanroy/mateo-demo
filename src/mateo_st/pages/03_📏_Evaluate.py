@@ -1,4 +1,3 @@
-from collections import defaultdict
 from io import StringIO
 
 import streamlit as st
@@ -23,9 +22,7 @@ def _init():
         st.session_state["sys_segments"] = dict()
 
     st.title("📏 Evaluate")
-    st.markdown(
-        "First specify the metrics and metric options to use, and then upload your data."
-    )
+    st.markdown("First specify the metrics and metric options to use, and then upload your data.")
 
 
 def _metric_selection():
@@ -54,17 +51,41 @@ def _metric_selection():
 
                 opt_label = f"{metric_name}--{opt_name}"
                 if has_choices:
-                    opt_input_col.selectbox(opt_label, options=opt["choices"], index=opt["choices"].index(opt["default"]),
-                                            label_visibility="hidden", help=opt["description"], key=opt_label)
+                    opt_input_col.selectbox(
+                        opt_label,
+                        options=opt["choices"],
+                        index=opt["choices"].index(opt["default"]),
+                        label_visibility="hidden",
+                        help=opt["description"],
+                        key=opt_label,
+                    )
                 else:
                     dtype = opt["type"]
                     force_str = "force_str" in opt and opt["force_str"]
                     if dtype is str or ((dtype is int or dtype is float) and force_str):
-                        opt_input_col.text_input(opt_label, label_visibility="hidden", value=opt["default"], help=opt["description"], key=opt_label)
+                        opt_input_col.text_input(
+                            opt_label,
+                            label_visibility="hidden",
+                            value=opt["default"],
+                            help=opt["description"],
+                            key=opt_label,
+                        )
                     elif dtype is int or dtype is float:
-                        opt_input_col.number_input(opt_label, label_visibility="hidden", value=opt["default"], help=opt["description"], key=opt_label)
+                        opt_input_col.number_input(
+                            opt_label,
+                            label_visibility="hidden",
+                            value=opt["default"],
+                            help=opt["description"],
+                            key=opt_label,
+                        )
                     elif dtype is bool:
-                        opt_input_col.checkbox(opt_label, label_visibility="hidden", value=opt["default"], help=opt["description"], key=opt_label)
+                        opt_input_col.checkbox(
+                            opt_label,
+                            label_visibility="hidden",
+                            value=opt["default"],
+                            help=opt["description"],
+                            key=opt_label,
+                        )
 
                 if opt_idx < len(meta["options"]) - 1:
                     expander.divider()
@@ -75,8 +96,10 @@ def _metric_selection():
 
 def _data_input():
     st.markdown("## Input data 📄")
-    st.write("Add a reference file and one or more files with translations. One line per file."
-            " Cannot contain empty lines and must be in UTF8!")
+    st.write(
+        "Add a reference file and one or more files with translations. One line per file."
+        " Cannot contain empty lines and must be in UTF8!"
+    )
 
     def read_file(uploaded_file):
         if uploaded_file is not None:
@@ -88,13 +111,16 @@ def _data_input():
     ref_file = st.file_uploader("Reference file")
     st.session_state["ref_segments"] = read_file(ref_file)
 
-    if any(meta["requires_source"] and name in st.session_state and st.session_state[name] for name, meta in METRICS_META.items()):
+    if any(
+        meta["requires_source"] and name in st.session_state and st.session_state[name]
+        for name, meta in METRICS_META.items()
+    ):
         src_file = st.file_uploader("Source file (only needed for some metrics, like COMET)")
         st.session_state["ref_segments"] = read_file(src_file)
 
     num_sys = st.number_input("How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=3)
 
-    for sys_idx in range(1, num_sys+1):
+    for sys_idx in range(1, num_sys + 1):
         sys_file = st.file_uploader(f"System #{sys_idx} file")
         if sys_file is not None:
             stringio = StringIO(ref_file.getvalue().decode("utf-8"))

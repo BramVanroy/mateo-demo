@@ -9,9 +9,8 @@ import plotly.express as px
 import streamlit as st
 import tensorflow as tf
 import torch
-from mateo_st.utils import COLORS_PLOTLY
-
 from mateo_st.metrics_constants import BASELINE_METRICS, METRIC_BEST_ARROW, METRICS
+from mateo_st.utils import COLORS_PLOTLY
 
 
 try:
@@ -185,7 +184,7 @@ def draw(results, fig_ct, df_ct, download_btn_tsv_ct):
     try:
         # some strings <-> bytes conversions necessary here
         b64 = base64.b64encode(df.to_csv(encoding="utf-8", sep="\t").encode("utf-8").encode()).decode()
-    except AttributeError as e:
+    except AttributeError:
         b64 = base64.b64encode(df.to_csv(encoding="utf-8", sep="\t").encode("utf-8")).decode()
     download_btn_tsv_ct.markdown(
         f"""
