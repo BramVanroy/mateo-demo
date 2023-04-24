@@ -1,4 +1,5 @@
 from io import StringIO
+from typing import Tuple
 
 import streamlit as st
 from mateo_st.css import add_custom_base_style
@@ -30,15 +31,13 @@ def _metric_selection():
     col1, col2 = st.columns(2, gap="medium")
 
     # Iterate over all the metrics in METRIC_META and add it and all possible options
-    for metric_idx, (name, meta) in enumerate(METRICS_META.items()):
+    for metric_idx, (ugly_metric_name, meta) in enumerate(METRICS_META.items()):
         # Artificially separate metrics over two columns
         col = col1 if metric_idx % 2 == 0 else col2
 
         metric_container = col.container()
-        metric_name = meta["name"]
-        chk_col, name_col = metric_container.columns([1, 5])
-        chk_col.checkbox(f"include_{name}", label_visibility="hidden", help=f"Use {metric_name}?", key=name)
-        name_col.markdown(f"**{metric_name}**")
+        pretty_metric_name = meta["name"]
+        metric_container.checkbox(f"Use {pretty_metric_name}", key=ugly_metric_name)
 
         if "options" in meta and meta["options"]:
             expander = metric_container.expander(f"{meta['name']} options")
@@ -49,7 +48,7 @@ def _metric_selection():
                 opt_name_col.write(opt_name)
                 opt_desc_col.write(opt["description"])
 
-                opt_label = f"{metric_name}--{opt_name}"
+                opt_label = f"{ugly_metric_name}--{opt_name}"
                 if has_choices:
                     opt_input_col.selectbox(
                         opt_label,
@@ -111,12 +110,13 @@ def _data_input():
     ref_file = st.file_uploader("Reference file")
     st.session_state["ref_segments"] = read_file(ref_file)
 
+    # Check whether any of the selected metrics require source input
     if any(
         meta["requires_source"] and name in st.session_state and st.session_state[name]
         for name, meta in METRICS_META.items()
     ):
         src_file = st.file_uploader("Source file (only needed for some metrics, like COMET)")
-        st.session_state["ref_segments"] = read_file(src_file)
+        st.session_state["src_segments"] = read_file(src_file)
 
     num_sys = st.number_input("How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=3)
 
@@ -129,10 +129,64 @@ def _data_input():
             st.session_state["sys_segments"][sys_idx] = []
 
 
+def _validate_state() -> Tuple[bool, str]:
+    source_required = any(
+        meta["requires_source"] and name in st.session_state and st.session_state[name]
+        for name, meta in METRICS_META.items()
+    )
+    can_continue = True
+    msg = "Cannot continue:\n"
+
+    # At least one metric must be selected
+    if not any(
+            name in st.session_state and st.session_state[name]
+            for name, meta in METRICS_META.items()
+    ):
+        msg += "- At least one metric must be selected\n"
+        can_continue = False
+
+    # Reference translations must be given
+    if not st.session_state["ref_segments"]:
+        msg += "- Reference translations must be given\n"
+        can_continue = False
+
+    if source_required:
+        # Source translations must be given if source_required
+        if not st.session_state["src_segments"]:
+            msg += "- A source file must be added because a metric that requires it was selected\n"
+            can_continue = False
+        # Source segments must be the same number as reference segments
+        elif len(st.session_state["src_segments"]) != len(st.session_state["ref_segments"]):
+            msg += "- The source file must contain the same number of lines as the reference file\n"
+            can_continue = False
+
+    # At least one set of sys translations need to exist
+    if not any(st.session_state["sys_segments"].values()):
+        msg += "- Must have at least one set of system translations\n"
+        can_continue = False
+    else:
+        for sys_idx, sys_segs in st.session_state["sys_segments"].items():
+            # System segments must be the same number as reference segments
+            if len(sys_segs) != len(st.session_state["ref_segments"]):
+                msg += f"- Reference file #{sys_idx} must contain the same number of lines as the reference file\n"
+                can_continue = False
+
+    return can_continue, msg
+
+
 def main():
     _init()
     _metric_selection()
     _data_input()
+    can_continue, msg = _validate_state()
+
+    if not can_continue:
+        st.warning(msg)
+    else:
+        if st.button("Calculate scores"):
+            st.write(st.session_state)
+        else:
+            st.write("Click the button above to start calculating the automatic evaluation scores for your data")
 
 
 if __name__ == "__main__":
