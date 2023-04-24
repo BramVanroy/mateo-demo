@@ -1,7 +1,7 @@
 from urllib.parse import quote
 
 import streamlit as st
-from functions.utils import add_custom_input_style
+from mateo_st.functions.utils import add_custom_input_style
 
 
 def get_input_content():

@@ -1,6 +1,6 @@
 import streamlit as st
-from css import add_custom_base_style
-from utils import get_cli_args, set_general_session_keys
+from mateo_st.css import add_custom_base_style
+from mateo_st.utils import get_cli_args, set_general_session_keys
 
 
 def _init():

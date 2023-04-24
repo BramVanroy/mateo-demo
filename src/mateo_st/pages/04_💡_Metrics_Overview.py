@@ -1,6 +1,6 @@
 import streamlit as st
-from css import add_custom_base_style, add_custom_metrics_style
-from functions.metrics_constants import METRICS_META, SUPPORTED_LANGS
+from mateo_st.css import add_custom_base_style, add_custom_metrics_style
+from mateo_st.functions.metrics_constants import METRICS_META, SUPPORTED_LANGS
 
 
 def main():

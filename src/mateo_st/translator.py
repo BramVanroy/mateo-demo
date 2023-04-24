@@ -9,8 +9,10 @@ from torch.quantization import quantize_dynamic
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
 
-DEFAULT_MODEL_SIZE = "distilled-1.3B"
+DEFAULT_MODEL_SIZE = "distilled-600M"
 DEFAULT_BATCH_SIZE = 4
+DEFAULT_MAX_LENGTH = 256
+DEFAULT_NUM_BEAMS = 3
 
 
 @dataclass
@@ -20,8 +22,8 @@ class Translator:
     model_size: str = DEFAULT_MODEL_SIZE
     no_cuda: bool = False
     quantize: bool = True
-    max_length: int = 256
-    num_beams: int = 5
+    max_length: int = DEFAULT_MAX_LENGTH
+    num_beams: int = DEFAULT_NUM_BEAMS
     model: PreTrainedModel = field(default=None, init=False)
     tokenizer: PreTrainedTokenizer = field(default=None, init=False)
     src_lang_key: str = field(default=None, init=False)
@@ -57,35 +59,34 @@ class Translator:
             raise KeyError(f"Target language '{self.tgt_lang}' not recognized or supported")
         self.tokenizer.tgt_lang = self.tgt_lang_key
 
+    def translate(self, encoded):
+        with torch.no_grad():
+            return self.model.generate(
+                **encoded,
+                forced_bos_token_id=self.tokenizer.lang_code_to_id[self.tgt_lang_key],
+                max_length=self.max_length,
+                num_beams=self.num_beams,
+            )
 
-def batch_translate(translator, sentences: Union[str, List[str]], batch_size: int = DEFAULT_BATCH_SIZE):
-    if isinstance(sentences, str):
-        sentences = [sentences]
+    def batch_translate(self, sentences: Union[str, List[str]], batch_size: int = DEFAULT_BATCH_SIZE):
+        if isinstance(sentences, str):
+            sentences = [sentences]
 
-    for batch in batchify(sentences, batch_size):
-        encoded = translator.tokenizer(batch, return_tensors="pt", padding=True)
-        if not translator.no_cuda:
-            encoded = encoded.to("cuda")
+        for batch in batchify(sentences, batch_size):
+            encoded = self.tokenizer(batch, return_tensors="pt", padding=True)
+            if not self.no_cuda:
+                encoded = encoded.to("cuda")
 
-        try:
-            generated_tokens = _translate(translator, encoded)
-        except RuntimeError:
-            # Out-of-memory; switch to CPU
-            translator.no_cuda = True
-            translator.model = translator.model.to("cpu")
-            encoded = encoded.to("cpu")
-            generated_tokens = _translate(translator, encoded)
+            try:
+                generated_tokens = self.translate(encoded)
+            except RuntimeError:
+                # Out-of-memory; switch to CPU
+                self.no_cuda = True
+                self.model = self.model.to("cpu")
+                encoded = encoded.to("cpu")
+                generated_tokens = self.translate(encoded)
 
-        yield translator.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-
-
-def _translate(translator, encoded: Dict[str, int]):
-    return translator.model.generate(
-        **encoded,
-        forced_bos_token_id=translator.tokenizer.lang_code_to_id[translator.tgt_lang_key],
-        max_length=translator.max_length,
-        num_beams=translator.num_beams,
-    )
+            yield self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 
 
 def batchify(sentences: List[str], batch_size: int):
@@ -95,7 +96,7 @@ def batchify(sentences: List[str], batch_size: int):
         yield sentences[idx : idx + batch_size]
 
 
-@st.cache(allow_output_mutation=True, suppress_st_warning=False, show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     model = BetterTransformer.transform(model, keep_original_model=False)
@@ -108,6 +109,11 @@ def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
             no_cuda = True
     elif quantize:  # Quantization not supported on CUDA
         model = quantize_dynamic(model, {nn.Linear, nn.Dropout, nn.LayerNorm}, dtype=qint8)
+
+    try:
+        model = torch.compile(model)
+    except Exception:  # torch.compile is not yet supported in all cases (e.g. Windows) so just ignore
+        pass
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 

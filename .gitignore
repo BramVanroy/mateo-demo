@@ -1,6 +1,4 @@
 cmd.sh
-run-backend.ps
-.eslintrc.js
 .venv
 
 # ignore compiled styles

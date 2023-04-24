@@ -9,9 +9,9 @@ import plotly.express as px
 import streamlit as st
 import tensorflow as tf
 import torch
-from utils import COLORS_PLOTLY
+from mateo_st.utils import COLORS_PLOTLY
 
-from .metrics_constants import BASELINE_METRICS, METRIC_BEST_ARROW, METRICS
+from mateo_st.metrics_constants import BASELINE_METRICS, METRIC_BEST_ARROW, METRICS
 
 
 try:
@@ -25,30 +25,30 @@ except Exception:
     pass
 
 
-@st.cache(allow_output_mutation=True, suppress_st_warning=False, show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def get_baseline_metrics(metrics: List[str]):
     metric_names = [METRICS[m] for m in metrics]
     return evaluate.combine(metric_names, force_prefix=True)
 
 
-@st.cache(allow_output_mutation=True, suppress_st_warning=False, show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def get_metric(metric: str, config_name: Optional[str] = None):
     return evaluate.load(METRICS[metric], config_name=config_name)
 
 
-@st.cache(allow_output_mutation=True, suppress_st_warning=False, show_spinner=False)
+@st.cache_data(show_spinner=False)
 def calculate_bleurt(predictions, references):
     metric = get_metric("bleurt", "BLEURT-20")
     return metric.compute(predictions=predictions, references=references)
 
 
-@st.cache(allow_output_mutation=True, suppress_st_warning=False, show_spinner=False)
+@st.cache_data(show_spinner=False)
 def calculate_bertscore(predictions, references, lang: str):
     metric = get_metric("bertscore")
     return metric.compute(predictions=predictions, references=references, device="cpu", lang=lang)
 
 
-@st.cache(allow_output_mutation=True, suppress_st_warning=False, show_spinner=False)
+@st.cache_data(show_spinner=False)
 def calculate_comet(sources, predictions, references):
     metric = get_metric("comet")
     # It is not clear to me whether `gpus=0` actually disables the GPU. Is it passed to the metric config?

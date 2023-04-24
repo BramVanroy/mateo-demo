@@ -1,5 +1,5 @@
 import streamlit as st
-from css import add_custom_base_style
+from mateo_st.css import add_custom_base_style
 
 
 def main():

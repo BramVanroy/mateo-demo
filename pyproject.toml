@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mateo_st"
+# Do not forget to change in __init__.py too!
+version = "0.0.1"
+authors = [
+    {name = "Bram Vanroy", email = "bramvanroy@hotmail.com"},
+]
+maintainers = [
+    {name = "Bram Vanroy", email = "bramvanroy@hotmail.com"},
+]
+description = "An interface for machine translation evaluation"
+readme = "README.md"
+keywords = ["machine translation", "machine translation evaluation", "bleu", "comet"]
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)"
+]
+
+requires-python = ">=3.9"
+dependencies = [
+    "accelerate==0.16.0",
+    "beautifulsoup4==4.11.2",
+    "bert-score==0.3.12",
+    "evaluate==0.4.0",
+    "optimum==1.7.1",
+    "pandas==1.5.3",
+    "plotly==5.13.0",
+    "sacrebleu==2.3.1",
+    "scikit-learn==1.2.1",
+    "sentencepiece==0.1.97",
+    "streamlit==1.19.0",
+    "tensorflow==2.11.0",
+    "torch==2.0.0",
+    "transformers==4.26.0",
+    "unbabel-comet==1.1.3",
+    "XlsxWriter==3.0.8",
+    "BLEURT @ git+https://github.com/google-research/bleurt.git"
+]
+
+[project.urls]
+homepage = "https://github.com/BramVanroy/mateo-demo"
+documentation = "https://github.com/BramVanroy/mateo-demo"
+repository = "https://github.com/BramVanroy/mateo-demo.git"
+changelog = "https://github.com/BramVanroy/mateo-demo/blob/master/CHANGELOG.md"
+
+[project.optional-dependencies]
+# https://stackoverflow.com/a/72524073/1150683
+dev = ["flake8", "black", "isort"]
+
+# TOOLS
+[tool.black]
+line-length = 119
+target-version = ["py39", "py310", "py311"]
+
+[tool.isort]
+ensure_newline_before_comments = true
+line_length = 119
+default_section = "FIRSTPARTY"
+known_first_party = "mateo_st"
+lines_after_imports = 2
+
+# flake8 is in setup.cfg as it does not support toml:
+# https://github.com/PyCQA/flake8/issues/234
