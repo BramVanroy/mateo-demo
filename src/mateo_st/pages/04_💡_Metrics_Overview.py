@@ -1,10 +1,10 @@
 import streamlit as st
 from mateo_st.css import add_custom_base_style, add_custom_metrics_style
-from mateo_st.functions.metrics_constants import METRICS_META, SUPPORTED_LANGS
+from mateo_st.metrics_constants import METRICS_META, SUPPORTED_LANGS
 
 
 def main():
-    st.set_page_config(page_title="Metrics overview | MATEO", page_icon="💯")
+    st.set_page_config(page_title="Metrics Overview | MATEO", page_icon="💡")
     add_custom_metrics_style()
     add_custom_base_style()
 

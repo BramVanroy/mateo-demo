@@ -1,20 +1,8 @@
-METRICS = {
-    "bleu": "sacrebleu",
-    "chr_f": "chrf",
-    "ter": "ter",
-    "bertscore": "bertscore",
-    "bleurt": "bleurt",
-    "comet": "comet",
-}
-
-METRIC_BEST_ARROW = {
-    "bleu": "↑",
-    "chr_f": "↑",
-    "ter": "↓",
-    "bertscore": "↑",
-    "bleurt": "↑",
-    "comet": "↑",
-}
+import bert_score
+import comet
+import sacrebleu
+from sacrebleu import BLEU
+from sacrebleu.metrics.bleu import _TOKENIZERS as SBTOKENIZERS
 
 METRICS_META = {
     "bleu": {
@@ -28,6 +16,36 @@ METRICS_META = {
         " title='Callison-Burch, Osborne, Koehn criticism on BLEU'>[1]</a>).</p>",
         "paper_url": "https://aclanthology.org/P02-1040/",
         "implementation": "<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
+        "default": True,
+        "higher_better": True,
+        "evaluate_name": "sacrebleu",
+        "version": sacrebleu.__version__,
+        "options": {
+            "smooth_method": {
+                "description": "Smoothing method to use",
+                "default": "exp",
+                "choices": ("floor", "add-k", "exp", "none")
+            },
+            "smooth_value": {
+                "description": "Smoothing value for `floor` and `add-k` methods. An empty value falls back to the default value",
+                "default": "",
+                "type": int,
+                # Because we need to allow empty values in the interface. Therefore, we need to explicitly cast to int
+                # when using the resulting session_state variable!
+                "force_str": True
+            },
+            "lowercase": {
+                "description": "Whether to lowercase the data",
+                "default": False,
+                "type": bool
+            },
+            "tokenize": {
+                "description": "Tokenizer to use",
+                "default": BLEU.TOKENIZER_DEFAULT,
+                "choices": tuple(SBTOKENIZERS.keys())
+            }
+        },
+        "requires_source": False,
     },
     "chr_f": {
         "name": "ChrF",
@@ -38,6 +56,12 @@ METRICS_META = {
         " baselines like BLEU or TER. By default, up to character 6-grams are considered.</p>",
         "paper_url": "https://aclanthology.org/W15-3049",
         "implementation": "<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
+        "default": True,
+        "higher_better": True,
+        "evaluate_name": "chrf",
+        "version": sacrebleu.__version__,
+        "options": {},
+        "requires_source": False,
     },
     "ter": {
         "name": "TER",
@@ -49,6 +73,12 @@ METRICS_META = {
         " ('phrase') shifts.</p>",
         "paper_url": "https://aclanthology.org/2006.amta-papers.25/",
         "implementation": "<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
+        "default": True,
+        "higher_better": False,
+        "evaluate_name": "ter",
+        "version": sacrebleu.__version__,
+        "options": {},
+        "requires_source": False,
     },
     "bertscore": {
         "name": "BERTScore",
@@ -64,6 +94,12 @@ METRICS_META = {
         ">BERTScore</a>. <a href='https://github.com/Tiiiger/bert_score#default-behavior'"
         " title='Default BERTScore behavior'>The underlying model</a> depends on the target language"
         " of your example.</p>",
+        "default": False,
+        "higher_better": True,
+        "evaluate_name": "bertscore",
+        "version": bert_score.__version__,
+        "options": {},
+        "requires_source": False,
     },
     "bleurt": {
         "name": "BLEURT",
@@ -79,6 +115,12 @@ METRICS_META = {
         "paper_url": "https://aclanthology.org/2020.acl-main.704/",
         "implementation": "<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a>."
         " We use the <code>BLEURT-20</code> checkpoint in this demo.</p>",
+        "default": False,
+        "higher_better": True,
+        "evaluate_name": "bleurt",
+        "version": None,
+        "options": {},
+        "requires_source": False,
     },
     "comet": {
         "name": "COMET",
@@ -92,16 +134,17 @@ METRICS_META = {
         "paper_url": "https://aclanthology.org/2020.emnlp-main.213/",
         "implementation": "<p><a href='https://github.com/Unbabel/COMET' title='COMET GitHub'>COMET</a>."
         " We use the default <code>wmt20-comet-da</code> checkpoint in this demo.</p>",
+        "default": True,
+        "higher_better": True,
+        "evaluate_name": "comet",
+        "version": comet.__version__,
+        "options": {},
+        "requires_source": True,
     },
 }
 
-DEFAULT_METRICS = ("bleu", "chr_f", "ter", "comet")
-
-BASELINE_METRICS = {
-    "bleu",
-    "chr_f",
-    "ter",
-}
+DEFAULT_METRICS = {k for k, d in METRICS_META.items() if d["default"]}
+BASELINE_METRICS = {k for k, d in METRICS_META.items() if d["class"] == "baseline"}
 
 SUPPORTED_LANGS = {
     "bertscore": {

@@ -24,7 +24,7 @@ COLORS_PLOTLY = {
 
 
 @st.cache_data
-def get_cli_args():
+def cli_args():
     import argparse
 
     cparser = argparse.ArgumentParser()
@@ -61,29 +61,26 @@ def get_cli_args():
     return cparser.parse_args()
 
 
-CLI_ARGS = get_cli_args()
-
-
 def set_general_session_keys():
     # CUDA
     if "no_cuda" not in st.session_state:
-        st.session_state["no_cuda"] = CLI_ARGS.no_cuda
+        st.session_state["no_cuda"] = cli_args().no_cuda
 
     if "transl_no_cuda" not in st.session_state:
-        st.session_state["transl_no_cuda"] = CLI_ARGS.transl_no_cuda
+        st.session_state["transl_no_cuda"] = cli_args().transl_no_cuda
 
     # TRANSLATION
     if "transl_batch_size" not in st.session_state:
-        st.session_state["transl_batch_size"] = CLI_ARGS.transl_batch_size
+        st.session_state["transl_batch_size"] = cli_args().transl_batch_size
 
     if "transl_model_size" not in st.session_state:
-        st.session_state["transl_model_size"] = CLI_ARGS.transl_model_size
+        st.session_state["transl_model_size"] = cli_args().transl_model_size
 
     if "transl_num_beams" not in st.session_state:
-        st.session_state["transl_num_beams"] = CLI_ARGS.transl_num_beams
+        st.session_state["transl_num_beams"] = cli_args().transl_num_beams
 
     if "transl_max_length" not in st.session_state:
-        st.session_state["transl_max_length"] = CLI_ARGS.transl_max_length
+        st.session_state["transl_max_length"] = cli_args().transl_max_length
 
     # LANGUAGES
     if "src_lang" not in st.session_state:

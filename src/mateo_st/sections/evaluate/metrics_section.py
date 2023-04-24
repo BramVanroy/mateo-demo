@@ -1,6 +1,6 @@
 import streamlit as st
-from mateo_st.functions.metrics_constants import DEFAULT_METRICS, METRICS, SUPPORTED_LANGS_REV
-from mateo_st.functions.metrics_functions import evaluate_input
+from mateo_st.metrics_constants import DEFAULT_METRICS, METRICS, SUPPORTED_LANGS_REV
+from mateo_st.metrics_functions import evaluate_input
 from mateo_st.functions.utils import add_custom_pbar_style
 
 

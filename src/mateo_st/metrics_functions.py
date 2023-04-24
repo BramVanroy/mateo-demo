@@ -51,17 +51,14 @@ def calculate_bertscore(predictions, references, lang: str):
 @st.cache_data(show_spinner=False)
 def calculate_comet(sources, predictions, references):
     metric = get_metric("comet")
-    # It is not clear to me whether `gpus=0` actually disables the GPU. Is it passed to the metric config?
+    # gpus = 0 should disable gpus
     return metric.compute(sources=sources, predictions=predictions, references=references, gpus=0)
 
 
-def post_process_scores(scores, all_results, metric_name: str, multiplier: bool = True, clamp: bool = True):
+def post_process_scores(scores, all_results, metric_name: str, multiplier: bool = True):
     multiplier = 100 if multiplier else 1
     for score_idx, score in enumerate(scores):
-        if clamp:
-            all_results[score_idx][f"{metric_name}_score"] = min([100, max([0, score * multiplier])])
-        else:
-            all_results[score_idx][f"{metric_name}_score"] = score * multiplier
+        all_results[score_idx][f"{metric_name}_score"] = score * multiplier
 
     return all_results
 

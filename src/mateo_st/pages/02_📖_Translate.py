@@ -7,10 +7,11 @@ import pandas as pd
 import streamlit as st
 from mateo_st.css import add_custom_base_style, add_custom_translation_style
 from mateo_st.translator import (TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator)
-from mateo_st.utils import create_download_link, set_general_session_keys, update_translator_lang, CLI_ARGS
+from mateo_st.utils import create_download_link, set_general_session_keys, update_translator_lang, cli_args
 
 
 def _init():
+    st.set_page_config(page_title="Automatically Translate | MATEO", page_icon="📖")
     add_custom_base_style()
     add_custom_translation_style()
 
@@ -30,8 +31,8 @@ def _init():
         " ([paper](https://arxiv.org/abs/2207.04672)). It enables machine translation to and from 200 languages."
         " In this interface, we specifically use"
         f" [{st.session_state['transl_model_size']}](https://huggingface.co/{TRANS_SIZE2MODEL[st.session_state['transl_model_size']]})"
-        f" (max. length: {CLI_ARGS.transl_max_length:,}; num. beams: {CLI_ARGS.transl_num_beams};"
-        f" batch size: {CLI_ARGS.transl_batch_size})."
+        f" (max. length: {cli_args().transl_max_length:,}; num. beams: {cli_args().transl_num_beams};"
+        f" batch size: {cli_args().transl_batch_size})."
     )
 
 
