@@ -8,7 +8,7 @@ from mateo_st.utils import set_general_session_keys
 
 
 def _init():
-    st.set_page_config(page_title="Evaluate Machine Translations | MATEO", page_icon="📏", layout="wide")
+    st.set_page_config(page_title="Evaluate Machine Translations | MATEO", page_icon="📏")
     add_custom_base_style()
 
     set_general_session_keys()
@@ -28,69 +28,40 @@ def _init():
 
 def _metric_selection():
     st.markdown("## ✨ Metric selection")
-    col1, col2 = st.columns(2, gap="medium")
 
     # Iterate over all the metrics in METRIC_META and add it and all possible options
     for metric_idx, (ugly_metric_name, meta) in enumerate(METRICS_META.items()):
-        # Artificially separate metrics over two columns
-        col = col1 if metric_idx % 2 == 0 else col2
-
-        metric_container = col.container()
+        metric_container = st.container()
         pretty_metric_name = meta["name"]
-        metric_container.checkbox(f"Use {pretty_metric_name}", key=ugly_metric_name)
+        metric_container.checkbox(f"Use {pretty_metric_name}", key=ugly_metric_name, value=meta["default"])
 
         if "options" in meta and meta["options"]:
             expander = metric_container.expander(f"{meta['name']} options")
             for opt_idx, (opt_name, opt) in enumerate(meta["options"].items()):
                 has_choices = "choices" in opt
 
-                opt_name_col, opt_desc_col, opt_input_col = expander.columns((2, 4, 4))
-                opt_name_col.write(opt_name)
-                opt_desc_col.write(opt["description"])
-
                 opt_label = f"{ugly_metric_name}--{opt_name}"
+                kwargs = {
+                    "label": opt_name,
+                    "help": opt["description"],
+                    "key": opt_label,
+                }
                 if has_choices:
-                    opt_input_col.selectbox(
-                        opt_label,
+                    expander.selectbox(
                         options=opt["choices"],
                         index=opt["choices"].index(opt["default"]),
-                        label_visibility="collapsed",
-                        help=opt["description"],
-                        key=opt_label,
+                        **kwargs
                     )
                 else:
                     dtype = opt["type"]
                     force_str = "force_str" in opt and opt["force_str"]
+                    kwargs["value"] = opt["default"]
                     if dtype is str or ((dtype is int or dtype is float) and force_str):
-                        opt_input_col.text_input(
-                            opt_label,
-                            label_visibility="collapsed",
-                            value=opt["default"],
-                            help=opt["description"],
-                            key=opt_label,
-                        )
+                        expander.text_input(**kwargs)
                     elif dtype is int or dtype is float:
-                        opt_input_col.number_input(
-                            opt_label,
-                            label_visibility="collapsed",
-                            value=opt["default"],
-                            help=opt["description"],
-                            key=opt_label,
-                        )
+                        expander.number_input(**kwargs)
                     elif dtype is bool:
-                        opt_input_col.checkbox(
-                            opt_label,
-                            label_visibility="collapsed",
-                            value=opt["default"],
-                            help=opt["description"],
-                            key=opt_label,
-                        )
-
-                if opt_idx < len(meta["options"]) - 1:
-                    expander.divider()
-
-        if metric_idx < len(METRICS_META) - 1:
-            col.divider()
+                        expander.checkbox(**kwargs)
 
 
 def _data_input():
