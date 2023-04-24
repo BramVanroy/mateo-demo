@@ -110,11 +110,6 @@ def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
     elif quantize:  # Quantization not supported on CUDA
         model = quantize_dynamic(model, {nn.Linear, nn.Dropout, nn.LayerNorm}, dtype=qint8)
 
-    try:
-        model = torch.compile(model)
-    except Exception:  # torch.compile is not yet supported in all cases (e.g. Windows) so just ignore
-        pass
-
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     return model, tokenizer, no_cuda
