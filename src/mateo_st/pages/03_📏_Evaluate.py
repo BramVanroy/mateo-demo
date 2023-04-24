@@ -54,7 +54,7 @@ def _metric_selection():
                         opt_label,
                         options=opt["choices"],
                         index=opt["choices"].index(opt["default"]),
-                        label_visibility="hidden",
+                        label_visibility="collapsed",
                         help=opt["description"],
                         key=opt_label,
                     )
@@ -64,7 +64,7 @@ def _metric_selection():
                     if dtype is str or ((dtype is int or dtype is float) and force_str):
                         opt_input_col.text_input(
                             opt_label,
-                            label_visibility="hidden",
+                            label_visibility="collapsed",
                             value=opt["default"],
                             help=opt["description"],
                             key=opt_label,
@@ -72,7 +72,7 @@ def _metric_selection():
                     elif dtype is int or dtype is float:
                         opt_input_col.number_input(
                             opt_label,
-                            label_visibility="hidden",
+                            label_visibility="collapsed",
                             value=opt["default"],
                             help=opt["description"],
                             key=opt_label,
@@ -80,7 +80,7 @@ def _metric_selection():
                     elif dtype is bool:
                         opt_input_col.checkbox(
                             opt_label,
-                            label_visibility="hidden",
+                            label_visibility="collapsed",
                             value=opt["default"],
                             help=opt["description"],
                             key=opt_label,
@@ -135,7 +135,7 @@ def _validate_state() -> Tuple[bool, str]:
         for name, meta in METRICS_META.items()
     )
     can_continue = True
-    msg = "Cannot continue:\n"
+    msg = "Make sure that the following requirements are met:\n"
 
     # At least one metric must be selected
     if not any(
