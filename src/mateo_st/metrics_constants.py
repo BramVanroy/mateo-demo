@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from typing import Any, Literal, Optional, Tuple, Type
+
 import bert_score
 import comet
 import sacrebleu
@@ -5,143 +8,165 @@ from sacrebleu import BLEU
 from sacrebleu.metrics.bleu import _TOKENIZERS as SBTOKENIZERS
 
 
+@dataclass
+class MetricOption:
+    name: str
+    description: str
+    default: Any
+    choices: Optional[Tuple] = None
+    types: Optional[Tuple[Type, ...]] = None
+    allow_empty_str: bool = False
+
+    def __post_init__(self):
+        if not self.choices and not self.types:
+            raise ValueError(f"{self.name} needs at least one of 'choices' or 'types'")
+
+        if self.allow_empty_str and any(t is not int and t is not float for t in self.types):
+            raise ValueError(f"{self.name}: 'force_str' only makes sense if the input types are int or float")
+
+
+@dataclass
+class MetricMeta:
+    name: str
+    metric_class: Literal["baseline", "neural"]
+    full_name: str
+    description_html: str
+    paper_url: str
+    implementation_html: str
+    evaluate_name: str
+    is_default_selected: bool = False
+    higher_better: bool = True
+    version: Optional[str] = None
+    options: Optional[Tuple[MetricOption, ...]] = None
+    requires_source: bool = False
+
+
 METRICS_META = {
-    "bleu": {
-        "name": "BLEU",
-        "class": "baseline",
-        "full_name": "BiLingual Evaluation Understudy",
-        "description": "<p>BLEU is perhaps the most well-known MT evaluation metric. It relies on how well a machine"
-        " translation's n-grams correspond to those of a reference translation. Despite its popularity,"
-        " it has also been criticized for its shortcomings such as a lack of sufficiently incorporating"
-        " recall (e.g., <a href='https://aclanthology.org/E06-1032'"
-        " title='Callison-Burch, Osborne, Koehn criticism on BLEU'>[1]</a>).</p>",
-        "paper_url": "https://aclanthology.org/P02-1040/",
-        "implementation": "<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
-        "default": True,
-        "higher_better": True,
-        "evaluate_name": "sacrebleu",
-        "version": sacrebleu.__version__,
-        "options": {
-            "smooth_method": {
-                "description": "Smoothing method to use",
-                "default": "exp",
-                "choices": ("floor", "add-k", "exp", "none"),
-            },
-            "smooth_value": {
-                "description": "Smoothing value for `floor` and `add-k` methods. An empty value falls back to the default value",
-                "default": "",
-                "types": [float],
-                # Because we need to allow empty values in the interface. Therefore, we need to explicitly cast to float
-                # when using the resulting session_state variable!
-                "force_str": True,
-            },
-            "lowercase": {"description": "Whether to lowercase the data", "default": False, "types": [bool]},
-            "tokenize": {
-                "description": "Tokenizer to use",
-                "default": BLEU.TOKENIZER_DEFAULT,
-                "choices": tuple(SBTOKENIZERS.keys()),
-            },
-        },
-        "requires_source": False,
-    },
-    "chr_f": {
-        "name": "ChrF",
-        "class": "baseline",
-        "full_name": "Character F-score",
-        "description": "<p>ChrF uses the F-score statistic for character n-gram matches. It therefore focuses on"
-        " characters rather than words. It has shown to be a strong baseline, often outperforming other"
-        " baselines like BLEU or TER. By default, up to character 6-grams are considered.</p>",
-        "paper_url": "https://aclanthology.org/W15-3049",
-        "implementation": "<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
-        "default": True,
-        "higher_better": True,
-        "evaluate_name": "chrf",
-        "version": sacrebleu.__version__,
-        "options": {},
-        "requires_source": False,
-    },
-    "ter": {
-        "name": "TER",
-        "class": "baseline",
-        "full_name": "Translation Edit Rate",
-        "description": "TER is an intuitive baseline metric that formulates MT quality as the number of edits required"
-        " to change an MT translation so that it exactly matches a reference translation. The possible"
-        " edit operations are insertions, deletions, substitutions of words as well as word sequence"
-        " ('phrase') shifts.</p>",
-        "paper_url": "https://aclanthology.org/2006.amta-papers.25/",
-        "implementation": "<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
-        "default": True,
-        "higher_better": False,
-        "evaluate_name": "ter",
-        "version": sacrebleu.__version__,
-        "options": {},
-        "requires_source": False,
-    },
-    "bertscore": {
-        "name": "BERTScore",
-        "class": "neural",
-        "full_name": "",
-        "description": "BERTScore is an automatic evaluation metric for text generation that computes similarity scores"
+    "bertscore": MetricMeta(
+        name="BERTScore",
+        metric_class="neural",
+        full_name="",
+        description_html="BERTScore is an automatic evaluation metric for text generation that computes similarity scores"
         " for each token in the machine translation with each token in the reference translation. These"
         " similarity scores are based on contextual embeddings retrieved from a"
         " <a href='https://aclanthology.org/N19-1423/' title='BERT paper'>BERT</a>"
         " language model.</p>",
-        "paper_url": "https://openreview.net/forum?id=SkeHuCVFDr",
-        "implementation": "<p><a href='https://github.com/Tiiiger/bert_score' title='BertScore GitHub'"
+        paper_url="https://openreview.net/forum?id=SkeHuCVFDr",
+        implementation_html="<p><a href='https://github.com/Tiiiger/bert_score' title='BertScore GitHub'"
         ">BERTScore</a>. <a href='https://github.com/Tiiiger/bert_score#default-behavior'"
         " title='Default BERTScore behavior'>The underlying model</a> depends on the target language"
         " of your example.</p>",
-        "default": False,
-        "higher_better": True,
-        "evaluate_name": "bertscore",
-        "version": bert_score.__version__,
-        "options": {},
-        "requires_source": False,
-    },
-    "bleurt": {
-        "name": "BLEURT",
-        "class": "neural",
-        "full_name": "Bilingual Evaluation Understudy with Representations from Transformers",
-        "description": "BLEURT utilizes large language models <a href='https://aclanthology.org/N19-1423/'"
+        evaluate_name="bertscore",
+        version=bert_score.__version__,
+        options=(),
+    ),
+    "bleu": MetricMeta(
+        name="BLEU",
+        metric_class="baseline",
+        full_name="BiLingual Evaluation Understudy",
+        description_html="<p>BLEU is perhaps the most well-known MT evaluation metric. It relies on how well a machine"
+        " translation's n-grams correspond to those of a reference translation. Despite its popularity,"
+        " it has also been criticized for its shortcomings such as a lack of sufficiently incorporating"
+        " recall (e.g., <a href='https://aclanthology.org/E06-1032'"
+        " title='Callison-Burch, Osborne, Koehn criticism on BLEU'>[1]</a>).</p>",
+        paper_url="https://aclanthology.org/P02-1040/",
+        implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
+        is_default_selected=True,
+        evaluate_name="sacrebleu",
+        version=sacrebleu.__version__,
+        options=(
+            MetricOption(
+                name="smooth_method",
+                description="Smoothing method to use",
+                default="exp",
+                choices=("floor", "add-k", "exp", "none"),
+            ),
+            MetricOption(
+                name="smooth_value",
+                description="Smoothing value for `floor` and `add-k` methods. An empty value falls back to the default value",
+                default="",
+                types=(float,),
+                allow_empty_str=True,
+            ),
+            MetricOption(name="lowercase", description="Whether to lowercase the data", default=False, types=(bool,)),
+            MetricOption(
+                name="tokenize",
+                description="Tokenizer to use",
+                default=BLEU.TOKENIZER_DEFAULT,
+                choices=tuple(SBTOKENIZERS.keys()),
+            ),
+        ),
+    ),
+    "bleurt": MetricMeta(
+        name="BLEURT",
+        metric_class="neural",
+        full_name="Bilingual Evaluation Understudy with Representations from Transformers",
+        description_html="BLEURT utilizes large language models <a href='https://aclanthology.org/N19-1423/'"
         " title='BERT paper'>BERT</a> and"
         " <a href='https://openreview.net/forum?id=xpFFI_NtgpW' title='RemBERT paper'"
         ">RemBERT</a> to compare a machine translation to a reference translation."
         " In their work, they highlight that most of their improvements are thanks to using synthetic"
         " data and pretraining on many different tasks such as back translation, entailment, and"
         " predicting existing MT metrics such as BLEU and BERTScore.</p>",
-        "paper_url": "https://aclanthology.org/2020.acl-main.704/",
-        "implementation": "<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a>."
+        paper_url="https://aclanthology.org/2020.acl-main.704/",
+        implementation_html="<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a>."
         " We use the <code>BLEURT-20</code> checkpoint in this demo.</p>",
-        "default": False,
-        "higher_better": True,
-        "evaluate_name": "bleurt",
-        "version": None,
-        "options": {},
-        "requires_source": False,
-    },
-    "comet": {
-        "name": "COMET",
-        "class": "neural",
-        "full_name": "Crosslingual Optimized Metric for Evaluation of Translation",
-        "description": "COMET is similar to other neural approaches in that it also finetunes existing language models, "
+        evaluate_name="bleurt",
+        options=(),
+    ),
+    "chrf": MetricMeta(
+        name="ChrF",
+        metric_class="baseline",
+        full_name="Character F-score",
+        description_html="<p>ChrF uses the F-score statistic for character n-gram matches. It therefore focuses on"
+        " characters rather than words. It has shown to be a strong baseline, often outperforming other"
+        " baselines like BLEU or TER. By default, up to character 6-grams are considered.</p>",
+        paper_url="https://aclanthology.org/W15-3049",
+        implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
+        is_default_selected=True,
+        evaluate_name="chrf",
+        version=sacrebleu.__version__,
+        options=(),
+    ),
+    "comet": MetricMeta(
+        name="COMET",
+        metric_class="neural",
+        full_name="Crosslingual Optimized Metric for Evaluation of Translation",
+        description_html="COMET is similar to other neural approaches in that it also finetunes existing language models, "
         " in their case"
         " <a href='https://aclanthology.org/2020.acl-main.747/' title='XLM-R paper'>XLM-R</a>. What"
         " makes COMET different, however, is that it can also consider the source text as part of the"
         " input rather than only comparing a machine translation to a reference translation.</p>",
-        "paper_url": "https://aclanthology.org/2020.emnlp-main.213/",
-        "implementation": "<p><a href='https://github.com/Unbabel/COMET' title='COMET GitHub'>COMET</a>."
+        paper_url="https://aclanthology.org/2020.emnlp-main.213/",
+        implementation_html="<p><a href='https://github.com/Unbabel/COMET' title='COMET GitHub'>COMET</a>."
         " We use the default <code>wmt20-comet-da</code> checkpoint in this demo.</p>",
-        "default": True,
-        "higher_better": True,
-        "evaluate_name": "comet",
-        "version": comet.__version__,
-        "options": {},
-        "requires_source": True,
-    },
+        is_default_selected=True,
+        evaluate_name="comet",
+        version=comet.__version__,
+        options=(),
+        requires_source=True,
+    ),
+    "ter": MetricMeta(
+        name="TER",
+        metric_class="baseline",
+        full_name="Translation Edit Rate",
+        description_html="TER is an intuitive baseline metric that formulates MT quality as the number of edits required"
+        " to change an MT translation so that it exactly matches a reference translation. The possible"
+        " edit operations are insertions, deletions, substitutions of words as well as word sequence"
+        " ('phrase') shifts.</p>",
+        paper_url="https://aclanthology.org/2006.amta-papers.25/",
+        implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
+        is_default_selected=True,
+        higher_better=False,
+        evaluate_name="ter",
+        version=sacrebleu.__version__,
+        options=(),
+    ),
 }
 
-DEFAULT_METRICS = {k for k, d in METRICS_META.items() if d["default"]}
-BASELINE_METRICS = {k for k, d in METRICS_META.items() if d["class"] == "baseline"}
+DEFAULT_METRICS = {name for name, meta in METRICS_META.items() if meta.is_default_selected}
+BASELINE_METRICS = {name for name, meta in METRICS_META.items() if meta.metric_class == "baseline"}
+
 
 SUPPORTED_LANGS = {
     "bertscore": {

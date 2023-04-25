@@ -3,7 +3,7 @@ from typing import Tuple
 
 import streamlit as st
 from mateo_st.metrics_constants import METRICS_META
-from mateo_st.utils import set_general_session_keys, load_css, isfloat, isint
+from mateo_st.utils import isfloat, isint, load_css, set_general_session_keys
 
 
 def _init():
@@ -31,32 +31,28 @@ def _metric_selection():
     # Iterate over all the metrics in METRIC_META and add it and all possible options
     for metric_idx, (ugly_metric_name, meta) in enumerate(METRICS_META.items()):
         metric_container = st.container()
-        pretty_metric_name = meta["name"]
-        metric_container.checkbox(f"Use {pretty_metric_name}", key=ugly_metric_name, value=meta["default"])
+        pretty_metric_name = meta.name
+        metric_container.checkbox(f"Use {pretty_metric_name}", key=ugly_metric_name, value=meta.is_default_selected)
 
-        if "options" in meta and meta["options"]:
-            expander = metric_container.expander(f"{meta['name']} options")
-            for opt_idx, (opt_name, opt) in enumerate(meta["options"].items()):
-                has_choices = "choices" in opt
+        if meta.options:
+            expander = metric_container.expander(f"{meta.name} options")
+            for opt_idx, opt in enumerate(meta.options):
+                opt_name = opt.name
+                has_choices = opt.choices
 
                 opt_label = f"{ugly_metric_name}--{opt_name}"
                 kwargs = {
                     "label": opt_name,
-                    "help": opt["description"],
+                    "help": opt.description,
                     "key": opt_label,
                 }
                 if has_choices:
-                    expander.selectbox(
-                        options=opt["choices"],
-                        index=opt["choices"].index(opt["default"]),
-                        **kwargs
-                    )
+                    expander.selectbox(options=opt.choices, index=opt.choices.index(opt.default), **kwargs)
                 else:
                     # Type field is determined by the FIRST item in the list types
-                    dtype = opt["types"][0]
-                    force_str = "force_str" in opt and opt["force_str"]
-                    kwargs["value"] = opt["default"]
-                    if dtype is str or ((dtype is int or dtype is float) and force_str):
+                    dtype = opt.types[0]
+                    kwargs["value"] = opt.default
+                    if dtype is str or ((dtype is int or dtype is float) and opt.allow_empty_str):
                         expander.text_input(**kwargs)
                     elif dtype is int or dtype is float:
                         expander.number_input(**kwargs, step=0.01 if dtype is float else 1)
@@ -83,7 +79,7 @@ def _data_input():
 
     # Check whether any of the selected metrics require source input
     if any(
-        meta["requires_source"] and name in st.session_state and st.session_state[name]
+        meta.requires_source and name in st.session_state and st.session_state[name]
         for name, meta in METRICS_META.items()
     ):
         src_file = st.file_uploader("Source file (only needed for some metrics, like COMET)")
@@ -102,17 +98,14 @@ def _data_input():
 
 def _validate_state() -> Tuple[bool, str]:
     source_required = any(
-        meta["requires_source"] and name in st.session_state and st.session_state[name]
+        meta.requires_source and name in st.session_state and st.session_state[name]
         for name, meta in METRICS_META.items()
     )
     can_continue = True
     msg = "Make sure that the following requirements are met:\n"
 
     # At least one metric must be selected
-    if not any(
-            name in st.session_state and st.session_state[name]
-            for name, meta in METRICS_META.items()
-    ):
+    if not any(name in st.session_state and st.session_state[name] for name, meta in METRICS_META.items()):
         msg += "- At least one metric must be selected\n"
         can_continue = False
 
@@ -142,18 +135,30 @@ def _validate_state() -> Tuple[bool, str]:
                 msg += f"- Reference file #{sys_idx} must contain the same number of lines as the reference file\n"
                 can_continue = False
 
-    # At least one metric must be selected
+    # Type-checking for options that have allow_empty_str
     for name, meta in METRICS_META.items():
         if name in st.session_state and st.session_state[name]:
-            if "options" in meta:
-                for opt_name, opt_d in meta["options"].items():
-                    if "force_str" in opt_d and opt_d["force_str"]:
-                        session_opt = st.session_state[f"{name}--{opt_name}"]
-                        do_test = isfloat if opt_d["types"] is float else isint
-                        if not (session_opt == "" or do_test(session_opt)):
-                            dtype = "float" if opt_d["types"] is float else "int"
-                            msg += f"- Option {opt_name} in {meta['name']} must be an empty string or {dtype}\n"
-                            can_continue = False
+            for opt in meta.options:
+                opt_name = opt.name
+                if opt.allow_empty_str:
+                    session_opt = st.session_state[f"{name}--{opt_name}"]
+                    # Collect tests for the specified dtypes
+                    do_tests = []
+                    for dtype in opt.types:
+                        if dtype is float:
+                            do_tests.append(isfloat)
+                        elif dtype is int:
+                            do_tests.append(isint)
+
+                    # Check that the user input is indeed either an empty string or (one of) the expected dtypes
+                    # Also check for special stringy float-types like "nan", "-inf", etc.
+                    if (
+                        session_opt != ""
+                        or not any(do_test(session_opt) for do_test in do_tests)
+                        or session_opt.lower().replace("-", "").replace("+", "") in ("inf", "infinity", "nan")
+                    ):
+                        msg += f"- Option `{opt_name}` in {meta.name} must be one of: empty string, {', '.join([t.__name__ for t in opt.types])}\n"
+                        can_continue = False
 
     return can_continue, msg
 
