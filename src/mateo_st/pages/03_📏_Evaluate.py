@@ -48,17 +48,20 @@ def _metric_selection():
                     "key": opt_label,
                 }
 
-                # Is this option one with choices or with free input?
+                # If this option is one with choices or with free input
                 if has_choices:
                     expander.selectbox(options=opt.choices, index=opt.choices.index(opt.default), **kwargs)
                 else:
                     # Type field is determined by the FIRST item in the list types
                     dtype = opt.types[0]
                     kwargs["value"] = opt.default
-                    if dtype is str or ((dtype is int or dtype is float) and opt.allow_empty_str):
+                    if dtype is str:
                         expander.text_input(**kwargs)
-                    elif dtype is int or dtype is float:
-                        expander.number_input(**kwargs, step=0.01 if dtype is float else 1)
+                    elif dtype in (int, float):
+                        if opt.empty_str_is_none:
+                            expander.text_input(**kwargs)
+                        else:
+                            expander.number_input(**kwargs, step=0.01 if float in opt.types else 1)
                     elif dtype is bool:
                         expander.checkbox(**kwargs)
 
@@ -138,12 +141,12 @@ def _validate_state() -> Tuple[bool, str]:
                 msg += f"- Reference file #{sys_idx} must contain the same number of lines as the reference file\n"
                 can_continue = False
 
-    # Type-checking for options that have allow_empty_str
+    # Type-checking for options that have empty_str_is_none
     for name, meta in METRICS_META.items():
         if name in st.session_state and st.session_state[name]:
             for opt in meta.options:
                 opt_name = opt.name
-                if opt.allow_empty_str:
+                if opt.empty_str_is_none:
                     session_opt = st.session_state[f"{name}--{opt_name}"]
                     # Collect tests for the specified dtypes
                     do_tests = []
@@ -163,6 +166,7 @@ def _validate_state() -> Tuple[bool, str]:
                                 f" {', '.join([t.__name__ for t in opt.types])}\n")
                         can_continue = False
 
+    st.session_state
     return can_continue, msg
 
 
