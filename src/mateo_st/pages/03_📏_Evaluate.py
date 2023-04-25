@@ -15,11 +15,20 @@ def _init():
     if "ref_segments" not in st.session_state:
         st.session_state["ref_segments"] = []
 
+    if "ref_file" not in st.session_state:
+        st.session_state["ref_file"] = None
+
     if "src_segments" not in st.session_state:
         st.session_state["src_segments"] = []
 
+    if "src_file" not in st.session_state:
+        st.session_state["src_file"] = None
+
     if "sys_segments" not in st.session_state:
         st.session_state["sys_segments"] = dict()
+
+    if "sys_files" not in st.session_state:
+        st.session_state["sys_files"] = dict()
 
     st.title("📏 Evaluate")
     st.markdown("First specify the metrics and metric options to use, and then upload your data.")
@@ -82,6 +91,7 @@ def _data_input():
 
     ref_file = st.file_uploader("Reference file")
     st.session_state["ref_segments"] = read_file(ref_file)
+    st.session_state["ref_file"] = ref_file.name if ref_file else None
 
     # Check whether any of the selected metrics require source input
     if any(
@@ -90,16 +100,14 @@ def _data_input():
     ):
         src_file = st.file_uploader("Source file (only needed for some metrics, like COMET)")
         st.session_state["src_segments"] = read_file(src_file)
+        st.session_state["src_file"] = src_file.name if src_file else None
 
     num_sys = st.number_input("How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=3)
 
     for sys_idx in range(1, num_sys + 1):
         sys_file = st.file_uploader(f"System #{sys_idx} file")
-        if sys_file is not None:
-            stringio = StringIO(ref_file.getvalue().decode("utf-8"))
-            st.session_state["sys_segments"][sys_idx] = stringio.read().splitlines()
-        else:
-            st.session_state["sys_segments"][sys_idx] = []
+        st.session_state["sys_segments"][sys_idx] = read_file(sys_file)
+        st.session_state["sys_files"][sys_idx] = sys_file.name if sys_file else None
 
 
 def _validate_state() -> Tuple[bool, str]:
@@ -169,6 +177,11 @@ def _validate_state() -> Tuple[bool, str]:
     return can_continue, msg
 
 
+def _evaluate():
+    st.markdown("## 🎁 Evaluation results")
+    st.write("Below you can find the results for your dataset.")
+
+
 def main():
     _init()
     _metric_selection()
@@ -180,8 +193,8 @@ def main():
         msg_container.warning(msg)
     else:
         msg_container.empty()
-        if st.button("Calculate scores"):
-            st.write(st.session_state)
+        if st.button("Evaluate MT"):
+            _evaluate()
         else:
             st.write("Click the button above to start calculating the automatic evaluation scores for your data")
 
