@@ -69,7 +69,7 @@ METRICS_META = {
             ),
             MetricOption(
                 name="model_type",
-                description="Model type to use. For demo purposes, we have limited the options to a couple of"
+                description="Model type to use. For this public interface, we have limited the options to a couple of"
                             " high-performing base and large models",
                 default="",
                 # Not all models because we want to save compute
