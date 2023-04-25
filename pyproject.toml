@@ -36,6 +36,7 @@ dependencies = [
     "accelerate==0.16.0",
     "beautifulsoup4==4.11.2",
     "bert-score==0.3.13",  # Update manually in metric_constants if updated
+    "datasets==2.10.0",
     "evaluate==0.4.0",
     "optimum==1.7.1",
     "pandas==1.5.3",
