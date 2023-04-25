@@ -82,6 +82,12 @@ def cli_args():
         default=DEFAULT_MAX_LENGTH,
         help="maximal length to generate per sentence",
     )
+    cparser.add_argument(
+        "--eval_max_sys",
+        type=int,
+        default=4,
+        help="max. number of systems to compare",
+    )
 
     args = cparser.parse_args()
 
