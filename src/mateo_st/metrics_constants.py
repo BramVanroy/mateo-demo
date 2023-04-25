@@ -30,12 +30,12 @@ METRICS_META = {
             "smooth_value": {
                 "description": "Smoothing value for `floor` and `add-k` methods. An empty value falls back to the default value",
                 "default": "",
-                "type": int,
-                # Because we need to allow empty values in the interface. Therefore, we need to explicitly cast to int
+                "types": [float],
+                # Because we need to allow empty values in the interface. Therefore, we need to explicitly cast to float
                 # when using the resulting session_state variable!
                 "force_str": True,
             },
-            "lowercase": {"description": "Whether to lowercase the data", "default": False, "type": bool},
+            "lowercase": {"description": "Whether to lowercase the data", "default": False, "types": [bool]},
             "tokenize": {
                 "description": "Tokenizer to use",
                 "default": BLEU.TOKENIZER_DEFAULT,

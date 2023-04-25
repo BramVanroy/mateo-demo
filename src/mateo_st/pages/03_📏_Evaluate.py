@@ -3,7 +3,7 @@ from typing import Tuple
 
 import streamlit as st
 from mateo_st.metrics_constants import METRICS_META
-from mateo_st.utils import set_general_session_keys, load_css
+from mateo_st.utils import set_general_session_keys, load_css, isfloat, isint
 
 
 def _init():
@@ -52,13 +52,14 @@ def _metric_selection():
                         **kwargs
                     )
                 else:
-                    dtype = opt["type"]
+                    # Type field is determined by the FIRST item in the list types
+                    dtype = opt["types"][0]
                     force_str = "force_str" in opt and opt["force_str"]
                     kwargs["value"] = opt["default"]
                     if dtype is str or ((dtype is int or dtype is float) and force_str):
                         expander.text_input(**kwargs)
                     elif dtype is int or dtype is float:
-                        expander.number_input(**kwargs)
+                        expander.number_input(**kwargs, step=0.01 if dtype is float else 1)
                     elif dtype is bool:
                         expander.checkbox(**kwargs)
 
@@ -141,6 +142,19 @@ def _validate_state() -> Tuple[bool, str]:
                 msg += f"- Reference file #{sys_idx} must contain the same number of lines as the reference file\n"
                 can_continue = False
 
+    # At least one metric must be selected
+    for name, meta in METRICS_META.items():
+        if name in st.session_state and st.session_state[name]:
+            if "options" in meta:
+                for opt_name, opt_d in meta["options"].items():
+                    if "force_str" in opt_d and opt_d["force_str"]:
+                        session_opt = st.session_state[f"{name}--{opt_name}"]
+                        do_test = isfloat if opt_d["types"] is float else isint
+                        if not (session_opt == "" or do_test(session_opt)):
+                            dtype = "float" if opt_d["types"] is float else "int"
+                            msg += f"- Option {opt_name} in {meta['name']} must be an empty string or {dtype}\n"
+                            can_continue = False
+
     return can_continue, msg
 
 
@@ -150,9 +164,11 @@ def main():
     _data_input()
     can_continue, msg = _validate_state()
 
+    msg_container = st.empty()
     if not can_continue:
-        st.warning(msg)
+        msg_container.warning(msg)
     else:
+        msg_container.empty()
         if st.button("Calculate scores"):
             st.write(st.session_state)
         else:
