@@ -1,5 +1,6 @@
-from dataclasses import dataclass
-from typing import Any, Literal, Optional, Tuple, Type
+from dataclasses import dataclass, field
+from statistics import mean
+from typing import Any, Literal, Optional, Tuple, Type, Dict
 
 import comet
 import sacrebleu
@@ -12,8 +13,8 @@ class MetricOption:
     name: str
     description: str
     default: Any
-    choices: Optional[Tuple] = None
-    types: Optional[Tuple[Type, ...]] = None
+    choices: Optional[Tuple] = field(default_factory=tuple)
+    types: Optional[Tuple[Type, ...]] = field(default_factory=tuple)
     empty_str_is_none: bool = False
 
     def __post_init__(self):
@@ -36,8 +37,9 @@ class MetricMeta:
     is_default_selected: bool = False
     higher_better: bool = True
     version: Optional[str] = None
-    options: Optional[Tuple[MetricOption, ...]] = None
+    options: Optional[Tuple[MetricOption, ...]] = field(default_factory=tuple)
     requires_source: bool = False
+    corpus_score_key: str = "score"
 
 
 METRICS_META = {
@@ -55,6 +57,7 @@ METRICS_META = {
         ">BERTScore</a></p>",
         evaluate_name="bertscore",
         version="0.3.13",  # Hard-coded because importing bertscore at top-level leads to import cycle issues
+        corpus_score_key="mean_f1",  # Manually added in postprocessing
         options=(
             MetricOption(
                 name="lang",
@@ -86,6 +89,7 @@ METRICS_META = {
                          "microsoft/deberta-v3-base",
                          "microsoft/deberta-v3-large",
                          "microsoft/mdeberta-v3-base"),
+                empty_str_is_none=True,
             ),
             MetricOption(
                 name="num_layers",
@@ -151,9 +155,10 @@ METRICS_META = {
         implementation_html="<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a></p>",
         evaluate_name="bleurt",
         version="commit cebe7e6",
+        corpus_score_key="mean_score",
         options=(
             MetricOption(
-                name="checkpoint",
+                name="config_name",
                 description="BLEURT trained checkpoint to use",
                 default="BLEURT-20",
                 choices=("bleurt-tiny-128", "bleurt-tiny-512", "bleurt-base-128", "bleurt-base-512", "bleurt-large-128",
@@ -211,9 +216,10 @@ METRICS_META = {
         is_default_selected=True,
         evaluate_name="comet",
         version=comet.__version__,
+        corpus_score_key="mean_score",
         options=(
             MetricOption(
-                name="checkpoint",
+                name="config_name",
                 description="COMET trained checkpoint to use",
                 default="wmt20-comet-da",
                 choices=("wmt20-comet-da", "wmt20-comet-qe-da", "wmt20-comet-qe-da-v2", "wmt21-comet-da",
@@ -562,3 +568,12 @@ SUPPORTED_LANGS = {
 SUPPORTED_LANGS_REV = {
     metric_name: {v: k for k, v in lang2key.items()} for metric_name, lang2key in SUPPORTED_LANGS.items()
 }
+
+
+def postprocess_result(metric_name: str, result: Dict[str, Any]):
+    if metric_name == "bertscore":
+        result["mean_f1"] = mean(result["f1"])
+    elif metric_name == "bleurt":
+        result["mean_score"] = mean(result["scores"])
+
+    return result
