@@ -1,14 +1,18 @@
-from io import StringIO
-from typing import Tuple, Optional, Dict
-
 import logging
+import warnings
+from io import StringIO
+from typing import Dict, Optional, Tuple
 
 import evaluate
+import numpy as np
+import pandas as pd
+import plotly.express as px
 import streamlit as st
-
+from evaluate import EvaluationModule
 from mateo_st.metrics_constants import METRICS_META, postprocess_result
-from mateo_st.utils import isfloat, isint, load_css, set_general_session_keys
-import warnings
+from mateo_st.utils import COLORS_PLOTLY, create_download_link, isfloat, isint, load_css, set_general_session_keys
+
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
@@ -107,8 +111,8 @@ def _data_input():
 
     # Check whether any of the selected metrics require source input
     if any(
-            meta.requires_source and name in st.session_state and st.session_state[name]
-            for name, meta in METRICS_META.items()
+        meta.requires_source and name in st.session_state and st.session_state[name]
+        for name, meta in METRICS_META.items()
     ):
         src_file = st.file_uploader("Source file (only needed for some metrics, like COMET)")
         st.session_state["src_segments"] = read_file(src_file)
@@ -116,10 +120,19 @@ def _data_input():
 
     num_sys = st.number_input("How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=3)
 
-    for sys_idx in range(1, num_sys + 1):
-        sys_file = st.file_uploader(f"System #{sys_idx} file")
-        st.session_state["sys_segments"][sys_idx] = read_file(sys_file)
-        st.session_state["sys_files"][sys_idx] = sys_file.name if sys_file else None
+    # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
+    # This can happen when a user first has three systems and then changes it back to 1
+    for sys_idx in range(1, 4):
+        if sys_idx <= num_sys:
+            sys_file = st.file_uploader(f"System #{sys_idx} file")
+            st.session_state["sys_segments"][sys_idx] = read_file(sys_file)
+            st.session_state["sys_files"][sys_idx] = sys_file.name if sys_file else None
+        else:
+            if sys_idx in st.session_state["sys_segments"]:
+                del st.session_state["sys_segments"][sys_idx]
+
+            if sys_idx in st.session_state["sys_files"]:
+                del st.session_state["sys_files"][sys_idx]
 
 
 def _validate_state() -> Tuple[bool, str]:
@@ -179,17 +192,21 @@ def _validate_state() -> Tuple[bool, str]:
                     # Check that the user input is indeed either an empty string or (one of) the expected dtypes
                     # Also check for special stringy float-types like "nan", "-inf", etc.
                     if (
-                            (session_opt != "" and not any(do_test(session_opt) for do_test in do_tests))
-                            or session_opt.lower().replace("-", "").replace("+", "") in ("inf", "infinity", "nan")
-                    ):
-                        msg += (f"- Option `{opt_name}` in {meta.name} must be one of: empty string,"
-                                f" {', '.join([t.__name__ for t in opt.types])}\n")
+                        session_opt != "" and not any(do_test(session_opt) for do_test in do_tests)
+                    ) or session_opt.lower().replace("-", "").replace("+", "") in ("inf", "infinity", "nan"):
+                        msg += (
+                            f"- Option `{opt_name}` in {meta.name} must be one of: empty string,"
+                            f" {', '.join([t.__name__ for t in opt.types])}\n"
+                        )
                         can_continue = False
 
     return can_continue, msg
 
 
 def _add_metrics_selection_to_state():
+    """Solidify the selected metrics and their options in one easy-to-use dictionary
+    that we can use later on to initialize the metrics.
+    """
     for name, meta in METRICS_META.items():
         if name in st.session_state and st.session_state[name]:
             metric_name = meta.evaluate_name
@@ -209,16 +226,29 @@ def _add_metrics_selection_to_state():
                 st.session_state["metrics"][metric_name][opt_name] = opt_val
                 st.session_state["metrics"][metric_name]["requires_source"] = meta.requires_source
                 st.session_state["metrics"][metric_name]["corpus_score_key"] = meta.corpus_score_key
+                st.session_state["metrics"][metric_name]["sentences_score_key"] = meta.sentences_score_key
 
 
 @st.cache_resource(show_spinner=False)
-def _load_metric(metric_name: str, config_name: Optional[str] = None):
+def _load_metric(metric_name: str, config_name: Optional[str] = None) -> EvaluationModule:
+    """Load an individual metric
+    :param metric_name: metric name
+    :param config_name: optional config
+    :return: loaded metric
+    """
     return evaluate.load(metric_name, config_name=config_name)
 
 
 def _load_metrics() -> Dict[str, dict]:
+    """Load the requested metrics and their optional config. The resulting dictionary
+    contains the loaded metric, but also other useful info such as `requires_source` or the
+    keys for the scores.
+
+    :return: a dictionary with as key the metric name and as values a dictionary with keys such as 'metric'
+    with the loaded metric and other useful info.
+    """
     loaded_metrics = {}
-    pbar = st.progress(0, text="Loading selected metrics and options...")
+    pbar = st.progress(0, text="Loading selected metrics and options")
     increment = 100 // len(st.session_state["metrics"])
 
     progress = 0
@@ -228,7 +258,8 @@ def _load_metrics() -> Dict[str, dict]:
             "metric": _load_metric(metric_name, config_name),
             "requires_source": opts.pop("requires_source"),
             "corpus_score_key": opts.pop("corpus_score_key"),
-            "options": opts
+            "sentences_score_key": opts.pop("sentences_score_key"),
+            "options": opts,
         }
         progress += increment
         pbar.progress(progress)
@@ -236,6 +267,7 @@ def _load_metrics() -> Dict[str, dict]:
     pbar.empty()
 
     # Disable loggers of 3rd party libs
+    # Only do this after loading/importing the metrics
     logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
     logging.getLogger("comet").setLevel(logging.ERROR)
     logging.getLogger("transformers").setLevel(logging.ERROR)
@@ -246,7 +278,7 @@ def _load_metrics() -> Dict[str, dict]:
 
 def _calculate_metrics(metrics: Dict[str, dict]):
     results = {}
-    pbar = st.progress(0, text="Evaluating...")
+    pbar = st.progress(0, text="Evaluating")
     increment = 100 // (len(st.session_state["sys_segments"]) * len(st.session_state["metrics"]))
     progress = 0
 
@@ -254,23 +286,76 @@ def _calculate_metrics(metrics: Dict[str, dict]):
         results[sys_idx] = {}
         for metric_name, metric_d in metrics.items():
             corpus_score_key = metric_d["corpus_score_key"]
+            sentences_score_key = metric_d["sentences_score_key"]
             if metric_d["requires_source"]:
-                result = metric_d["metric"].compute(predictions=sys_segs, references=st.session_state["ref_segments"],
-                                                    sources=st.session_state["src_segments"], **metric_d["options"])
+                result = metric_d["metric"].compute(
+                    predictions=sys_segs,
+                    references=st.session_state["ref_segments"],
+                    sources=st.session_state["src_segments"],
+                    **metric_d["options"],
+                )
             else:
-                result = metric_d["metric"].compute(predictions=sys_segs, references=st.session_state["ref_segments"],
-                                                    **metric_d["options"])
+                result = metric_d["metric"].compute(
+                    predictions=sys_segs, references=st.session_state["ref_segments"], **metric_d["options"]
+                )
             result = postprocess_result(metric_name, result)
-            print(metric_name, result)
-            score = result[corpus_score_key]
-            results[sys_idx][metric_name] = score
+
+            results[sys_idx][metric_name] = {
+                "corpus": result[corpus_score_key],
+                "sentences": result[sentences_score_key] if sentences_score_key else None,
+            }
 
             progress += increment
             pbar.progress(progress)
 
     pbar.empty()
     st.session_state["results"] = results
-    print(results)
+
+
+def _build_corpus_df():
+    res = st.session_state["results"]
+
+    data = []
+    for sys_idx, results in res.items():
+        sys_data = {"system": st.session_state["sys_files"][sys_idx]}
+        for metric_name, metric_res in results.items():
+            sys_data[metric_name] = metric_res["corpus"]
+        data.append(sys_data)
+
+    df = pd.DataFrame(data)
+
+    # Remove "sacre" (bleu's output with sacrebleu is "sacrebleu")
+    df = df.rename(mapper=lambda col: col.replace("sacre", ""), axis=1)
+    return df
+
+
+def _draw_corpus_scores(df):
+    df = df.rename(
+        mapper=lambda col: f"{col} {'↑' if METRICS_META[col].higher_better else '↓'}" if col in METRICS_META else col,
+        axis=1,
+    )
+    # Reshape DataFame for plotting
+    df_melt = pd.melt(df, id_vars="system", var_name="metric", value_name="score")
+    fig = px.bar(
+        df_melt,
+        x="metric",
+        y="score",
+        color="system" if len(st.session_state["sys_files"]) > 1 else None,
+        barmode="group",
+        color_discrete_sequence=COLORS_PLOTLY["default"],
+    )
+
+    st.plotly_chart(fig)
+
+
+def _style_df_for_display(df):
+    rounded_df = df.replace(pd.NA, np.nan)
+    rounded_df.iloc[:, 1:] = rounded_df.iloc[:, 1:].astype(float).round(decimals=2).copy()
+    numeric_col_names = rounded_df.columns[1:].tolist()
+    styled_df = rounded_df.style.highlight_null(props="color: transparent;").format(
+        "{:,.2f}", na_rep="", subset=numeric_col_names
+    )
+    return styled_df
 
 
 def _evaluate(metrics: Dict[str, dict]):
@@ -278,8 +363,19 @@ def _evaluate(metrics: Dict[str, dict]):
     _calculate_metrics(metrics)
 
     if "results" in st.session_state and st.session_state["results"]:
-        st.write("Below you can find the results for your dataset.")
-        st.session_state["results"]
+        st.write("Below you can find the corpus results for your dataset.")
+
+        corpus_df = _build_corpus_df()
+        st.markdown("### 📊 Chart")
+        _draw_corpus_scores(corpus_df)
+        st.markdown("### 🗄️ Table")
+        styled_df = _style_df_for_display(corpus_df)
+        st.dataframe(styled_df)
+        excel_link = create_download_link(corpus_df, "mateo.xlsx", "Excel file")
+        txt_link = create_download_link(
+            corpus_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo.tsv", "tab-separated file"
+        )
+        st.markdown(f"You can download the table as an {excel_link}, or as a {txt_link}.", unsafe_allow_html=True)
 
 
 def main():

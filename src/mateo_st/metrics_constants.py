@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from statistics import mean
-from typing import Any, Literal, Optional, Tuple, Type, Dict
+from typing import Any, Dict, Literal, Optional, Tuple, Type
 
 import comet
 import sacrebleu
@@ -22,7 +22,9 @@ class MetricOption:
             raise ValueError(f"{self.name} needs at least one of 'choices' or 'types'")
 
         if self.choices and self.default not in self.choices:
-            raise ValueError(f"{self.name}: the default option ('{self.default}') must be in 'choices' ('{', '.join(self.choices)}')")
+            raise ValueError(
+                f"{self.name}: the default option ('{self.default}') must be in 'choices' ('{', '.join(self.choices)}')"
+            )
 
 
 @dataclass
@@ -40,6 +42,7 @@ class MetricMeta:
     options: Optional[Tuple[MetricOption, ...]] = field(default_factory=tuple)
     requires_source: bool = False
     corpus_score_key: str = "score"
+    sentences_score_key: Optional[str] = None
 
 
 METRICS_META = {
@@ -58,43 +61,46 @@ METRICS_META = {
         evaluate_name="bertscore",
         version="0.3.13",  # Hard-coded because importing bertscore at top-level leads to import cycle issues
         corpus_score_key="mean_f1",  # Manually added in postprocessing
+        sentences_score_key="f1",
         options=(
             MetricOption(
                 name="lang",
                 description="Language of the translations. This is an optional shortcut, used to select a good default"
-                            f" model for your language"
-                            f" (en: roberta-large, zh: bert-base-chinese, tr: dbmdz/bert-base-turkish-cased, en-sci:"
-                            f" allenai/scibert_scivocab_uncased, and bert-base-multilingual-cased for all 'other').\n"
-                            " Alternatively, choose a model from the 'model_type' option.\n⚠️ 'model_type' has"
-                            " precedence over 'lang' so make sure to set 'model_type' to '' when selecting a 'lang'!",
+                " model for your language"
+                " (en: roberta-large, zh: bert-base-chinese, tr: dbmdz/bert-base-turkish-cased, en-sci:"
+                " allenai/scibert_scivocab_uncased, and bert-base-multilingual-cased for all 'other').\n"
+                " Alternatively, choose a model from the 'model_type' option.\n⚠️ 'model_type' has"
+                " precedence over 'lang' so make sure to set 'model_type' to '' when selecting a 'lang'!",
                 default="other",
                 choices=("other", "en", "zh", "tr", "en-sci"),
             ),
             MetricOption(
                 name="model_type",
                 description="Model type to use. For this public interface, we have limited the options to a couple of"
-                            " high-performing base and large models",
+                " high-performing base and large models",
                 default="",
                 # Not all models because we want to save compute
                 # All options here: https://github.com/Tiiiger/bert_score/blob/dbcf6db37e8bd6ff68446f06b0ba5d0763b62d20/bert_score/utils.py#L40
-                choices=("",
-                         "bert-base-multilingual-cased",
-                         "roberta-base",
-                         "roberta-large",
-                         "bert-base-chinese",
-                         "dbmdz/bert-base-turkish-cased",
-                         "allenai/scibert_scivocab_uncased",
-                         "facebook/bart-base",
-                         "princeton-nlp/sup-simcse-bert-base-uncased",
-                         "microsoft/deberta-v3-base",
-                         "microsoft/deberta-v3-large",
-                         "microsoft/mdeberta-v3-base"),
+                choices=(
+                    "",
+                    "bert-base-multilingual-cased",
+                    "roberta-base",
+                    "roberta-large",
+                    "bert-base-chinese",
+                    "dbmdz/bert-base-turkish-cased",
+                    "allenai/scibert_scivocab_uncased",
+                    "facebook/bart-base",
+                    "princeton-nlp/sup-simcse-bert-base-uncased",
+                    "microsoft/deberta-v3-base",
+                    "microsoft/deberta-v3-large",
+                    "microsoft/mdeberta-v3-base",
+                ),
                 empty_str_is_none=True,
             ),
             MetricOption(
                 name="num_layers",
                 description="This layer's representation will be used. If empty, defaults to the best layer as tuned"
-                            " on WMT16",
+                " on WMT16",
                 default="",
                 types=(int,),
                 empty_str_is_none=True,
@@ -156,13 +162,24 @@ METRICS_META = {
         evaluate_name="bleurt",
         version="commit cebe7e6",
         corpus_score_key="mean_score",
+        sentences_score_key="scores",
         options=(
             MetricOption(
                 name="config_name",
                 description="BLEURT trained checkpoint to use",
                 default="BLEURT-20",
-                choices=("bleurt-tiny-128", "bleurt-tiny-512", "bleurt-base-128", "bleurt-base-512", "bleurt-large-128",
-                         "bleurt-large-512", "BLEURT-20-D3", "BLEURT-20-D6", "BLEURT-20-D12", "BLEURT-20"),
+                choices=(
+                    "bleurt-tiny-128",
+                    "bleurt-tiny-512",
+                    "bleurt-base-128",
+                    "bleurt-base-512",
+                    "bleurt-large-128",
+                    "bleurt-large-512",
+                    "BLEURT-20-D3",
+                    "BLEURT-20-D6",
+                    "BLEURT-20-D12",
+                    "BLEURT-20",
+                ),
             ),
         ),
     ),
@@ -180,26 +197,33 @@ METRICS_META = {
         version=sacrebleu.__version__,
         options=(
             MetricOption(
-                name="char_order",
-                description="Character n-gram order",
-                default=CHRF.CHAR_ORDER,
-                types=(int,)
+                name="char_order", description="Character n-gram order", default=CHRF.CHAR_ORDER, types=(int,)
             ),
             MetricOption(
                 name="word_order",
                 description="Word n-gram order. If equals to 2, the metric is referred to as chrF++",
                 default=CHRF.WORD_ORDER,
-                types=(int,)
+                types=(int,),
             ),
             MetricOption(
                 name="beta",
                 description="Determines the importance of recall w.r.t precision",
                 default=CHRF.BETA,
-                types=(int,)
+                types=(int,),
             ),
             MetricOption(name="lowercase", description="Whether to lowercase the data", default=False, types=(bool,)),
-            MetricOption(name="whitespace", description="Whether to include whitespaces when extracting character n-grams", default=False, types=(bool,)),
-            MetricOption(name="eps_smoothing", description="Whether to apply epsilon smoothing similar to reference chrF++.py, NLTK and Moses implementations", default=False, types=(bool,)),
+            MetricOption(
+                name="whitespace",
+                description="Whether to include whitespaces when extracting character n-grams",
+                default=False,
+                types=(bool,),
+            ),
+            MetricOption(
+                name="eps_smoothing",
+                description="Whether to apply epsilon smoothing similar to reference chrF++.py, NLTK and Moses implementations",
+                default=False,
+                types=(bool,),
+            ),
         ),
     ),
     "comet": MetricMeta(
@@ -217,13 +241,22 @@ METRICS_META = {
         evaluate_name="comet",
         version=comet.__version__,
         corpus_score_key="mean_score",
+        sentences_score_key="scores",
         options=(
             MetricOption(
                 name="config_name",
                 description="COMET trained checkpoint to use",
                 default="wmt20-comet-da",
-                choices=("wmt20-comet-da", "wmt20-comet-qe-da", "wmt20-comet-qe-da-v2", "wmt21-comet-da",
-                         "wmt21-cometinho-da", "wmt21-comet-qe-da", "eamt22-cometinho-da", "eamt22-prune-comet-da"),
+                choices=(
+                    "wmt20-comet-da",
+                    "wmt20-comet-qe-da",
+                    "wmt20-comet-qe-da-v2",
+                    "wmt21-comet-da",
+                    "wmt21-cometinho-da",
+                    "wmt21-comet-qe-da",
+                    "eamt22-cometinho-da",
+                    "eamt22-prune-comet-da",
+                ),
             ),
         ),
         requires_source=True,
@@ -243,10 +276,27 @@ METRICS_META = {
         evaluate_name="ter",
         version=sacrebleu.__version__,
         options=(
-            MetricOption(name="normalized", description="Whether to enable character normalization", default=False, types=(bool,)),
-            MetricOption(name="ignore_punct", description="Whether to removes punctuations from sentences", default=False, types=(bool,)),
-            MetricOption(name="support_zh_ja_chars", description="Whether to add support for Asian character processing", default=False, types=(bool,)),
-            MetricOption(name="case_sensitive", description="Whether to NOT lowercase the data", default=False, types=(bool,)),
+            MetricOption(
+                name="normalized",
+                description="Whether to enable character normalization",
+                default=False,
+                types=(bool,),
+            ),
+            MetricOption(
+                name="ignore_punct",
+                description="Whether to removes punctuations from sentences",
+                default=False,
+                types=(bool,),
+            ),
+            MetricOption(
+                name="support_zh_ja_chars",
+                description="Whether to add support for Asian character processing",
+                default=False,
+                types=(bool,),
+            ),
+            MetricOption(
+                name="case_sensitive", description="Whether to NOT lowercase the data", default=False, types=(bool,)
+            ),
         ),
     ),
 }
@@ -571,9 +621,20 @@ SUPPORTED_LANGS_REV = {
 
 
 def postprocess_result(metric_name: str, result: Dict[str, Any]):
+    """Post-processes the result that is retrieve from Metric.compute.
+
+    :param metric_name: the metric name
+    :param result: score result (dictionary)
+    :return: modified score result
+    """
     if metric_name == "bertscore":
-        result["mean_f1"] = mean(result["f1"])
+        result["mean_f1"] = 100 * mean(result["f1"])
+        result["f1"] = [score * 100 for score in result["f1"]]
     elif metric_name == "bleurt":
-        result["mean_score"] = mean(result["scores"])
+        result["mean_score"] = 100 * mean(result["scores"])
+        result["scores"] = [score * 100 for score in result["scores"]]
+    elif metric_name == "comet":
+        result["mean_score"] = 100 * result["mean_score"]
+        result["scores"] = [score * 100 for score in result["scores"]]
 
     return result

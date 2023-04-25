@@ -25,6 +25,21 @@ def update_translator_lang(side: str):
             st.session_state["translator"].set_tgt_lang(st.session_state["tgt_lang"])
 
 
+def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download"):
+    if isinstance(data, pd.DataFrame):
+        # Write the DataFrame to an in-memory bytes object
+        bytes_io = BytesIO()
+        with pd.ExcelWriter(bytes_io, "xlsxwriter") as writer:
+            data.to_excel(writer, index=False)
+
+        # Retrieve the bytes from the bytes object
+        b64 = base64.b64encode(bytes_io.getvalue()).decode("utf-8")
+        return f'<a download="{filename}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" title="Download">{link_text}</a>'
+    elif isinstance(data, str):
+        b64 = base64.b64encode(data.encode("utf-8")).decode("utf-8")
+        return f'<a download="{filename}" href="data:file/txt;base64,{b64}" title="Download">{link_text}</a>'
+
+
 COLORS_PLOTLY = {
     "default": ["#94bf89", "#BF8480", "#6A5E73"],
     # Add other styles if wanted
@@ -90,24 +105,6 @@ def set_general_session_keys():
 
     if "transl_max_length" not in st.session_state:
         st.session_state["transl_max_length"] = cli_args().transl_max_length
-
-
-def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download"):
-    if isinstance(data, pd.DataFrame):
-        # Write the DataFrame to an in-memory bytes object
-        bytes_io = BytesIO()
-        with pd.ExcelWriter(bytes_io, "xlsxwriter") as writer:
-            data.to_excel(writer, index=False)
-
-        # Retrieve the bytes from the bytes object
-        b64 = base64.b64encode(bytes_io.getvalue()).decode("utf-8")
-        return (
-            f'<a download="{filename}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml'
-            f'.sheet;base64,{b64}" title="Download">{link_text}</a>'
-        )
-    elif isinstance(data, str):
-        b64 = base64.b64encode(data.encode("utf-8")).decode("utf-8")
-        return f'<a download="{filename}" href="data:file/txt;base64,{b64}" title="Download">{link_text}</a>'
 
 
 def load_css(name: str):
