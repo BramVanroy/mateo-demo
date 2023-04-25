@@ -22,6 +22,23 @@ def _init():
     if "text_to_translate" not in st.session_state:
         st.session_state["text_to_translate"] = None
 
+    # LANGUAGES
+    if "src_lang" not in st.session_state:
+        st.session_state["src_lang"] = "English"
+    elif st.session_state["src_lang"] not in TRANS_LANG2KEY:
+        st.session_state["src_lang"] = "English"
+
+    if "src_lang_key" not in st.session_state:
+        st.session_state["src_lang_key"] = TRANS_LANG2KEY[st.session_state["src_lang"]]
+
+    if "tgt_lang" not in st.session_state:
+        st.session_state["tgt_lang"] = "Dutch"
+    elif st.session_state["tgt_lang"] not in TRANS_LANG2KEY:
+        st.session_state["tgt_lang"] = "Dutch"
+
+    if "tgt_lang_key" not in st.session_state:
+        st.session_state["tgt_lang_key"] = TRANS_LANG2KEY[st.session_state["tgt_lang"]]
+
     st.title("📖 Translate")
     st.markdown(
         "To provide quick access to multilingual translation, including for low-resource languages, we here provide"

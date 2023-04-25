@@ -91,29 +91,6 @@ def set_general_session_keys():
     if "transl_max_length" not in st.session_state:
         st.session_state["transl_max_length"] = cli_args().transl_max_length
 
-    # LANGUAGES
-    if "src_lang" not in st.session_state:
-        st.session_state["src_lang"] = "English"
-    elif st.session_state["src_lang"] not in TRANS_LANG2KEY:
-        st.session_state["src_lang"] = "English"
-
-    if "src_lang_key" not in st.session_state:
-        st.session_state["src_lang_key"] = TRANS_LANG2KEY[st.session_state["src_lang"]]
-
-    if "tgt_lang" not in st.session_state:
-        st.session_state["tgt_lang"] = "Dutch"
-    elif st.session_state["tgt_lang"] not in TRANS_LANG2KEY:
-        st.session_state["tgt_lang"] = "Dutch"
-
-    if "tgt_lang_key" not in st.session_state:
-        st.session_state["tgt_lang_key"] = TRANS_LANG2KEY[st.session_state["tgt_lang"]]
-
-    if "mt_text" not in st.session_state:
-        st.session_state["mt_text"] = ""
-
-    if "other_hyps" not in st.session_state:
-        st.session_state["other_hyps"] = []
-
 
 def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download"):
     if isinstance(data, pd.DataFrame):
@@ -141,3 +118,22 @@ def load_css(name: str):
 @st.cache_data
 def read_file(fin: Union[str, PathLike]):
     return Path(fin).read_text(encoding="utf-8")
+
+
+def isfloat(item: str):
+    try:
+        float(item)
+    except (TypeError, ValueError):
+        return False
+    else:
+        return True
+
+
+def isint(item: str):
+    try:
+        item_float = float(item)
+        item_int = int(item)
+    except (TypeError, ValueError):
+        return False
+    else:
+        return item_float == item_int
