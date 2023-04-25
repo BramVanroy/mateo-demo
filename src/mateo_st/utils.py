@@ -112,7 +112,7 @@ def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_tex
 
 def load_css(name: str):
     pfcss = Path(__file__).parent.joinpath(f"css/{name}.css")
-    st.markdown(f'<style>{read_file(pfcss)}</style>', unsafe_allow_html=True)
+    st.markdown(f"<style>{read_file(pfcss)}</style>", unsafe_allow_html=True)
 
 
 @st.cache_data

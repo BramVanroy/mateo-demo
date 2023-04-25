@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from mateo_st.translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator
-from mateo_st.utils import cli_args, create_download_link, set_general_session_keys, update_translator_lang, load_css
+from mateo_st.utils import cli_args, create_download_link, load_css, set_general_session_keys, update_translator_lang
 
 
 def _init():
