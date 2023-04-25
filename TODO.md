@@ -7,3 +7,4 @@
   - parallel compute option
 - Add FastAPI backend?
 - Make sure that the 'lang' vs 'model_type' precedence works as expected
+- Make sure to post-process input: empty string -> None, numbers that should be float/int
