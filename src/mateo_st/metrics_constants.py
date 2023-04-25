@@ -112,6 +112,7 @@ METRICS_META = {
         implementation_html="<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a>."
         " We use the <code>BLEURT-20</code> checkpoint in this demo.</p>",
         evaluate_name="bleurt",
+        version="commit cebe7e6",
         options=(),
     ),
     "chrf": MetricMeta(

@@ -1,3 +1,5 @@
+import re
+
 import streamlit as st
 from mateo_st.metrics_constants import METRICS_META, SUPPORTED_LANGS
 from mateo_st.utils import load_css
@@ -46,7 +48,12 @@ def main():
 
         # Version
         if meta.version:
-            metrics_markdown += f"<aside className='metric-version'><p>Version <code>{meta.version}</code></p></aside>"
+            version_str = meta.version
+            # Add <code> tags if this is really just a version number, e.g. 0.1.2
+            if re.match(r"^(?:\d+\.?){1,3}$", version_str):
+                version_str = f"<code>{version_str}</code>"
+
+            metrics_markdown += f"<aside className='metric-version'><p>Version {version_str}</p></aside>"
 
         # Supported languages
         if metric_key in SUPPORTED_LANGS and SUPPORTED_LANGS[metric_key]:
