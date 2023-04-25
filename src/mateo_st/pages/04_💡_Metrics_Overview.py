@@ -24,25 +24,29 @@ def main():
     metrics_markdown = "<div className='metrics-wrapper'>"
 
     for metric_key, meta in METRICS_META.items():
-        metrics_markdown += f"<div className='metric {meta['class']}'>"
+        metrics_markdown += f"<div className='metric {meta.metric_class}'>"
         # header
-        metrics_markdown += f"<header><h2>{meta['name']}</h2>"
-        if "full_name" in meta and meta["full_name"]:
-            metrics_markdown += f"<p>{meta['full_name']}</p>"
+        metrics_markdown += f"<header><h2>{meta.name}</h2>"
+        if meta.full_name:
+            metrics_markdown += f"<p>{meta.full_name}</p>"
         metrics_markdown += "</header>"
 
         # Content
-        metrics_markdown += f"<div className='metric-content'>{meta['description']}</div>"
+        metrics_markdown += f"<div className='metric-content'>{meta.description_html}</div>"
 
-        if "paper_url" in meta and meta["paper_url"]:
+        if meta.paper_url:
             metrics_markdown += (
-                f"<div className='metric-paper'><p><a href='{meta['paper_url']}'"
-                f" title='Paper of {meta['name']}' target='_blank'>Paper</a></p></div>"
+                f"<div className='metric-paper'><p><a href='{meta.paper_url}'"
+                f" title='Paper of {meta.name}' target='_blank'>Paper</a></p></div>"
             )
 
         # Implementation
-        if "implementation" in meta and meta["implementation"]:
-            metrics_markdown += f"<aside className='metric-implementation'>{meta['implementation']}</aside>"
+        if meta.implementation_html:
+            metrics_markdown += f"<aside className='metric-implementation'>{meta.implementation_html}</aside>"
+
+        # Version
+        if meta.version:
+            metrics_markdown += f"<aside className='metric-version'><p>Version <code>{meta.version}</code></p></aside>"
 
         # Supported languages
         if metric_key in SUPPORTED_LANGS and SUPPORTED_LANGS[metric_key]:
