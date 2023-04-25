@@ -1,11 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, Literal, Optional, Tuple, Type
 
-import bert_score
 import comet
 import sacrebleu
-from bert_score import lang2model as bertscore_lang2model
-from sacrebleu import BLEU
+from sacrebleu import BLEU, CHRF
 from sacrebleu.metrics.bleu import _TOKENIZERS as SBTOKENIZERS
 
 
@@ -16,14 +14,11 @@ class MetricOption:
     default: Any
     choices: Optional[Tuple] = None
     types: Optional[Tuple[Type, ...]] = None
-    allow_empty_str: bool = False
+    empty_str_is_none: bool = False
 
     def __post_init__(self):
         if not self.choices and not self.types:
             raise ValueError(f"{self.name} needs at least one of 'choices' or 'types'")
-
-        if self.allow_empty_str and any(t is not int and t is not float for t in self.types):
-            raise ValueError(f"{self.name}: 'allow_empty_str' only makes sense if the input types are int or float")
 
         if self.choices and self.default not in self.choices:
             raise ValueError(f"{self.name}: the default option ('{self.default}') must be in 'choices' ('{', '.join(self.choices)}')")
@@ -57,22 +52,20 @@ METRICS_META = {
         " language model.</p>",
         paper_url="https://openreview.net/forum?id=SkeHuCVFDr",
         implementation_html="<p><a href='https://github.com/Tiiiger/bert_score' title='BertScore GitHub'"
-        ">BERTScore</a>. <a href='https://github.com/Tiiiger/bert_score#default-behavior'"
-        " title='Default BERTScore behavior'>The underlying model</a> depends on the target language"
-        " of your example.</p>",
+        ">BERTScore</a></p>",
         evaluate_name="bertscore",
-        version=bert_score.__version__,
+        version="0.3.13",  # Hard-coded because importing bertscore at top-level leads to import cycle issues
         options=(
             MetricOption(
                 name="lang",
                 description="Language of the translations. This is an optional shortcut, used to select a good default"
                             f" model for your language"
-                            f" ({', '.join([': '.join(langmodel) for langmodel in bertscore_lang2model.items()])}, and"
-                            f" bert-base-multilingual-cased for 'other').\n"
+                            f" (en: roberta-large, zh: bert-base-chinese, tr: dbmdz/bert-base-turkish-cased, en-sci:"
+                            f" allenai/scibert_scivocab_uncased, and bert-base-multilingual-cased for all 'other').\n"
                             " Alternatively, choose a model from the 'model_type' option.\n⚠️ 'model_type' has"
                             " precedence over 'lang' so make sure to set 'model_type' to '' when selecting a 'lang'!",
                 default="other",
-                choices=("other", ) + tuple(bertscore_lang2model.keys()),
+                choices=("other", "en", "zh", "tr", "en-sci"),
             ),
             MetricOption(
                 name="model_type",
@@ -100,7 +93,7 @@ METRICS_META = {
                             " on WMT16",
                 default="",
                 types=(int,),
-                allow_empty_str=True,
+                empty_str_is_none=True,
             )
             # Not adding other options such as rescale_with_baseline or idf, because those require extra corpus input
             # to calculate baseline/idf scores on
@@ -132,7 +125,7 @@ METRICS_META = {
                 description="Smoothing value for `floor` and `add-k` methods. An empty value falls back to the default value",
                 default="",
                 types=(float, int),
-                allow_empty_str=True,
+                empty_str_is_none=True,
             ),
             MetricOption(name="lowercase", description="Whether to lowercase the data", default=False, types=(bool,)),
             MetricOption(
@@ -155,8 +148,7 @@ METRICS_META = {
         " data and pretraining on many different tasks such as back translation, entailment, and"
         " predicting existing MT metrics such as BLEU and BERTScore.</p>",
         paper_url="https://aclanthology.org/2020.acl-main.704/",
-        implementation_html="<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a>."
-        " We use the <code>BLEURT-20</code> checkpoint in this demo.</p>",
+        implementation_html="<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a></p>",
         evaluate_name="bleurt",
         version="commit cebe7e6",
         options=(
@@ -181,24 +173,53 @@ METRICS_META = {
         is_default_selected=True,
         evaluate_name="chrf",
         version=sacrebleu.__version__,
-        options=(),
+        options=(
+            MetricOption(
+                name="char_order",
+                description="Character n-gram order",
+                default=CHRF.CHAR_ORDER,
+                types=(int,)
+            ),
+            MetricOption(
+                name="word_order",
+                description="Word n-gram order. If equals to 2, the metric is referred to as chrF++",
+                default=CHRF.WORD_ORDER,
+                types=(int,)
+            ),
+            MetricOption(
+                name="beta",
+                description="Determines the importance of recall w.r.t precision",
+                default=CHRF.BETA,
+                types=(int,)
+            ),
+            MetricOption(name="lowercase", description="Whether to lowercase the data", default=False, types=(bool,)),
+            MetricOption(name="whitespace", description="Whether to include whitespaces when extracting character n-grams", default=False, types=(bool,)),
+            MetricOption(name="eps_smoothing", description="Whether to apply epsilon smoothing similar to reference chrF++.py, NLTK and Moses implementations", default=False, types=(bool,)),
+        ),
     ),
     "comet": MetricMeta(
         name="COMET",
         metric_class="neural",
         full_name="Crosslingual Optimized Metric for Evaluation of Translation",
-        description_html="COMET is similar to other neural approaches in that it also finetunes existing language models, "
+        description_html="COMET is similar to other neural approaches in that it also finetunes existing language models,"
         " in their case"
         " <a href='https://aclanthology.org/2020.acl-main.747/' title='XLM-R paper'>XLM-R</a>. What"
         " makes COMET different, however, is that it can also consider the source text as part of the"
         " input rather than only comparing a machine translation to a reference translation.</p>",
         paper_url="https://aclanthology.org/2020.emnlp-main.213/",
-        implementation_html="<p><a href='https://github.com/Unbabel/COMET' title='COMET GitHub'>COMET</a>."
-        " We use the default <code>wmt20-comet-da</code> checkpoint in this demo.</p>",
+        implementation_html="<p><a href='https://github.com/Unbabel/COMET' title='COMET GitHub'>COMET</a></p>",
         is_default_selected=True,
         evaluate_name="comet",
         version=comet.__version__,
-        options=(),
+        options=(
+            MetricOption(
+                name="checkpoint",
+                description="COMET trained checkpoint to use",
+                default="wmt20-comet-da",
+                choices=("wmt20-comet-da", "wmt20-comet-qe-da", "wmt20-comet-qe-da-v2", "wmt21-comet-da",
+                         "wmt21-cometinho-da", "wmt21-comet-qe-da", "eamt22-cometinho-da", "eamt22-prune-comet-da"),
+            ),
+        ),
         requires_source=True,
     ),
     "ter": MetricMeta(
@@ -215,7 +236,12 @@ METRICS_META = {
         higher_better=False,
         evaluate_name="ter",
         version=sacrebleu.__version__,
-        options=(),
+        options=(
+            MetricOption(name="normalized", description="Whether to enable character normalization", default=False, types=(bool,)),
+            MetricOption(name="ignore_punct", description="Whether to removes punctuations from sentences", default=False, types=(bool,)),
+            MetricOption(name="support_zh_ja_chars", description="Whether to add support for Asian character processing", default=False, types=(bool,)),
+            MetricOption(name="case_sensitive", description="Whether to NOT lowercase the data", default=False, types=(bool,)),
+        ),
     ),
 }
 
