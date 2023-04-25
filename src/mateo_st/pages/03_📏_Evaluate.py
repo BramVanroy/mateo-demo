@@ -67,7 +67,7 @@ def _metric_selection():
 
 
 def _data_input():
-    st.markdown("## Input data 📄")
+    st.markdown("## 📄 Input data")
     st.write(
         "Add a reference file and one or more files with translations. One line per file."
         " Cannot contain empty lines and must be in UTF8!"
@@ -166,7 +166,6 @@ def _validate_state() -> Tuple[bool, str]:
                                 f" {', '.join([t.__name__ for t in opt.types])}\n")
                         can_continue = False
 
-    st.session_state
     return can_continue, msg
 
 

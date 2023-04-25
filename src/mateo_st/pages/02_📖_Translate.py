@@ -108,7 +108,7 @@ def _model_selection():
 
 def _data_input():
     inp_data_heading, input_col = st.columns((3, 1))
-    inp_data_heading.markdown("## Input data 📄")
+    inp_data_heading.markdown("## 📄 Input data")
 
     fupload_check = input_col.checkbox("File upload?")
 
