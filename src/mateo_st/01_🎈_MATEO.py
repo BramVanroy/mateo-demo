@@ -1,10 +1,10 @@
 import streamlit as st
-from mateo_st.css import add_custom_base_style
+from mateo_st.utils import load_css
 
 
 def main():
     st.set_page_config(page_title="MATEO: MAchine Translation Evaluation Online", page_icon="💯")
-    add_custom_base_style()
+    load_css("base")
 
     st.title("🎈 MATEO: MAchine Translation Evaluation Online")
 

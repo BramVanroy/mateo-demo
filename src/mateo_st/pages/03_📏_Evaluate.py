@@ -2,14 +2,13 @@ from io import StringIO
 from typing import Tuple
 
 import streamlit as st
-from mateo_st.css import add_custom_base_style
 from mateo_st.metrics_constants import METRICS_META
-from mateo_st.utils import set_general_session_keys
+from mateo_st.utils import set_general_session_keys, load_css
 
 
 def _init():
     st.set_page_config(page_title="Evaluate Machine Translations | MATEO", page_icon="📏")
-    add_custom_base_style()
+    load_css("base")
 
     set_general_session_keys()
 

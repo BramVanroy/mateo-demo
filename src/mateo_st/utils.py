@@ -1,5 +1,7 @@
 import base64
 from io import BytesIO
+from os import PathLike
+from pathlib import Path
 from typing import Union
 
 import pandas as pd
@@ -129,3 +131,13 @@ def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_tex
     elif isinstance(data, str):
         b64 = base64.b64encode(data.encode("utf-8")).decode("utf-8")
         return f'<a download="{filename}" href="data:file/txt;base64,{b64}" title="Download">{link_text}</a>'
+
+
+def load_css(name: str):
+    pfcss = Path(__file__).parent.joinpath(f"css/{name}.css")
+    st.markdown(f'<style>{read_file(pfcss)}</style>', unsafe_allow_html=True)
+
+
+@st.cache_data
+def read_file(fin: Union[str, PathLike]):
+    return Path(fin).read_text(encoding="utf-8")

@@ -5,15 +5,14 @@ from math import ceil
 import numpy as np
 import pandas as pd
 import streamlit as st
-from mateo_st.css import add_custom_base_style, add_custom_translation_style
 from mateo_st.translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator
-from mateo_st.utils import cli_args, create_download_link, set_general_session_keys, update_translator_lang
+from mateo_st.utils import cli_args, create_download_link, set_general_session_keys, update_translator_lang, load_css
 
 
 def _init():
     st.set_page_config(page_title="Automatically Translate | MATEO", page_icon="📖")
-    add_custom_base_style()
-    add_custom_translation_style()
+    load_css("base")
+    load_css("translation")
 
     set_general_session_keys()
 
