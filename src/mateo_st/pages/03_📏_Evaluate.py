@@ -1,7 +1,6 @@
-import logging
 import warnings
 from io import StringIO
-from typing import Dict, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import evaluate
 import numpy as np
@@ -10,7 +9,15 @@ import plotly.express as px
 import streamlit as st
 from evaluate import EvaluationModule
 from mateo_st.metrics_constants import METRICS_META, postprocess_result
-from mateo_st.utils import COLORS_PLOTLY, create_download_link, isfloat, isint, load_css, set_general_session_keys
+from mateo_st.utils import (
+    COLORS_PLOTLY,
+    cli_args,
+    create_download_link,
+    isfloat,
+    isint,
+    load_css,
+    set_general_session_keys,
+)
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -64,7 +71,7 @@ def _metric_selection():
             expander = metric_container.expander(f"{meta.name} options")
             for opt_idx, opt in enumerate(meta.options):
                 opt_name = opt.name
-                has_choices = opt.choices
+                has_choices = bool(opt.choices)
 
                 opt_label = f"{ugly_metric_name}--{opt_name}"
                 kwargs = {
@@ -178,8 +185,11 @@ def _validate_state() -> Tuple[bool, str]:
     for name, meta in METRICS_META.items():
         if name in st.session_state and st.session_state[name]:
             for opt in meta.options:
-                opt_name = opt.name
+                if opt.choices:  # do not check for multi-select
+                    continue
+
                 if opt.empty_str_is_none:
+                    opt_name = opt.name
                     session_opt = st.session_state[f"{name}--{opt_name}"]
                     # Collect tests for the specified dtypes
                     do_tests = []
@@ -229,75 +239,70 @@ def _add_metrics_selection_to_state():
                 st.session_state["metrics"][metric_name]["sentences_score_key"] = meta.sentences_score_key
 
 
-@st.cache_resource(show_spinner=False)
+@st.cache_resource(show_spinner=False, max_entries=24, ttl=86400)
 def _load_metric(metric_name: str, config_name: Optional[str] = None) -> EvaluationModule:
     """Load an individual metric
     :param metric_name: metric name
     :param config_name: optional config
     :return: loaded metric
     """
+
     return evaluate.load(metric_name, config_name=config_name)
 
 
-def _load_metrics() -> Dict[str, dict]:
-    """Load the requested metrics and their optional config. The resulting dictionary
-    contains the loaded metric, but also other useful info such as `requires_source` or the
-    keys for the scores.
-
-    :return: a dictionary with as key the metric name and as values a dictionary with keys such as 'metric'
-    with the loaded metric and other useful info.
-    """
-    loaded_metrics = {}
-    pbar = st.progress(0, text="Loading selected metrics and options")
-    increment = 100 // len(st.session_state["metrics"])
-
-    progress = 0
-    for metric_name, opts in st.session_state["metrics"].items():
-        config_name = opts.pop("config_name", None)
-        loaded_metrics[metric_name] = {
-            "metric": _load_metric(metric_name, config_name),
-            "requires_source": opts.pop("requires_source"),
-            "corpus_score_key": opts.pop("corpus_score_key"),
-            "sentences_score_key": opts.pop("sentences_score_key"),
-            "options": opts,
-        }
-        progress += increment
-        pbar.progress(progress)
-
-    pbar.empty()
-
-    # Disable loggers of 3rd party libs
-    # Only do this after loading/importing the metrics
-    logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
-    logging.getLogger("comet").setLevel(logging.ERROR)
-    logging.getLogger("transformers").setLevel(logging.ERROR)
-    logging.getLogger("tensorflow").setLevel(logging.ERROR)
-    logging.getLogger("bleurt").setLevel(logging.ERROR)
-    return loaded_metrics
+@st.cache_data(show_spinner=False, ttl=86400)
+def _compute_metric(
+    metric_name: str,
+    *,
+    predictions: List[str],
+    references: List[str],
+    sources: Optional[List[str]] = None,
+    config_name: Optional[str] = None,
+    **kwargs,
+):
+    metric = _load_metric(metric_name, config_name)
+    if sources:
+        return metric.compute(predictions=predictions, references=references, sources=sources, **kwargs)
+    else:
+        return metric.compute(predictions=predictions, references=references, **kwargs)
 
 
-def _calculate_metrics(metrics: Dict[str, dict]):
+def _compute_metrics():
     results = {}
-    pbar = st.progress(0, text="Evaluating")
+    pbar_text_ct = st.empty()
+    pbar = st.progress(0)
     increment = 100 // (len(st.session_state["sys_segments"]) * len(st.session_state["metrics"]))
     progress = 0
 
     for sys_idx, sys_segs in st.session_state["sys_segments"].items():
         results[sys_idx] = {}
-        for metric_name, metric_d in metrics.items():
-            corpus_score_key = metric_d["corpus_score_key"]
-            sentences_score_key = metric_d["sentences_score_key"]
-            if metric_d["requires_source"]:
-                result = metric_d["metric"].compute(
-                    predictions=sys_segs,
-                    references=st.session_state["ref_segments"],
-                    sources=st.session_state["src_segments"],
-                    **metric_d["options"],
+        for metric_name, opts in st.session_state["metrics"].items():
+            if sys_idx == 1:
+                pbar_text_ct.markdown(
+                    f'<p style="font-size: 0.8em">(Down)loading metric <code>{metric_name}</code> and evaluating system #{sys_idx}. Downloading may take a while but only has to happen once.</p>',
+                    unsafe_allow_html=True,
                 )
             else:
-                result = metric_d["metric"].compute(
-                    predictions=sys_segs, references=st.session_state["ref_segments"], **metric_d["options"]
+                pbar_text_ct.markdown(
+                    f'<p style="font-size: 0.8em">Evaluating system #{sys_idx} with <code>{metric_name}</code></p>',
+                    unsafe_allow_html=True,
                 )
+
+            opts = opts.copy()  # Copy to not pop globally
+            corpus_score_key = opts.pop("corpus_score_key")
+            sentences_score_key = opts.pop("sentences_score_key")
+            config_name = opts.pop("config_name", None)
+            requires_source = opts.pop("requires_source")
+
+            result = _compute_metric(
+                metric_name,
+                predictions=sys_segs,
+                references=st.session_state["ref_segments"],
+                sources=st.session_state["src_segments"] if requires_source else None,
+                config_name=config_name,
+                **opts,
+            )
+
             result = postprocess_result(metric_name, result)
 
             results[sys_idx][metric_name] = {
@@ -308,6 +313,7 @@ def _calculate_metrics(metrics: Dict[str, dict]):
             progress += increment
             pbar.progress(progress)
 
+    pbar_text_ct.empty()
     pbar.empty()
     st.session_state["results"] = results
 
@@ -358,9 +364,9 @@ def _style_df_for_display(df):
     return styled_df
 
 
-def _evaluate(metrics: Dict[str, dict]):
+def _evaluate():
     st.markdown("## 🎁 Evaluation results")
-    _calculate_metrics(metrics)
+    _compute_metrics()
 
     if "results" in st.session_state and st.session_state["results"]:
         st.write("Below you can find the corpus results for your dataset.")
@@ -393,11 +399,12 @@ def main():
         _add_metrics_selection_to_state()
 
         if st.button("Evaluate MT"):
-            metrics = _load_metrics()
-            _evaluate(metrics)
+            _evaluate()
         else:
             st.write("Click the button above to start calculating the automatic evaluation scores for your data")
 
 
 if __name__ == "__main__":
     main()
+    # Call this to immediately disable CUDA if needed
+    cli_args()

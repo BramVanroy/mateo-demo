@@ -2,7 +2,7 @@ import re
 
 import streamlit as st
 from mateo_st.metrics_constants import METRICS_META, SUPPORTED_LANGS
-from mateo_st.utils import load_css
+from mateo_st.utils import cli_args, load_css
 
 
 def main():
@@ -70,3 +70,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # Call this to immediately disable CUDA if needed
+    cli_args()

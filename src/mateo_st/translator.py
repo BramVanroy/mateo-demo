@@ -1,12 +1,10 @@
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import Any, List, Union
 
 import streamlit as st
 import torch
-from optimum.bettertransformer import BetterTransformer
 from torch import nn, qint8
 from torch.quantization import quantize_dynamic
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
 
 DEFAULT_MODEL_SIZE = "distilled-600M"
@@ -24,8 +22,8 @@ class Translator:
     quantize: bool = True
     max_length: int = DEFAULT_MAX_LENGTH
     num_beams: int = DEFAULT_NUM_BEAMS
-    model: PreTrainedModel = field(default=None, init=False)
-    tokenizer: PreTrainedTokenizer = field(default=None, init=False)
+    model: Any = field(default=None, init=False)
+    tokenizer: Any = field(default=None, init=False)
     src_lang_key: str = field(default=None, init=False)
     tgt_lang_key: str = field(default=None, init=False)
 
@@ -98,6 +96,11 @@ def batchify(sentences: List[str], batch_size: int):
 
 @st.cache_resource(show_spinner=False)
 def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
+    # We defer loading of transformers and optimum because _sometimes_ there are
+    # import errors triggered if we put tehm at the top. Don't know why...
+    from optimum.bettertransformer import BetterTransformer
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     model = BetterTransformer.transform(model, keep_original_model=False)
     if torch.cuda.is_available() and not no_cuda:

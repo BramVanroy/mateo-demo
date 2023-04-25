@@ -1,4 +1,5 @@
 import base64
+import os
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
@@ -82,7 +83,13 @@ def cli_args():
         help="maximal length to generate per sentence",
     )
 
-    return cparser.parse_args()
+    args = cparser.parse_args()
+
+    # Disable CUDA for everything
+    if args.no_cuda:
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+    return args
 
 
 def set_general_session_keys():

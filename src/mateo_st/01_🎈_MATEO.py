@@ -1,5 +1,5 @@
 import streamlit as st
-from mateo_st.utils import load_css
+from mateo_st.utils import cli_args, load_css
 
 
 def main():
@@ -55,3 +55,5 @@ Is there anything else you would like to see included? [Get in touch](#contact)!
 
 if __name__ == "__main__":
     main()
+    # Call this to immediately disable CUDA if needed
+    cli_args()

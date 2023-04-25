@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from statistics import mean
 from typing import Any, Dict, Literal, Optional, Tuple, Type
 
+import bert_score
 import comet
 import sacrebleu
 from sacrebleu import BLEU, CHRF
@@ -59,7 +60,7 @@ METRICS_META = {
         implementation_html="<p><a href='https://github.com/Tiiiger/bert_score' title='BertScore GitHub'"
         ">BERTScore</a></p>",
         evaluate_name="bertscore",
-        version="0.3.13",  # Hard-coded because importing bertscore at top-level leads to import cycle issues
+        version=bert_score.__version__,
         corpus_score_key="mean_f1",  # Manually added in postprocessing
         sentences_score_key="f1",
         options=(
@@ -161,7 +162,7 @@ METRICS_META = {
         implementation_html="<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a></p>",
         evaluate_name="bleurt",
         version="commit cebe7e6",
-        corpus_score_key="mean_score",
+        corpus_score_key="mean_score",  # Manually added in postprocessing
         sentences_score_key="scores",
         options=(
             MetricOption(

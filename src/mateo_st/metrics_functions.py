@@ -7,21 +7,9 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-import tensorflow as tf
 import torch
 from mateo_st.metrics_constants import BASELINE_METRICS, METRIC_BEST_ARROW, METRICS
 from mateo_st.utils import COLORS_PLOTLY
-
-
-try:
-    # Disable all GPUS for TF evaluation - BLEURT for instance
-    tf.config.set_visible_devices([], "GPU")
-    visible_devices = tf.config.get_visible_devices()
-    for device in visible_devices:
-        assert device.device_type != "GPU"
-except Exception:
-    # Invalid device or cannot modify virtual devices once initialized.
-    pass
 
 
 @st.cache_resource(show_spinner=False)
