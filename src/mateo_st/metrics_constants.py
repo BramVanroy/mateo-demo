@@ -4,6 +4,7 @@ from typing import Any, Literal, Optional, Tuple, Type
 import bert_score
 import comet
 import sacrebleu
+from bert_score import lang2model as bertscore_lang2model
 from sacrebleu import BLEU
 from sacrebleu.metrics.bleu import _TOKENIZERS as SBTOKENIZERS
 
@@ -22,7 +23,10 @@ class MetricOption:
             raise ValueError(f"{self.name} needs at least one of 'choices' or 'types'")
 
         if self.allow_empty_str and any(t is not int and t is not float for t in self.types):
-            raise ValueError(f"{self.name}: 'force_str' only makes sense if the input types are int or float")
+            raise ValueError(f"{self.name}: 'allow_empty_str' only makes sense if the input types are int or float")
+
+        if self.choices and self.default not in self.choices:
+            raise ValueError(f"{self.name}: the default option ('{self.default}') must be in 'choices' ('{', '.join(self.choices)}')")
 
 
 @dataclass
@@ -58,7 +62,49 @@ METRICS_META = {
         " of your example.</p>",
         evaluate_name="bertscore",
         version=bert_score.__version__,
-        options=(),
+        options=(
+            MetricOption(
+                name="lang",
+                description="Language of the translations. This is an optional shortcut, used to select a good default"
+                            f" model for your language"
+                            f" ({', '.join([': '.join(langmodel) for langmodel in bertscore_lang2model.items()])}, and"
+                            f" bert-base-multilingual-cased for 'other').\n"
+                            " Alternatively, choose a model from the 'model_type' option.\n⚠️ 'model_type' has"
+                            " precedence over 'lang' so make sure to set 'model_type' to '' when selecting a 'lang'!",
+                default="other",
+                choices=("other", ) + tuple(bertscore_lang2model.keys()),
+            ),
+            MetricOption(
+                name="model_type",
+                description="Model type to use. For demo purposes, we have limited the options to a couple of"
+                            " high-performing base and large models",
+                default="",
+                # Not all models because we want to save compute
+                # All options here: https://github.com/Tiiiger/bert_score/blob/dbcf6db37e8bd6ff68446f06b0ba5d0763b62d20/bert_score/utils.py#L40
+                choices=("",
+                         "bert-base-multilingual-cased",
+                         "roberta-base",
+                         "roberta-large",
+                         "bert-base-chinese",
+                         "dbmdz/bert-base-turkish-cased",
+                         "allenai/scibert_scivocab_uncased",
+                         "facebook/bart-base",
+                         "princeton-nlp/sup-simcse-bert-base-uncased",
+                         "microsoft/deberta-v3-base",
+                         "microsoft/deberta-v3-large",
+                         "microsoft/mdeberta-v3-base"),
+            ),
+            MetricOption(
+                name="num_layers",
+                description="This layer's representation will be used. If empty, defaults to the best layer as tuned"
+                            " on WMT16",
+                default="",
+                types=(int,),
+                allow_empty_str=True,
+            )
+            # Not adding other options such as rescale_with_baseline or idf, because those require extra corpus input
+            # to calculate baseline/idf scores on
+        ),
     ),
     "bleu": MetricMeta(
         name="BLEU",
@@ -85,7 +131,7 @@ METRICS_META = {
                 name="smooth_value",
                 description="Smoothing value for `floor` and `add-k` methods. An empty value falls back to the default value",
                 default="",
-                types=(float,),
+                types=(float, int),
                 allow_empty_str=True,
             ),
             MetricOption(name="lowercase", description="Whether to lowercase the data", default=False, types=(bool,)),
@@ -113,7 +159,15 @@ METRICS_META = {
         " We use the <code>BLEURT-20</code> checkpoint in this demo.</p>",
         evaluate_name="bleurt",
         version="commit cebe7e6",
-        options=(),
+        options=(
+            MetricOption(
+                name="checkpoint",
+                description="BLEURT trained checkpoint to use",
+                default="BLEURT-20",
+                choices=("bleurt-tiny-128", "bleurt-tiny-512", "bleurt-base-128", "bleurt-base-512", "bleurt-large-128",
+                         "bleurt-large-512", "BLEURT-20-D3", "BLEURT-20-D6", "BLEURT-20-D12", "BLEURT-20"),
+            ),
+        ),
     ),
     "chrf": MetricMeta(
         name="ChrF",

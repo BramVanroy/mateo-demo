@@ -28,12 +28,13 @@ def _init():
 def _metric_selection():
     st.markdown("## ✨ Metric selection")
 
-    # Iterate over all the metrics in METRIC_META and add it and all possible options
+    # Iterate over all the metrics in METRIC_META and add each one and all its options
     for metric_idx, (ugly_metric_name, meta) in enumerate(METRICS_META.items()):
         metric_container = st.container()
         pretty_metric_name = meta.name
         metric_container.checkbox(f"Use {pretty_metric_name}", key=ugly_metric_name, value=meta.is_default_selected)
 
+        # Add options as an "expander"
         if meta.options:
             expander = metric_container.expander(f"{meta.name} options")
             for opt_idx, opt in enumerate(meta.options):
@@ -42,10 +43,12 @@ def _metric_selection():
 
                 opt_label = f"{ugly_metric_name}--{opt_name}"
                 kwargs = {
-                    "label": opt_name,
+                    "label": f"{opt_name} (default: '{opt.default}')",
                     "help": opt.description,
                     "key": opt_label,
                 }
+
+                # Is this option one with choices or with free input?
                 if has_choices:
                     expander.selectbox(options=opt.choices, index=opt.choices.index(opt.default), **kwargs)
                 else:
@@ -79,8 +82,8 @@ def _data_input():
 
     # Check whether any of the selected metrics require source input
     if any(
-        meta.requires_source and name in st.session_state and st.session_state[name]
-        for name, meta in METRICS_META.items()
+            meta.requires_source and name in st.session_state and st.session_state[name]
+            for name, meta in METRICS_META.items()
     ):
         src_file = st.file_uploader("Source file (only needed for some metrics, like COMET)")
         st.session_state["src_segments"] = read_file(src_file)
@@ -153,11 +156,11 @@ def _validate_state() -> Tuple[bool, str]:
                     # Check that the user input is indeed either an empty string or (one of) the expected dtypes
                     # Also check for special stringy float-types like "nan", "-inf", etc.
                     if (
-                        session_opt != ""
-                        or not any(do_test(session_opt) for do_test in do_tests)
-                        or session_opt.lower().replace("-", "").replace("+", "") in ("inf", "infinity", "nan")
+                            (session_opt != "" and not any(do_test(session_opt) for do_test in do_tests))
+                            or session_opt.lower().replace("-", "").replace("+", "") in ("inf", "infinity", "nan")
                     ):
-                        msg += f"- Option `{opt_name}` in {meta.name} must be one of: empty string, {', '.join([t.__name__ for t in opt.types])}\n"
+                        msg += (f"- Option `{opt_name}` in {meta.name} must be one of: empty string,"
+                                f" {', '.join([t.__name__ for t in opt.types])}\n")
                         can_continue = False
 
     return can_continue, msg
