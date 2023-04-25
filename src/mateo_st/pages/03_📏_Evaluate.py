@@ -125,11 +125,14 @@ def _data_input():
         st.session_state["src_segments"] = read_file(src_file)
         st.session_state["src_file"] = src_file.name if src_file else None
 
-    num_sys = st.number_input("How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=3)
+    max_sys = cli_args().eval_max_sys
+    num_sys = st.number_input(
+        "How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=max_sys
+    )
 
     # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
     # This can happen when a user first has three systems and then changes it back to 1
-    for sys_idx in range(1, 4):
+    for sys_idx in range(1, max_sys + 1):
         if sys_idx <= num_sys:
             sys_file = st.file_uploader(f"System #{sys_idx} file")
             st.session_state["sys_segments"][sys_idx] = read_file(sys_file)
@@ -374,6 +377,7 @@ def _evaluate():
         corpus_df = _build_corpus_df()
         st.markdown("### 📊 Chart")
         _draw_corpus_scores(corpus_df)
+
         st.markdown("### 🗄️ Table")
         styled_df = _style_df_for_display(corpus_df)
         st.dataframe(styled_df)
@@ -382,6 +386,17 @@ def _evaluate():
             corpus_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo.tsv", "tab-separated file"
         )
         st.markdown(f"You can download the table as an {excel_link}, or as a {txt_link}.", unsafe_allow_html=True)
+
+        st.markdown("### 📄 LaTeX")
+        latex_col_format = "l" + ("r" * len(st.session_state["metrics"]))
+        st.code(
+            styled_df.to_latex(
+                column_format=latex_col_format,
+                caption=f"Metric scores ({', '.join(list(st.session_state['metrics']))}) for"
+                f" {len(st.session_state['results'])} systems, calculated with MATEO.",
+            ),
+            language="latex",
+        )
 
 
 def main():
