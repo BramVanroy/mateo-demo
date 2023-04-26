@@ -130,14 +130,15 @@ def _get_increment_size(num_sents) -> int:
 
 
 def _translate():
-
     st.markdown("## Translations")
-    transl_info = st.info("Translating...")
     download_info = st.empty()
 
     pbar = st.progress(0)
     sentences = [s.strip() for s in st.session_state["text_to_translate"].splitlines() if s.strip()]
     num_sentences = len(sentences)
+
+    transl_info = st.info(f"Translating {num_sentences:,} sentence(s)...")
+
     increment = _get_increment_size(num_sentences)
     percent_done = 0
     all_translations = []
