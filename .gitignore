@@ -1,13 +1,6 @@
 cmd.sh
 .venv
 
-# ignore compiled styles
-*.css
-
-# dependencies
-**/node_modules/
-**/.pnp
-*.pnp.js
 
 # testing
 /coverage

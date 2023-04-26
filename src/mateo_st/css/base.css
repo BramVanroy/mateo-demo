@@ -1,0 +1,7 @@
+a {color: #09ab3b !important;}
+a:hover {text-decoration: none;}
+
+/*  Progress bar custom color */
+.stProgress > div > div > div > div {
+    background-color: #94bf89;
+}
