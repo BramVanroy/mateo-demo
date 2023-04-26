@@ -1,15 +1,18 @@
 # TODO MATEO
 
+- fix css git
 - Add separate "visualization" page for CharCUT?
 - Add more options to argparse
-  - parallel compute option
-- Add FastAPI backend? + aiocache?
 - Add "CONTRIBUTING.MD" that explains how to add a metric
-- Add significance testing
+- Add significance testing:
+  - for sacrebleu metrics, use sacrebleu
+  - for other sentence-level metrics, use https://github.com/Unbabel/COMET/blob/db918c6149c771509adcb427e1cf1c6ca94fd926/comet/cli/compare.py#L460
 - Add the option to specify cache life expectancy via envvar?
 - Add Dockerfile
-- Fix plotly color sceheme if we need more than three colors
+- Fix plotly color scheme if we need more than three colors
 - Add signatures to output
 - Remove index from latex and underline "Best" systen (but not that this depends on `higher_better`)
-- Add options for the user to translator (num_beams and max_length)
-- Add "TRANSLATE" button to translate page so that it doesnt just start after uploading (=unintuitive)
+- Add script that automatically downloads the most important models/metrics. This can optionally be run before starting
+streamlit for the first time to make sure that the basics models are at least downloaded
+- Add some kind of pre-batching option so that we can show better progress in the progress bar
+- For evaluation, use st.info above the progressbar, like in translation
