@@ -16,7 +16,6 @@ from mateo_st.utils import (
     isfloat,
     isint,
     load_css,
-    set_general_session_keys,
 )
 
 
@@ -26,8 +25,6 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 def _init():
     st.set_page_config(page_title="Evaluate Machine Translations | MATEO", page_icon="📏")
     load_css("base")
-
-    set_general_session_keys()
 
     if "ref_segments" not in st.session_state:
         st.session_state["ref_segments"] = []
@@ -281,15 +278,13 @@ def _compute_metrics():
         results[sys_idx] = {}
         for metric_name, opts in st.session_state["metrics"].items():
             if sys_idx == 1:
-                pbar_text_ct.markdown(
-                    f'<p style="font-size: 0.8em">(Down)loading metric <code>{metric_name}</code> and evaluating system #{sys_idx}. Downloading may take a while but only has to happen once.</p>',
-                    unsafe_allow_html=True,
-                )
+                msg = f"(Down)loading metric <code>{metric_name}</code> and evaluating system #{sys_idx}." \
+                      f" Downloading may take a while."
+
             else:
-                pbar_text_ct.markdown(
-                    f'<p style="font-size: 0.8em">Evaluating system #{sys_idx} with <code>{metric_name}</code></p>',
-                    unsafe_allow_html=True,
-                )
+                msg = f"Evaluating system #{sys_idx} with <code>{metric_name}"
+
+            pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
 
             opts = opts.copy()  # Copy to not pop globally
             corpus_score_key = opts.pop("corpus_score_key")
@@ -393,7 +388,7 @@ def _evaluate():
             styled_df.to_latex(
                 column_format=latex_col_format,
                 caption=f"Metric scores ({', '.join(list(st.session_state['metrics']))}) for"
-                f" {len(st.session_state['results'])} systems, calculated with MATEO.",
+                f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
             ),
             language="latex",
         )
