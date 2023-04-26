@@ -10,7 +10,6 @@ import streamlit as st
 from evaluate import EvaluationModule
 from mateo_st.metrics_constants import METRICS_META, postprocess_result
 from mateo_st.utils import (
-    COLORS_PLOTLY,
     cli_args,
     create_download_link,
     isfloat,
@@ -246,7 +245,6 @@ def _load_metric(metric_name: str, config_name: Optional[str] = None) -> Evaluat
     :param config_name: optional config
     :return: loaded metric
     """
-
     return evaluate.load(metric_name, config_name=config_name)
 
 
@@ -346,7 +344,7 @@ def _draw_corpus_scores(df):
         y="score",
         color="system" if len(st.session_state["sys_files"]) > 1 else None,
         barmode="group",
-        color_discrete_sequence=COLORS_PLOTLY["default"],
+        template="plotly"
     )
 
     st.plotly_chart(fig)

@@ -31,12 +31,6 @@ def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_tex
         return f'<a download="{filename}" href="data:file/txt;base64,{b64}" title="Download">{link_text}</a>'
 
 
-COLORS_PLOTLY = {
-    "default": ["#94bf89", "#BF8480", "#6A5E73"],
-    # Add other styles if wanted
-}
-
-
 @st.cache_data
 def cli_args():
     import argparse
