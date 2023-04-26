@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from typing import Any, List, Union
 
@@ -7,10 +8,10 @@ from torch import nn, qint8
 from torch.quantization import quantize_dynamic
 
 
-DEFAULT_MODEL_SIZE = "distilled-600M"
-DEFAULT_BATCH_SIZE = 4
-DEFAULT_MAX_LENGTH = 256
-DEFAULT_NUM_BEAMS = 3
+DEFAULT_MODEL_SIZE = os.getenv("mateo_transl_model_size", "distilled-600M")
+DEFAULT_BATCH_SIZE = os.getenv("mateo_batch_size", 32)
+DEFAULT_MAX_LENGTH = os.getenv("mateo_max_length", 128)
+DEFAULT_NUM_BEAMS = os.getenv("mateo_max_num_beams", 2)
 
 
 @dataclass
@@ -20,8 +21,6 @@ class Translator:
     model_size: str = DEFAULT_MODEL_SIZE
     no_cuda: bool = False
     quantize: bool = True
-    max_length: int = DEFAULT_MAX_LENGTH
-    num_beams: int = DEFAULT_NUM_BEAMS
     model: Any = field(default=None, init=False)
     tokenizer: Any = field(default=None, init=False)
     src_lang_key: str = field(default=None, init=False)
@@ -57,16 +56,17 @@ class Translator:
             raise KeyError(f"Target language '{self.tgt_lang}' not recognized or supported")
         self.tokenizer.tgt_lang = self.tgt_lang_key
 
-    def translate(self, encoded):
+    def translate(self, encoded, max_length: int = DEFAULT_MAX_LENGTH, num_beams: int = DEFAULT_NUM_BEAMS):
         with torch.no_grad():
             return self.model.generate(
                 **encoded,
                 forced_bos_token_id=self.tokenizer.lang_code_to_id[self.tgt_lang_key],
-                max_length=self.max_length,
-                num_beams=self.num_beams,
+                max_length=max_length,
+                num_beams=num_beams,
             )
 
-    def batch_translate(self, sentences: Union[str, List[str]], batch_size: int = DEFAULT_BATCH_SIZE):
+    def batch_translate(self, sentences: Union[str, List[str]], *, batch_size: int = DEFAULT_BATCH_SIZE,
+                        max_length: int = DEFAULT_MAX_LENGTH, num_beams: int = DEFAULT_NUM_BEAMS):
         if isinstance(sentences, str):
             sentences = [sentences]
 
@@ -76,13 +76,13 @@ class Translator:
                 encoded = encoded.to("cuda")
 
             try:
-                generated_tokens = self.translate(encoded)
+                generated_tokens = self.translate(encoded, max_length=max_length, num_beams=num_beams)
             except RuntimeError:
                 # Out-of-memory; switch to CPU
                 self.no_cuda = True
                 self.model = self.model.to("cpu")
                 encoded = encoded.to("cpu")
-                generated_tokens = self.translate(encoded)
+                generated_tokens = self.translate(encoded, max_length=max_length, num_beams=num_beams)
 
             yield self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 
@@ -116,6 +116,15 @@ def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     return model, tokenizer, no_cuda
+
+
+def update_translator_lang(side: str):
+    st.session_state[f"{side}_lang_key"] = TRANS_LANG2KEY[st.session_state[f"{side}_lang"]]
+    if "translator" in st.session_state and st.session_state["translator"]:
+        if side == "src":
+            st.session_state["translator"].set_src_lang(st.session_state["src_lang"])
+        else:
+            st.session_state["translator"].set_tgt_lang(st.session_state["tgt_lang"])
 
 
 TRANS_LANG2KEY = {

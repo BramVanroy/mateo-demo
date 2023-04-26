@@ -5,16 +5,13 @@ from math import ceil
 import numpy as np
 import pandas as pd
 import streamlit as st
-from mateo_st.translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator
-from mateo_st.utils import cli_args, create_download_link, load_css, set_general_session_keys, update_translator_lang
+from mateo_st.translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator, update_translator_lang
+from mateo_st.utils import cli_args, create_download_link, load_css
 
 
 def _init():
     st.set_page_config(page_title="Automatically Translate | MATEO", page_icon="📖")
     load_css("base")
-    load_css("translation")
-
-    set_general_session_keys()
 
     if "translator" not in st.session_state:
         st.session_state["translator"] = None
@@ -46,9 +43,8 @@ def _init():
         "[No Language Left Behind](https://ai.facebook.com/research/no-language-left-behind/)"
         " ([paper](https://arxiv.org/abs/2207.04672)). It enables machine translation to and from 200 languages."
         " In this interface, we specifically use"
-        f" [{st.session_state['transl_model_size']}](https://huggingface.co/{TRANS_SIZE2MODEL[st.session_state['transl_model_size']]})"
-        f" (max. length: {cli_args().transl_max_length:,}; num. beams: {cli_args().transl_num_beams};"
-        f" batch size: {cli_args().transl_batch_size})."
+        f" [{cli_args().transl_model_size}](https://huggingface.co/{TRANS_SIZE2MODEL[cli_args().transl_model_size]})"
+        f" (max. length={cli_args().transl_max_length}; num_beams={cli_args().transl_num_beams})."
     )
 
 
@@ -81,7 +77,7 @@ def _model_selection():
     )
 
     load_info = st.info(
-        f"(Down)loading model {st.session_state['transl_model_size']} for"
+        f"(Down)loading model {cli_args().transl_model_size} for"
         f" {st.session_state['src_lang']} → {st.session_state['tgt_lang']}."
         f"\nThis may take a while the first time..."
     )
@@ -91,13 +87,12 @@ def _model_selection():
             st.session_state["translator"] = Translator(
                 src_lang=st.session_state["src_lang"],
                 tgt_lang=st.session_state["tgt_lang"],
-                model_size=st.session_state["transl_model_size"],
-                max_length=st.session_state["transl_max_length"],
-                num_beams=st.session_state["transl_num_beams"],
-                no_cuda=st.session_state["transl_no_cuda"] or st.session_state["no_cuda"],
+                model_size=cli_args().transl_model_size,
+                quantize=not cli_args().transl_no_quantize,
+                no_cuda=cli_args().transl_no_cuda or cli_args().no_cuda,
             )
         except KeyError as exc:
-            load_info.error(str(exc))
+            load_info.exception(exc)
 
     if "translator" in st.session_state and st.session_state["translator"] is not None:
         load_info.success(
@@ -128,10 +123,10 @@ def _data_input():
 
 
 def _get_increment_size(num_sents) -> int:
-    if st.session_state["transl_batch_size"] >= num_sents:
+    if cli_args().transl_batch_size >= num_sents:
         return 100
     else:
-        return ceil(100 / (num_sents / st.session_state["transl_batch_size"]))
+        return ceil(100 / (num_sents / cli_args().transl_batch_size))
 
 
 def _translate():
@@ -152,7 +147,10 @@ def _translate():
         transl_ct = st.empty()
         df = pd.DataFrame()
         for translations in st.session_state["translator"].batch_translate(
-            sentences, batch_size=st.session_state["transl_batch_size"]
+                sentences,
+                batch_size=cli_args().transl_batch_size,
+                max_length=cli_args().transl_max_length,
+                num_beams=cli_args().transl_num_beams,
         ):
             all_translations.extend(translations)
 

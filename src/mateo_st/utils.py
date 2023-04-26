@@ -12,18 +12,8 @@ from mateo_st.translator import (
     DEFAULT_MAX_LENGTH,
     DEFAULT_MODEL_SIZE,
     DEFAULT_NUM_BEAMS,
-    TRANS_LANG2KEY,
     TRANS_SIZE2MODEL,
 )
-
-
-def update_translator_lang(side: str):
-    st.session_state[f"{side}_lang_key"] = TRANS_LANG2KEY[st.session_state[f"{side}_lang"]]
-    if "translator" in st.session_state and st.session_state["translator"]:
-        if side == "src":
-            st.session_state["translator"].set_src_lang(st.session_state["src_lang"])
-        else:
-            st.session_state["translator"].set_tgt_lang(st.session_state["tgt_lang"])
 
 
 def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download"):
@@ -74,7 +64,7 @@ def cli_args():
         "--transl_num_beams",
         type=int,
         default=DEFAULT_NUM_BEAMS,
-        help="number of beams to generate translations with",
+        help="number of beams to  allow to generate translations with",
     )
     cparser.add_argument(
         "--transl_max_length",
@@ -98,34 +88,12 @@ def cli_args():
     return args
 
 
-def set_general_session_keys():
-    # CUDA
-    if "no_cuda" not in st.session_state:
-        st.session_state["no_cuda"] = cli_args().no_cuda
-
-    if "transl_no_cuda" not in st.session_state:
-        st.session_state["transl_no_cuda"] = cli_args().transl_no_cuda
-
-    # TRANSLATION
-    if "transl_batch_size" not in st.session_state:
-        st.session_state["transl_batch_size"] = cli_args().transl_batch_size
-
-    if "transl_model_size" not in st.session_state:
-        st.session_state["transl_model_size"] = cli_args().transl_model_size
-
-    if "transl_num_beams" not in st.session_state:
-        st.session_state["transl_num_beams"] = cli_args().transl_num_beams
-
-    if "transl_max_length" not in st.session_state:
-        st.session_state["transl_max_length"] = cli_args().transl_max_length
-
-
 def load_css(name: str):
     pfcss = Path(__file__).parent.joinpath(f"css/{name}.css")
     st.markdown(f"<style>{read_file(pfcss)}</style>", unsafe_allow_html=True)
 
 
-@st.cache_data
+@st.cache_data(max_entries=64)
 def read_file(fin: Union[str, PathLike]):
     return Path(fin).read_text(encoding="utf-8")
 
