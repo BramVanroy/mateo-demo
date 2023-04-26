@@ -41,7 +41,7 @@ COLORS_PLOTLY = {
 def cli_args():
     import argparse
 
-    cparser = argparse.ArgumentParser()
+    cparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     cparser.add_argument("--no_cuda", action="store_true", help="whether to disable CUDA for all tasks")
     cparser.add_argument("--transl_no_cuda", action="store_true", help="whether to disable CUDA for translation")
 
