@@ -130,62 +130,63 @@ def _get_increment_size(num_sents) -> int:
 
 
 def _translate():
-    if "text_to_translate" not in st.session_state or not st.session_state["text_to_translate"]:
-        return None
-    elif "translator" in st.session_state and st.session_state["translator"]:
-        st.markdown("## Translations")
-        transl_info = st.info("Translating...")
-        download_info = st.empty()
 
-        pbar = st.progress(0)
-        sentences = [s.strip() for s in st.session_state["text_to_translate"].splitlines() if s.strip()]
-        num_sentences = len(sentences)
-        increment = _get_increment_size(num_sentences)
-        percent_done = 0
-        all_translations = []
+    st.markdown("## Translations")
+    transl_info = st.info("Translating...")
+    download_info = st.empty()
 
-        transl_ct = st.empty()
-        df = pd.DataFrame()
-        for translations in st.session_state["translator"].batch_translate(
-                sentences,
-                batch_size=cli_args().transl_batch_size,
-                max_length=cli_args().transl_max_length,
-                num_beams=cli_args().transl_num_beams,
-        ):
-            all_translations.extend(translations)
+    pbar = st.progress(0)
+    sentences = [s.strip() for s in st.session_state["text_to_translate"].splitlines() if s.strip()]
+    num_sentences = len(sentences)
+    increment = _get_increment_size(num_sentences)
+    percent_done = 0
+    all_translations = []
 
-            df = pd.DataFrame(
-                list(zip(sentences, all_translations)),
-                columns=[
-                    f"src ({st.session_state['src_lang_key']})",
-                    f"mt ({st.session_state['tgt_lang_key']}):"
-                    f" {st.session_state['translator'].model_name.split('/')[-1]}",
-                ],
-            )
-            df.index = np.arange(1, len(df) + 1)  # Index starting at number 1
-            transl_ct.dataframe(df)
-            percent_done += increment
-            pbar.progress(min(percent_done, 100))
+    transl_ct = st.empty()
+    df = pd.DataFrame()
+    for translations in st.session_state["translator"].batch_translate(
+            sentences,
+            batch_size=cli_args().transl_batch_size,
+            max_length=cli_args().transl_max_length,
+            num_beams=cli_args().transl_num_beams,
+    ):
+        all_translations.extend(translations)
 
-        pbar.empty()
-        transl_info.success("Done translating!")
-
-        xlsx_download_html = create_download_link(df, "translations.xlsx", "Download Excel")
-        txt_download_html = create_download_link(
-            "\n".join(all_translations) + "\n", "translations.txt", "Download text"
+        df = pd.DataFrame(
+            list(zip(sentences, all_translations)),
+            columns=[
+                f"src ({st.session_state['src_lang_key']})",
+                f"mt ({st.session_state['tgt_lang_key']}):"
+                f" {st.session_state['translator'].model_name.split('/')[-1]}",
+            ],
         )
-        download_info.markdown(
-            f"- <strong>{xlsx_download_html}</strong>: parallel source/MT sentences as Excel file;\n"
-            f"- <strong>{txt_download_html}</strong>: only translations, as a plain text file.",
-            unsafe_allow_html=True,
-        )
+        df.index = np.arange(1, len(df) + 1)  # Index starting at number 1
+        transl_ct.dataframe(df)
+        percent_done += increment
+        pbar.progress(min(percent_done, 100))
+
+    pbar.empty()
+    transl_info.success("Done translating!")
+
+    xlsx_download_html = create_download_link(df, "translations.xlsx", "Download Excel")
+    txt_download_html = create_download_link(
+        "\n".join(all_translations) + "\n", "translations.txt", "Download text"
+    )
+    download_info.markdown(
+        f"- <strong>{xlsx_download_html}</strong>: parallel source/MT sentences as Excel file;\n"
+        f"- <strong>{txt_download_html}</strong>: only translations, as a plain text file.",
+        unsafe_allow_html=True,
+    )
 
 
 def main():
     _init()
     _model_selection()
     _data_input()
-    _translate()
+
+    if "translator" in st.session_state and st.session_state["translator"] and "text_to_translate" in st.session_state and st.session_state["text_to_translate"]:
+        if st.button("Translate"):
+            _translate()
 
 
 if __name__ == "__main__":
