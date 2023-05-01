@@ -334,6 +334,13 @@ def _build_corpus_df():
     df = pd.DataFrame(data)
 
     # Remove "sacre" (bleu's output with sacrebleu is "sacrebleu")
+    def col_mapper(colname: str):
+        if colname in METRICS_META:
+            return f"{colname} {'↑' if METRICS_META[colname].higher_better  else '↓'}"
+        else:
+            return colname
+
+    df = df.rename(mapper=col_mapper, axis=1)
     df = df.rename(mapper=lambda col: col.replace("sacre", ""), axis=1)
     return df
 
@@ -366,17 +373,6 @@ def _build_sentence_df(include_sys_translations: bool = True):
 
 
 def _draw_corpus_scores(df):
-    def col_mapper(colname: str):
-        if colname in METRICS_META:
-            return f"{colname} {'↑' if METRICS_META[colname].higher_better  else '↓'}"
-        elif f"sacre{colname}" in METRICS_META:
-            metric_name = f"sacre{colname}"
-            return f"{colname} {'↑' if METRICS_META[metric_name].higher_better  else '↓'}"
-        else:
-            return colname
-
-    df = df.rename(mapper=col_mapper, axis=1)
-
     # Barplot
     # Reshape DataFame for plotting
     df_melt = pd.melt(df, id_vars="system", var_name="metric", value_name="score")
@@ -416,7 +412,11 @@ def _style_df_for_display(df):
     rounded_df = df.replace(pd.NA, np.nan)
     rounded_df.iloc[:, 1:] = rounded_df.iloc[:, 1:].astype(float).round(decimals=2).copy()
     numeric_col_names = rounded_df.columns[1:].tolist()
-    styled_df = rounded_df.style.highlight_null(props="color: transparent;").format(
+    higher_better = [c for c in numeric_col_names if "↑" in c]
+    lower_better = [c for c in numeric_col_names if "↓" in c]
+    styled_df = rounded_df.style.highlight_null(props="color: transparent;")
+    styled_df = styled_df.highlight_max(subset=higher_better, props="font-weight: bold;").highlight_min(subset=lower_better, props="font-weight: bold;")
+    styled_df = styled_df.format(
         "{:,.2f}", na_rep="", subset=numeric_col_names
     )
     return styled_df
@@ -436,7 +436,7 @@ def _evaluate():
         st.markdown("### 🗄️ Table(s)")
         st.markdown("#### Corpus")
         styled_df = _style_df_for_display(corpus_df)
-        st.dataframe(styled_df)
+        st.table(styled_df)
 
         excel_link = create_download_link(corpus_df, "mateo-corpus.xlsx", "Excel file")
         txt_link = create_download_link(
@@ -450,6 +450,7 @@ def _evaluate():
         pretty_metrics = ", ".join(METRICS_META[m].name for m in st.session_state["metrics"])
         st.code(
             styled_df.hide(axis="index").to_latex(
+                convert_css=True,
                 column_format=latex_col_format,
                 caption=f"Metric scores ({pretty_metrics}) for"
                 f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
