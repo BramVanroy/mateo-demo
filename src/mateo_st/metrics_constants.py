@@ -36,7 +36,6 @@ class MetricMeta:
     description_html: str
     paper_url: str
     implementation_html: str
-    evaluate_name: str
     is_default_selected: bool = False
     higher_better: bool = True
     version: Optional[str] = None
@@ -60,7 +59,6 @@ METRICS_META = {
         paper_url="https://openreview.net/forum?id=SkeHuCVFDr",
         implementation_html="<p><a href='https://github.com/Tiiiger/bert_score' title='BertScore GitHub'"
         ">BERTScore</a></p>",
-        evaluate_name="bertscore",
         version=bert_score.__version__,
         corpus_score_key="mean_f1",  # Manually added in postprocessing
         sentences_score_key="f1",
@@ -111,7 +109,7 @@ METRICS_META = {
             # to calculate baseline/idf scores on
         ),
     ),
-    "bleu": MetricMeta(
+    "sacrebleu": MetricMeta(
         name="BLEU",
         metric_class="baseline",
         full_name="BiLingual Evaluation Understudy",
@@ -123,7 +121,6 @@ METRICS_META = {
         paper_url="https://aclanthology.org/P02-1040/",
         implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
         is_default_selected=True,
-        evaluate_name="sacrebleu",
         version=sacrebleu.__version__,
         options=(
             MetricOption(
@@ -162,7 +159,6 @@ METRICS_META = {
         " predicting existing MT metrics such as BLEU and BERTScore.</p>",
         paper_url="https://aclanthology.org/2020.acl-main.704/",
         implementation_html="<p><a href='https://github.com/google-research/bleurt' title='BLEURT GitHub'>BLEURT</a></p>",
-        evaluate_name="bleurt",
         version="commit cebe7e6",
         corpus_score_key="mean_score",  # Manually added in postprocessing
         sentences_score_key="scores",
@@ -196,7 +192,6 @@ METRICS_META = {
         paper_url="https://aclanthology.org/W15-3049",
         implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
         is_default_selected=True,
-        evaluate_name="chrf",
         version=sacrebleu.__version__,
         options=(
             MetricOption(
@@ -242,7 +237,6 @@ METRICS_META = {
         paper_url="https://aclanthology.org/2020.emnlp-main.213/",
         implementation_html="<p><a href='https://github.com/Unbabel/COMET' title='COMET GitHub'>COMET</a></p>",
         is_default_selected=True,
-        evaluate_name="comet",
         version=comet.__version__,
         corpus_score_key="mean_score",
         sentences_score_key="scores",
@@ -277,7 +271,6 @@ METRICS_META = {
         implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
         is_default_selected=True,
         higher_better=False,
-        evaluate_name="ter",
         version=sacrebleu.__version__,
         options=(
             MetricOption(

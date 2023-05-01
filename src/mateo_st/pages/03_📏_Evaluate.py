@@ -1,6 +1,6 @@
 import warnings
 from io import StringIO
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Union
 
 import evaluate
 import numpy as np
@@ -8,7 +8,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from evaluate import EvaluationModule
-from mateo_st.metrics_constants import METRICS_META, postprocess_result
+from mateo_st.metrics_constants import METRICS_META, postprocess_result, MetricMeta, MetricOption
 from mateo_st.utils import (
     cli_args,
     create_download_link,
@@ -132,7 +132,6 @@ def _data_input():
         "How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=max_sys
     )
 
-
     # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
     # This can happen when a user first has three systems and then changes it back to 1
     for sys_idx in range(1, max_sys + 1):
@@ -223,13 +222,12 @@ def _add_metrics_selection_to_state():
     """Solidify the selected metrics and their options in one easy-to-use dictionary
     that we can use later on to initialize the metrics.
     """
-    for name, meta in METRICS_META.items():
-        if name in st.session_state and st.session_state[name]:
-            metric_name = meta.evaluate_name
+    for metric_name, meta in METRICS_META.items():
+        if metric_name in st.session_state and st.session_state[metric_name]:
             st.session_state["metrics"][metric_name] = {}
             for opt in meta.options:
                 opt_name = opt.name
-                opt_val = st.session_state[f"{name}--{opt_name}"]
+                opt_val = st.session_state[f"{metric_name}--{opt_name}"]
                 if opt.empty_str_is_none:
                     if opt_val == "":
                         opt_val = None
@@ -240,9 +238,6 @@ def _add_metrics_selection_to_state():
                             opt_val = int(opt_val)
 
                 st.session_state["metrics"][metric_name][opt_name] = opt_val
-                st.session_state["metrics"][metric_name]["requires_source"] = meta.requires_source
-                st.session_state["metrics"][metric_name]["corpus_score_key"] = meta.corpus_score_key
-                st.session_state["metrics"][metric_name]["sentences_score_key"] = meta.sentences_score_key
 
 
 @st.cache_resource(show_spinner=False, max_entries=24, ttl=86400)
@@ -281,34 +276,37 @@ def _compute_metrics():
 
     for sys_idx, sys_segs in st.session_state["sys_segments"].items():
         results[sys_idx] = {}
-        for metric_name, opts in st.session_state["metrics"].items():
+        for metric_evaluate_name, opts in st.session_state["metrics"].items():
+            opts: Dict[str, Union[MetricOption, MetricMeta]] = opts.copy()  # Copy to not pop globally
+            meta = METRICS_META[metric_evaluate_name]
+
             if sys_idx == 1:
-                msg = f"(Down)loading metric <code>{metric_name}</code> and evaluating system #{sys_idx}."
+                msg = f"(Down)loading metric <code>{meta.name}</code> and evaluating system #{sys_idx}."
+                if meta.metric_class == "neural":
+                    msg += f"<br><code>{meta.name}</code> is a neural metric, so downloading and calculating may take" \
+                           f" a long while, depending on the size of your dataset."
             else:
-                msg = f"Evaluating system #{sys_idx} with <code>{metric_name}"
+                msg = f"Evaluating system #{sys_idx} with <code>{meta.name}</code>"
+                if meta.metric_class == "neural":
+                    msg += f"<br><code>{meta.name}</code> is a neural metric, so calculating may take" \
+                           f" a long while, depending on the size of your dataset."
 
             pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
 
-            opts = opts.copy()  # Copy to not pop globally
-            corpus_score_key = opts.pop("corpus_score_key")
-            sentences_score_key = opts.pop("sentences_score_key")
-            config_name = opts.pop("config_name", None)
-            requires_source = opts.pop("requires_source")
-
             result = _compute_metric(
-                metric_name,
+                metric_evaluate_name,
                 predictions=sys_segs,
                 references=st.session_state["ref_segments"],
-                sources=st.session_state["src_segments"] if requires_source else None,
-                config_name=config_name,
+                sources=st.session_state["src_segments"] if meta.requires_source else None,
+                config_name=opts.pop("config_name", None),
                 **opts,
             )
 
-            result = postprocess_result(metric_name, result)
+            result = postprocess_result(metric_evaluate_name, result)
 
-            results[sys_idx][metric_name] = {
-                "corpus": result[corpus_score_key],
-                "sentences": result[sentences_score_key] if sentences_score_key else None,
+            results[sys_idx][metric_evaluate_name] = {
+                "corpus": result[meta.corpus_score_key],
+                "sentences": result[meta.sentences_score_key] if meta.sentences_score_key else None,
             }
 
             progress += increment
