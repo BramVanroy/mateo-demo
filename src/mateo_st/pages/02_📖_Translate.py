@@ -120,7 +120,9 @@ def _data_input():
         else:
             st.session_state["text_to_translate"] = None
     else:
-        st.session_state["text_to_translate"] = st.text_area(label="Sentences to translate", label_visibility="collapsed")
+        st.session_state["text_to_translate"] = st.text_area(
+            label="Sentences to translate", label_visibility="collapsed"
+        )
 
 
 def _get_increment_size(num_sents) -> int:
@@ -147,10 +149,10 @@ def _translate():
     transl_ct = st.empty()
     df = pd.DataFrame()
     for translations in st.session_state["translator"].batch_translate(
-            sentences,
-            batch_size=cli_args().transl_batch_size,
-            max_length=cli_args().transl_max_length,
-            num_beams=cli_args().transl_num_beams,
+        sentences,
+        batch_size=cli_args().transl_batch_size,
+        max_length=cli_args().transl_max_length,
+        num_beams=cli_args().transl_num_beams,
     ):
         all_translations.extend(translations)
 
@@ -171,9 +173,7 @@ def _translate():
     transl_info.success("Done translating!")
 
     xlsx_download_html = create_download_link(df, "translations.xlsx", "Download Excel")
-    txt_download_html = create_download_link(
-        "\n".join(all_translations) + "\n", "translations.txt", "Download text"
-    )
+    txt_download_html = create_download_link("\n".join(all_translations) + "\n", "translations.txt", "Download text")
     download_info.markdown(
         f"- <strong>{xlsx_download_html}</strong>: parallel source/MT sentences as Excel file;\n"
         f"- <strong>{txt_download_html}</strong>: only translations, as a plain text file.",

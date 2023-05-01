@@ -65,8 +65,14 @@ class Translator:
                 num_beams=num_beams,
             )
 
-    def batch_translate(self, sentences: Union[str, List[str]], *, batch_size: int = DEFAULT_BATCH_SIZE,
-                        max_length: int = DEFAULT_MAX_LENGTH, num_beams: int = DEFAULT_NUM_BEAMS):
+    def batch_translate(
+        self,
+        sentences: Union[str, List[str]],
+        *,
+        batch_size: int = DEFAULT_BATCH_SIZE,
+        max_length: int = DEFAULT_MAX_LENGTH,
+        num_beams: int = DEFAULT_NUM_BEAMS,
+    ):
         if isinstance(sentences, str):
             sentences = [sentences]
 

@@ -1,7 +1,7 @@
 import warnings
 from io import StringIO
 from pathlib import Path
-from typing import List, Optional, Tuple, Dict, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import evaluate
 import numpy as np
@@ -9,14 +9,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from evaluate import EvaluationModule
-from mateo_st.metrics_constants import METRICS_META, postprocess_result, MetricMeta, MetricOption
-from mateo_st.utils import (
-    cli_args,
-    create_download_link,
-    isfloat,
-    isint,
-    load_css,
-)
+from mateo_st.metrics_constants import METRICS_META, MetricMeta, MetricOption, postprocess_result
+from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -290,13 +284,17 @@ def _compute_metrics():
             if sys_idx == 1:
                 msg = f"(Down)loading metric <code>{meta.name}</code> and evaluating system #{sys_idx}."
                 if meta.metric_class == "neural":
-                    msg += f"<br><code>{meta.name}</code> is a neural metric, so downloading and calculating may take" \
-                           f" a long while, depending on the size of your dataset."
+                    msg += (
+                        f"<br><code>{meta.name}</code> is a neural metric, so downloading and calculating may take"
+                        f" a long while, depending on the size of your dataset."
+                    )
             else:
                 msg = f"Evaluating system #{sys_idx} with <code>{meta.name}</code>"
                 if meta.metric_class == "neural":
-                    msg += f"<br><code>{meta.name}</code> is a neural metric, so calculating may take" \
-                           f" a long while, depending on the size of your dataset."
+                    msg += (
+                        f"<br><code>{meta.name}</code> is a neural metric, so calculating may take"
+                        f" a long while, depending on the size of your dataset."
+                    )
 
             pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
 
@@ -354,7 +352,7 @@ def _draw_corpus_scores(df):
         y="score",
         color="system" if len(st.session_state["sys_files"]) > 1 else None,
         barmode="group",
-        template="plotly"
+        template="plotly",
     )
 
     st.plotly_chart(fig)
