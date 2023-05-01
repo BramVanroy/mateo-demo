@@ -108,23 +108,30 @@ def _data_input():
         else:
             return []
 
-    ref_file = st.file_uploader("Reference file")
-    st.session_state["ref_segments"] = read_file(ref_file)
-    st.session_state["ref_file"] = ref_file.name if ref_file else None
-
     # Check whether any of the selected metrics require source input
+    # If so, use a two-col layout for the input buttons, if not just use full-width reference input
     if any(
         meta.requires_source and name in st.session_state and st.session_state[name]
         for name, meta in METRICS_META.items()
     ):
-        src_file = st.file_uploader("Source file (only needed for some metrics, like COMET)")
+        ref_inp_col, src_inp_col = st.columns(2)
+        ref_file = ref_inp_col.file_uploader("Reference file")
+        src_file = src_inp_col.file_uploader("Source file")
         st.session_state["src_segments"] = read_file(src_file)
         st.session_state["src_file"] = src_file.name if src_file else None
+    else:
+        st.session_state["src_segments"] = []
+        st.session_state["src_file"] = None
+        ref_file = st.file_uploader("Reference file")
+
+    st.session_state["ref_segments"] = read_file(ref_file)
+    st.session_state["ref_file"] = ref_file.name if ref_file else None
 
     max_sys = cli_args().eval_max_sys
     num_sys = st.number_input(
         "How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=max_sys
     )
+
 
     # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
     # This can happen when a user first has three systems and then changes it back to 1
@@ -276,9 +283,7 @@ def _compute_metrics():
         results[sys_idx] = {}
         for metric_name, opts in st.session_state["metrics"].items():
             if sys_idx == 1:
-                msg = f"(Down)loading metric <code>{metric_name}</code> and evaluating system #{sys_idx}." \
-                      f" Downloading may take a while."
-
+                msg = f"(Down)loading metric <code>{metric_name}</code> and evaluating system #{sys_idx}."
             else:
                 msg = f"Evaluating system #{sys_idx} with <code>{metric_name}"
 
