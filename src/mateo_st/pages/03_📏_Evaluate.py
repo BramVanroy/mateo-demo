@@ -412,6 +412,19 @@ def _evaluate():
         )
         st.markdown(f"You can download the table as an {excel_link}, or as a {txt_link}.", unsafe_allow_html=True)
 
+        # LATEX
+        st.markdown("##### LaTeX")
+        latex_col_format = "l" + ("r" * len(st.session_state["metrics"]))
+
+        st.code(
+            styled_df.hide(axis="index").to_latex(
+                column_format=latex_col_format,
+                caption=f"Metric scores ({', '.join(list(st.session_state['metrics']))}) for"
+                        f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
+            ),
+            language="latex",
+        )
+
         # Sentence
         st.markdown("#### Sentences")
         sentence_df = _build_sentence_df(include_sys_translations=True)
@@ -430,18 +443,6 @@ def _evaluate():
                 excel_link = create_download_link(sentence_df, "mateo-sentences.xlsx", "Excel file", df_groupby="metric")
                 st.markdown(f"You can download the table as an {excel_link}. Metrics are separated in sheets.", unsafe_allow_html=True)
 
-        # LATEX
-        st.markdown("### 📄 LaTeX")
-        latex_col_format = "l" + ("r" * len(st.session_state["metrics"]))
-
-        st.code(
-            styled_df.hide(axis="index").to_latex(
-                column_format=latex_col_format,
-                caption=f"Metric scores ({', '.join(list(st.session_state['metrics']))}) for"
-                        f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
-            ),
-            language="latex",
-        )
 
 
 def main():
