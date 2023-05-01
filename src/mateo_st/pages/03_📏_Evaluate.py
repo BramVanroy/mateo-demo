@@ -7,6 +7,7 @@ import evaluate
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 from evaluate import EvaluationModule
 from mateo_st.metrics_constants import METRICS_META, MetricMeta, MetricOption, postprocess_result
@@ -362,13 +363,23 @@ def _build_sentence_df(include_sys_translations: bool = True):
 
 
 def _draw_corpus_scores(df):
-    df = df.rename(
-        mapper=lambda col: f"{col} {'↑' if METRICS_META[col].higher_better else '↓'}" if col in METRICS_META else col,
-        axis=1,
-    )
+    def col_mapper(colname: str):
+        if colname in METRICS_META:
+            return f"{colname} {'↑' if METRICS_META[colname].higher_better  else '↓'}"
+        elif f"sacre{colname}" in METRICS_META:
+            metric_name = f"sacre{colname}"
+            return f"{colname} {'↑' if METRICS_META[metric_name].higher_better  else '↓'}"
+        else:
+            return colname
+
+    df = df.rename(mapper=col_mapper, axis=1)
+
+    # Barplot
     # Reshape DataFame for plotting
     df_melt = pd.melt(df, id_vars="system", var_name="metric", value_name="score")
-    fig = px.bar(
+
+    bar_plot_tab, radar_plot_tab = st.tabs(["Bar plot", "Radar plot"])
+    bar_fig = px.bar(
         df_melt,
         x="metric",
         y="score",
@@ -377,7 +388,28 @@ def _draw_corpus_scores(df):
         template="plotly",
     )
 
-    st.plotly_chart(fig)
+    bar_plot_tab.plotly_chart(bar_fig)
+
+    # Radar plot
+    systems = df["system"].unique().tolist()
+    metrics = [col for col in df.columns if col != "system"]
+    radar_fig = go.Figure()
+
+    for system in systems:
+        print(system)
+        print(df.loc[df["system"] == system].values.flatten().tolist()[1:])
+        radar_fig.add_trace(go.Scatterpolar(
+            r=df.loc[df["system"] == system].values.flatten().tolist()[1:],
+            theta=metrics,
+            fill="toself",
+            name=system
+        ))
+
+    radar_fig.update_layout(
+        showlegend=True,
+        template="plotly"
+    )
+    radar_plot_tab.plotly_chart(radar_fig)
 
 
 def _style_df_for_display(df):
@@ -415,11 +447,11 @@ def _evaluate():
         # LATEX
         st.markdown("##### LaTeX")
         latex_col_format = "l" + ("r" * len(st.session_state["metrics"]))
-
+        pretty_metrics = ', '.join(METRICS_META[m].name for m in st.session_state['metrics'])
         st.code(
             styled_df.hide(axis="index").to_latex(
                 column_format=latex_col_format,
-                caption=f"Metric scores ({', '.join(list(st.session_state['metrics']))}) for"
+                caption=f"Metric scores ({pretty_metrics}) for"
                         f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
             ),
             language="latex",
@@ -427,8 +459,15 @@ def _evaluate():
 
         # Sentence
         st.markdown("#### Sentences")
-        sentence_df = _build_sentence_df(include_sys_translations=True)
+        with st.expander("About sentence-level scores"):
+            st.write("Some metrics have a corresponding sentence-level score, which you can then download here. For"
+                     " instance,  the COMET corpus score is simply the average (arithmetic mean) of all the sentence"
+                     " scores. This is not the case for all metrics. Corpus BLEU for instance, is not simply the"
+                     " arithmetic mean of all sentence-level BLEU scores but is calculated by its geometric mean and"
+                     " modified by a brevity penalty. As such, sentence-level BLEU scores, or similar, are not given"
+                     " because they individually not a good representation of a system's performance.")
 
+        sentence_df = _build_sentence_df(include_sys_translations=True)
         if not sentence_df.empty:
             metric_names = sentence_df["metric"].unique().tolist()
             if metric_names:
@@ -442,8 +481,10 @@ def _evaluate():
 
                 excel_link = create_download_link(sentence_df, "mateo-sentences.xlsx", "Excel file", df_groupby="metric")
                 st.markdown(f"You can download the table as an {excel_link}. Metrics are separated in sheets.", unsafe_allow_html=True)
-
-
+        else:
+            segment_level_metrics = [meta.name for m, meta in METRICS_META.items() if meta.segment_level]
+            st.info(f"No segment-level metrics calculated. Segment level metrics are:"
+                     f" {', '.join(segment_level_metrics)}.")
 
 def main():
     _init()
