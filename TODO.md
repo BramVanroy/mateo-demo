@@ -10,7 +10,7 @@
 - Add Dockerfile
 - Add signatures to output
 - Remove index from latex and underline "Best" systen (but not that this depends on `higher_better`)
-- Add script that automatically downloads the most important models/metrics. This can optionally be run before starting
+- Add shell script that automatically downloads the most important models/metrics. This can optionally be run before starting
 streamlit for the first time to make sure that the basics models are at least downloaded
 - Add some kind of pre-batching option so that we can show better progress in the progress bar
-- For evaluation, use st.info above the progressbar, like in translation
+- use Ray? https://towardsdatascience.com/parallel-inference-of-huggingface-transformers-on-cpus-4487c28abe23
