@@ -112,14 +112,14 @@ def _data_input():
         " be removed."
     )
     if fupload_check:
-        uploaded_file = st.file_uploader("Text file", label_visibility="hidden")
+        uploaded_file = st.file_uploader("Text file", label_visibility="collapsed")
         if uploaded_file is not None:
             stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
             st.session_state["text_to_translate"] = stringio.read()
         else:
             st.session_state["text_to_translate"] = None
     else:
-        st.session_state["text_to_translate"] = st.text_area(label="Sentences to translate", label_visibility="hidden")
+        st.session_state["text_to_translate"] = st.text_area(label="Sentences to translate", label_visibility="collapsed")
 
 
 def _get_increment_size(num_sents) -> int:
@@ -185,7 +185,21 @@ def main():
     _model_selection()
     _data_input()
 
-    if "translator" in st.session_state and st.session_state["translator"] and "text_to_translate" in st.session_state and st.session_state["text_to_translate"]:
+    enabled = True
+    msg = "Make sure that the following requirements are met:\n"
+    if not ("translator" in st.session_state and st.session_state["translator"]):
+        enabled = False
+        msg += "- Translator not loaded\n"
+
+    if not ("text_to_translate" in st.session_state and st.session_state["text_to_translate"]):
+        enabled = False
+        msg += "- Add text to translate\n"
+
+    msg_container = st.empty()
+    if not enabled:
+        msg_container.warning(msg)
+    else:
+        msg_container.empty()
         if st.button("Translate"):
             _translate()
 
