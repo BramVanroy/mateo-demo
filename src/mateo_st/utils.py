@@ -3,7 +3,7 @@ import os
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 import pandas as pd
 import streamlit as st
@@ -16,12 +16,17 @@ from mateo_st.translator import (
 )
 
 
-def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download"):
+def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download", df_groupby: Optional[str] = None):
     if isinstance(data, pd.DataFrame):
         # Write the DataFrame to an in-memory bytes object
         bytes_io = BytesIO()
         with pd.ExcelWriter(bytes_io, "xlsxwriter") as writer:
-            data.to_excel(writer, index=False)
+            if df_groupby is not None:
+                for groupname, groupdf in data.groupby(df_groupby):
+                    groupdf = groupdf.drop(columns="metric").reset_index(drop=True)
+                    groupdf.to_excel(writer, index=False, sheet_name=groupname)
+            else:
+                data.to_excel(writer, index=False)
 
         # Retrieve the bytes from the bytes object
         b64 = base64.b64encode(bytes_io.getvalue()).decode("utf-8")

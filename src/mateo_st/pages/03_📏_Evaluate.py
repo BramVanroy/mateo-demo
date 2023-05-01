@@ -12,7 +12,6 @@ from evaluate import EvaluationModule
 from mateo_st.metrics_constants import METRICS_META, MetricMeta, MetricOption, postprocess_result
 from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
 
-
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
@@ -111,8 +110,8 @@ def _data_input():
     # Check whether any of the selected metrics require source input
     # If so, use a two-col layout for the input buttons, if not just use full-width reference input
     if any(
-        meta.requires_source and name in st.session_state and st.session_state[name]
-        for name, meta in METRICS_META.items()
+            meta.requires_source and name in st.session_state and st.session_state[name]
+            for name, meta in METRICS_META.items()
     ):
         src_file = src_inp_col.file_uploader("Source file")
         st.session_state["src_segments"] = read_file(src_file)
@@ -207,7 +206,7 @@ def _validate_state() -> Tuple[bool, str]:
                     # Check that the user input is indeed either an empty string or (one of) the expected dtypes
                     # Also check for special stringy float-types like "nan", "-inf", etc.
                     if (
-                        session_opt != "" and not any(do_test(session_opt) for do_test in do_tests)
+                            session_opt != "" and not any(do_test(session_opt) for do_test in do_tests)
                     ) or session_opt.lower().replace("-", "").replace("+", "") in ("inf", "infinity", "nan"):
                         msg += (
                             f"- Option `{opt_name}` in {meta.name} must be one of: empty string,"
@@ -253,13 +252,13 @@ def _load_metric(metric_name: str, config_name: Optional[str] = None) -> Evaluat
 
 @st.cache_data(show_spinner=False, ttl=86400)
 def _compute_metric(
-    metric_name: str,
-    *,
-    predictions: List[str],
-    references: List[str],
-    sources: Optional[List[str]] = None,
-    config_name: Optional[str] = None,
-    **kwargs,
+        metric_name: str,
+        *,
+        predictions: List[str],
+        references: List[str],
+        sources: Optional[List[str]] = None,
+        config_name: Optional[str] = None,
+        **kwargs,
 ):
     metric = _load_metric(metric_name, config_name)
     if sources:
@@ -323,10 +322,8 @@ def _compute_metrics():
 
 
 def _build_corpus_df():
-    res = st.session_state["results"]
-
     data = []
-    for sys_idx, results in res.items():
+    for sys_idx, results in st.session_state["results"].items():
         sys_data = {"system": st.session_state["sys_files"][sys_idx]}
         for metric_name, metric_res in results.items():
             sys_data[metric_name] = metric_res["corpus"]
@@ -336,6 +333,31 @@ def _build_corpus_df():
 
     # Remove "sacre" (bleu's output with sacrebleu is "sacrebleu")
     df = df.rename(mapper=lambda col: col.replace("sacre", ""), axis=1)
+    return df
+
+
+def _build_sentence_df(include_sys_translations: bool = True):
+    data = []
+    for metric_name in st.session_state["metrics"].keys():
+        if not METRICS_META[metric_name].segment_level:
+            continue
+        for item_idx in range(len(st.session_state["src_segments"])):
+            item = {
+                "metric": metric_name.replace("sacre", ""),
+                "src": st.session_state["src_segments"][item_idx],
+                "ref": st.session_state["ref_segments"][item_idx],
+            }
+            for sys_idx, results in st.session_state["results"].items():
+                sys_name = st.session_state["sys_files"][sys_idx]
+                item[sys_name] = st.session_state["sys_segments"][sys_idx][item_idx] if include_sys_translations else None
+                item[f"{sys_name}_score"] = results[metric_name]["sentences"][item_idx]
+
+            data.append(item)
+
+    df = pd.DataFrame(data)
+    # Drop empty columns, which will happen when include_sys_translations is None
+    df = df.dropna(axis=1, how="all")
+
     return df
 
 
@@ -379,22 +401,43 @@ def _evaluate():
         st.markdown("### 📊 Chart")
         _draw_corpus_scores(corpus_df)
 
-        st.markdown("### 🗄️ Table")
+        st.markdown("### 🗄️ Table(s)")
+        st.markdown("#### Corpus")
         styled_df = _style_df_for_display(corpus_df)
         st.dataframe(styled_df)
-        excel_link = create_download_link(corpus_df, "mateo.xlsx", "Excel file")
+
+        excel_link = create_download_link(corpus_df, "mateo-corpus.xlsx", "Excel file")
         txt_link = create_download_link(
-            corpus_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo.tsv", "tab-separated file"
+            corpus_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-corpus.tsv", "tab-separated file"
         )
         st.markdown(f"You can download the table as an {excel_link}, or as a {txt_link}.", unsafe_allow_html=True)
 
+        # Sentence
+        st.markdown("#### Sentences")
+        sentence_df = _build_sentence_df(include_sys_translations=True)
+
+        if not sentence_df.empty:
+            metric_names = sentence_df["metric"].unique().tolist()
+            if metric_names:
+                grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}
+                pretty_names = [METRICS_META[metric_name].name for metric_name in metric_names]
+
+                for metric_name, tab in zip(metric_names, st.tabs(pretty_names)):
+                    metricdf = grouped_df[metric_name]
+                    metricdf = metricdf.drop(columns="metric").reset_index(drop=True)
+                    tab.dataframe(metricdf)
+
+                excel_link = create_download_link(sentence_df, "mateo-sentences.xlsx", "Excel file", df_groupby="metric")
+                st.markdown(f"You can download the table as an {excel_link}. Metrics are separated in sheets.", unsafe_allow_html=True)
+
+        # LATEX
         st.markdown("### 📄 LaTeX")
         latex_col_format = "l" + ("r" * len(st.session_state["metrics"]))
         st.code(
             styled_df.to_latex(
                 column_format=latex_col_format,
                 caption=f"Metric scores ({', '.join(list(st.session_state['metrics']))}) for"
-                f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
+                        f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
             ),
             language="latex",
         )
