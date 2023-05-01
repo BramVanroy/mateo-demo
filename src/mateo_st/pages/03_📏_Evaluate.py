@@ -396,8 +396,6 @@ def _draw_corpus_scores(df):
     radar_fig = go.Figure()
 
     for system in systems:
-        print(system)
-        print(df.loc[df["system"] == system].values.flatten().tolist()[1:])
         radar_fig.add_trace(go.Scatterpolar(
             r=df.loc[df["system"] == system].values.flatten().tolist()[1:],
             theta=metrics,
