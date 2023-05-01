@@ -1,5 +1,6 @@
 import warnings
 from io import StringIO
+from pathlib import Path
 from typing import List, Optional, Tuple, Dict, Union
 
 import evaluate
@@ -143,7 +144,7 @@ def _data_input():
             sys_container = sys_inp_col_left if sys_idx % 2 != 0 else sys_inp_col_right
             sys_file = sys_container.file_uploader(f"System #{sys_idx} file")
             st.session_state["sys_segments"][sys_idx] = read_file(sys_file)
-            st.session_state["sys_files"][sys_idx] = sys_file.name if sys_file else None
+            st.session_state["sys_files"][sys_idx] = Path(sys_file.name).stem if sys_file else None
         else:
             if sys_idx in st.session_state["sys_segments"]:
                 del st.session_state["sys_segments"][sys_idx]
