@@ -433,8 +433,9 @@ def _evaluate():
         # LATEX
         st.markdown("### 📄 LaTeX")
         latex_col_format = "l" + ("r" * len(st.session_state["metrics"]))
+
         st.code(
-            styled_df.to_latex(
+            styled_df.hide(axis="index").to_latex(
                 column_format=latex_col_format,
                 caption=f"Metric scores ({', '.join(list(st.session_state['metrics']))}) for"
                         f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
