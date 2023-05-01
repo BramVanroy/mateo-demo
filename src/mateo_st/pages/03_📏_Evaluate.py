@@ -227,6 +227,7 @@ def _add_metrics_selection_to_state():
     """Solidify the selected metrics and their options in one easy-to-use dictionary
     that we can use later on to initialize the metrics.
     """
+    st.session_state["metrics"] = dict()
     for metric_name, meta in METRICS_META.items():
         if metric_name in st.session_state and st.session_state[metric_name]:
             st.session_state["metrics"][metric_name] = {}
@@ -412,9 +413,9 @@ def main():
         st.session_state["metrics"] = dict()
     else:
         msg_container.empty()
-        _add_metrics_selection_to_state()
 
         if st.button("Evaluate MT"):
+            _add_metrics_selection_to_state()
             _evaluate()
         else:
             st.write("Click the button above to start calculating the automatic evaluation scores for your data")
