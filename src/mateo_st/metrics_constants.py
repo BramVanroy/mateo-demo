@@ -44,6 +44,7 @@ class MetricMeta:
     requires_source: bool = False
     corpus_score_key: str = "score"
     sentences_score_key: Optional[str] = None
+    segment_level: bool = True
 
 
 METRICS_META = {
@@ -146,6 +147,7 @@ METRICS_META = {
                 choices=tuple(SBTOKENIZERS.keys()),
             ),
         ),
+        segment_level=False,
     ),
     "bleurt": MetricMeta(
         name="BLEURT",
@@ -226,6 +228,7 @@ METRICS_META = {
                 types=(bool,),
             ),
         ),
+        segment_level=False,
     ),
     "comet": MetricMeta(
         name="COMET",
@@ -299,6 +302,7 @@ METRICS_META = {
                 name="case_sensitive", description="Whether to NOT lowercase the data", default=False, types=(bool,)
             ),
         ),
+        segment_level=False,
     ),
 }
 
