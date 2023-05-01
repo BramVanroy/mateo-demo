@@ -129,14 +129,16 @@ def _data_input():
 
     max_sys = cli_args().eval_max_sys
     num_sys = st.number_input(
-        "How many systems do you wish to compare? (max. 3)", step=1, min_value=1, max_value=max_sys
+        f"How many systems do you wish to compare? (max. {max_sys})", step=1, min_value=1, max_value=max_sys
     )
 
     # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
     # This can happen when a user first has three systems and then changes it back to 1
+    sys_inp_col_left, sys_inp_col_right = st.columns(2)
     for sys_idx in range(1, max_sys + 1):
         if sys_idx <= num_sys:
-            sys_file = st.file_uploader(f"System #{sys_idx} file")
+            sys_container = sys_inp_col_left if sys_idx % 2 != 0 else sys_inp_col_right
+            sys_file = sys_container.file_uploader(f"System #{sys_idx} file")
             st.session_state["sys_segments"][sys_idx] = read_file(sys_file)
             st.session_state["sys_files"][sys_idx] = sys_file.name if sys_file else None
         else:
