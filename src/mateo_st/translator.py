@@ -11,7 +11,7 @@ from torch.quantization import quantize_dynamic
 DEFAULT_MODEL_SIZE = os.getenv("mateo_transl_model_size", "distilled-600M")
 DEFAULT_BATCH_SIZE = os.getenv("mateo_batch_size", 8)
 DEFAULT_MAX_LENGTH = os.getenv("mateo_max_length", 128)
-DEFAULT_NUM_BEAMS = os.getenv("mateo_max_num_beams", 2)
+DEFAULT_NUM_BEAMS = os.getenv("mateo_max_num_beams", 1)
 
 
 @dataclass
