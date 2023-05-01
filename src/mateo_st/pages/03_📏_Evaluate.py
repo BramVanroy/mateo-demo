@@ -56,9 +56,11 @@ def _init():
 def _metric_selection():
     st.markdown("## ✨ Metric selection")
 
+    metric_inp_col_left, metric_inp_col_right = st.columns(2)
+
     # Iterate over all the metrics in METRIC_META and add each one and all its options
     for metric_idx, (ugly_metric_name, meta) in enumerate(METRICS_META.items()):
-        metric_container = st.container()
+        metric_container = metric_inp_col_left if metric_idx % 2 == 0 else metric_inp_col_right
         pretty_metric_name = meta.name
         metric_container.checkbox(f"Use {pretty_metric_name}", key=ugly_metric_name, value=meta.is_default_selected)
 
@@ -108,27 +110,28 @@ def _data_input():
         else:
             return []
 
+    ref_inp_col, src_inp_col = st.columns(2)
+    ref_file = ref_inp_col.file_uploader("Reference file")
+
     # Check whether any of the selected metrics require source input
     # If so, use a two-col layout for the input buttons, if not just use full-width reference input
     if any(
         meta.requires_source and name in st.session_state and st.session_state[name]
         for name, meta in METRICS_META.items()
     ):
-        ref_inp_col, src_inp_col = st.columns(2)
-        ref_file = ref_inp_col.file_uploader("Reference file")
         src_file = src_inp_col.file_uploader("Source file")
         st.session_state["src_segments"] = read_file(src_file)
         st.session_state["src_file"] = src_file.name if src_file else None
     else:
         st.session_state["src_segments"] = []
         st.session_state["src_file"] = None
-        ref_file = st.file_uploader("Reference file")
 
     st.session_state["ref_segments"] = read_file(ref_file)
     st.session_state["ref_file"] = ref_file.name if ref_file else None
 
+    max_sys_inp_col, _ = st.columns(2)
     max_sys = cli_args().eval_max_sys
-    num_sys = st.number_input(
+    num_sys = max_sys_inp_col.number_input(
         f"How many systems do you wish to compare? (max. {max_sys})", step=1, min_value=1, max_value=max_sys
     )
 
