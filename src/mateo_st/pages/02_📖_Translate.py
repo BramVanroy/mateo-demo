@@ -12,6 +12,7 @@ from mateo_st.utils import cli_args, create_download_link, load_css
 def _init():
     st.set_page_config(page_title="Automatically Translate | MATEO", page_icon="📖")
     load_css("base")
+    load_css("translate")
 
     if "translator" not in st.session_state:
         st.session_state["translator"] = None
