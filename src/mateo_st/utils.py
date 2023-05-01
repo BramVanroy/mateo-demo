@@ -3,7 +3,7 @@ import os
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional, Union
 
 import pandas as pd
 import streamlit as st
@@ -16,7 +16,9 @@ from mateo_st.translator import (
 )
 
 
-def create_download_link(data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download", df_groupby: Optional[str] = None):
+def create_download_link(
+    data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download", df_groupby: Optional[str] = None
+):
     if isinstance(data, pd.DataFrame):
         # Write the DataFrame to an in-memory bytes object
         bytes_io = BytesIO()

@@ -13,6 +13,7 @@ from evaluate import EvaluationModule
 from mateo_st.metrics_constants import METRICS_META, MetricMeta, MetricOption, postprocess_result
 from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
 
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
@@ -111,8 +112,8 @@ def _data_input():
     # Check whether any of the selected metrics require source input
     # If so, use a two-col layout for the input buttons, if not just use full-width reference input
     if any(
-            meta.requires_source and name in st.session_state and st.session_state[name]
-            for name, meta in METRICS_META.items()
+        meta.requires_source and name in st.session_state and st.session_state[name]
+        for name, meta in METRICS_META.items()
     ):
         src_file = src_inp_col.file_uploader("Source file")
         st.session_state["src_segments"] = read_file(src_file)
@@ -207,7 +208,7 @@ def _validate_state() -> Tuple[bool, str]:
                     # Check that the user input is indeed either an empty string or (one of) the expected dtypes
                     # Also check for special stringy float-types like "nan", "-inf", etc.
                     if (
-                            session_opt != "" and not any(do_test(session_opt) for do_test in do_tests)
+                        session_opt != "" and not any(do_test(session_opt) for do_test in do_tests)
                     ) or session_opt.lower().replace("-", "").replace("+", "") in ("inf", "infinity", "nan"):
                         msg += (
                             f"- Option `{opt_name}` in {meta.name} must be one of: empty string,"
@@ -253,13 +254,13 @@ def _load_metric(metric_name: str, config_name: Optional[str] = None) -> Evaluat
 
 @st.cache_data(show_spinner=False, ttl=86400)
 def _compute_metric(
-        metric_name: str,
-        *,
-        predictions: List[str],
-        references: List[str],
-        sources: Optional[List[str]] = None,
-        config_name: Optional[str] = None,
-        **kwargs,
+    metric_name: str,
+    *,
+    predictions: List[str],
+    references: List[str],
+    sources: Optional[List[str]] = None,
+    config_name: Optional[str] = None,
+    **kwargs,
 ):
     metric = _load_metric(metric_name, config_name)
     if sources:
@@ -350,7 +351,9 @@ def _build_sentence_df(include_sys_translations: bool = True):
             }
             for sys_idx, results in st.session_state["results"].items():
                 sys_name = st.session_state["sys_files"][sys_idx]
-                item[sys_name] = st.session_state["sys_segments"][sys_idx][item_idx] if include_sys_translations else None
+                item[sys_name] = (
+                    st.session_state["sys_segments"][sys_idx][item_idx] if include_sys_translations else None
+                )
                 item[f"{sys_name}_score"] = results[metric_name]["sentences"][item_idx]
 
             data.append(item)
@@ -396,17 +399,16 @@ def _draw_corpus_scores(df):
     radar_fig = go.Figure()
 
     for system in systems:
-        radar_fig.add_trace(go.Scatterpolar(
-            r=df.loc[df["system"] == system].values.flatten().tolist()[1:],
-            theta=metrics,
-            fill="toself",
-            name=system
-        ))
+        radar_fig.add_trace(
+            go.Scatterpolar(
+                r=df.loc[df["system"] == system].values.flatten().tolist()[1:],
+                theta=metrics,
+                fill="toself",
+                name=system,
+            )
+        )
 
-    radar_fig.update_layout(
-        showlegend=True,
-        template="plotly"
-    )
+    radar_fig.update_layout(showlegend=True, template="plotly")
     radar_plot_tab.plotly_chart(radar_fig)
 
 
@@ -445,12 +447,12 @@ def _evaluate():
         # LATEX
         st.markdown("##### LaTeX")
         latex_col_format = "l" + ("r" * len(st.session_state["metrics"]))
-        pretty_metrics = ', '.join(METRICS_META[m].name for m in st.session_state['metrics'])
+        pretty_metrics = ", ".join(METRICS_META[m].name for m in st.session_state["metrics"])
         st.code(
             styled_df.hide(axis="index").to_latex(
                 column_format=latex_col_format,
                 caption=f"Metric scores ({pretty_metrics}) for"
-                        f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
+                f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
             ),
             language="latex",
         )
@@ -458,12 +460,14 @@ def _evaluate():
         # Sentence
         st.markdown("#### Sentences")
         with st.expander("About sentence-level scores"):
-            st.write("Some metrics have a corresponding sentence-level score, which you can then download here. For"
-                     " instance,  the COMET corpus score is simply the average (arithmetic mean) of all the sentence"
-                     " scores. This is not the case for all metrics. Corpus BLEU for instance, is not simply the"
-                     " arithmetic mean of all sentence-level BLEU scores but is calculated by its geometric mean and"
-                     " modified by a brevity penalty. As such, sentence-level BLEU scores, or similar, are not given"
-                     " because they individually not a good representation of a system's performance.")
+            st.write(
+                "Some metrics have a corresponding sentence-level score, which you can then download here. For"
+                " instance,  the COMET corpus score is simply the average (arithmetic mean) of all the sentence"
+                " scores. This is not the case for all metrics. Corpus BLEU for instance, is not simply the"
+                " arithmetic mean of all sentence-level BLEU scores but is calculated by its geometric mean and"
+                " modified by a brevity penalty. As such, sentence-level BLEU scores, or similar, are not given"
+                " because they individually not a good representation of a system's performance."
+            )
 
         sentence_df = _build_sentence_df(include_sys_translations=True)
         if not sentence_df.empty:
@@ -477,12 +481,20 @@ def _evaluate():
                     metricdf = metricdf.drop(columns="metric").reset_index(drop=True)
                     tab.dataframe(metricdf)
 
-                excel_link = create_download_link(sentence_df, "mateo-sentences.xlsx", "Excel file", df_groupby="metric")
-                st.markdown(f"You can download the table as an {excel_link}. Metrics are separated in sheets.", unsafe_allow_html=True)
+                excel_link = create_download_link(
+                    sentence_df, "mateo-sentences.xlsx", "Excel file", df_groupby="metric"
+                )
+                st.markdown(
+                    f"You can download the table as an {excel_link}. Metrics are separated in sheets.",
+                    unsafe_allow_html=True,
+                )
         else:
             segment_level_metrics = [meta.name for m, meta in METRICS_META.items() if meta.segment_level]
-            st.info(f"No segment-level metrics calculated. Segment level metrics are:"
-                     f" {', '.join(segment_level_metrics)}.")
+            st.info(
+                f"No segment-level metrics calculated. Segment level metrics are:"
+                f" {', '.join(segment_level_metrics)}."
+            )
+
 
 def main():
     _init()
