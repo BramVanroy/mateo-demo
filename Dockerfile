@@ -2,7 +2,7 @@ FROM ubuntu:latest
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update \
     && apt-get -y install build-essential curl git software-properties-common \
-    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository ppa:deadsnakes/ppa \
     && apt update \
