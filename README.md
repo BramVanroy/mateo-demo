@@ -19,15 +19,24 @@ project is open source and will be hosted at CLARIN.eu infrastructure.
 
 ### Docker
 
-The Dockerfile exposes three environment variables
+The Dockerfile exposes these environment variables
 
 - PORT: server port to expose and to run the streamlit server on (default: 5004)
 - SERVER: server address to run on (default: 'localhost')
 - BASE: base path (default: '')
 - NO_CUDA: set to `true` to disable CUDA for all operations (default: '')
 
+These will be used in the streamlit command:
+
 ```shell
 streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER --server.baseUrlPath $BASE;
+```
+
+To build and run the repository on port 5034 with CUDA disabled:
+
+```shell
+docker build -t mateo . 
+docker run --rm -d --name mateo-demo -p 5034:5034 --env PORT=5054 --env NO_CUDA=true  mateo
 ```
 
 ## Acknowledgements
