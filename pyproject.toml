@@ -30,7 +30,7 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)"
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 # When adding items from git, make sure to add the right commit in metrics_constants.py for the metric's 'version'
 dependencies = [
     "accelerate==0.16.0",
@@ -67,7 +67,7 @@ dev = ["flake8", "black", "isort"]
 # TOOLS
 [tool.black]
 line-length = 119
-target-version = ["py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311"]
 
 [tool.isort]
 profile = "black"
