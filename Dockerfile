@@ -10,7 +10,7 @@ RUN apt-get -y update \
 LABEL authors="Bram Vanroy"
 
 RUN git clone https://github.com/BramVanroy/mateo-demo.git
-WORKDIR mateo-demo
+WORKDIR /mateo-demo
 
 RUN python -m pip install -r requirements.txt
 RUN python -m pip install --no-cache-dir --upgrade .
@@ -20,9 +20,9 @@ ENV SERVER="localhost"
 ENV BASE=""
 ENV NO_CUDA=""
 EXPOSE $PORT
-HEALTHCHECK CMD curl --fail http://localhost:$PORT/_stcore/health
+HEALTHCHECK CMD curl --fail http://$SERVER:$PORT/_stcore/health
 
-WORKDIR /src/mateo_st
+WORKDIR /mateo-demo/src/mateo_st
 
 CMD if [ -z "$BASE" ]; then \
         cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER"; \
