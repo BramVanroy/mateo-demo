@@ -65,6 +65,12 @@ changelog = "https://github.com/BramVanroy/mateo-demo/blob/master/CHANGELOG.md"
 dev = ["flake8", "black", "isort"]
 
 # TOOLS
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.black]
 line-length = 119
 target-version = ["py38", "py39", "py310", "py311"]
