@@ -7,7 +7,6 @@
   - for sacrebleu metrics, use sacrebleu
   - for other sentence-level metrics, use https://github.com/Unbabel/COMET/blob/db918c6149c771509adcb427e1cf1c6ca94fd926/comet/cli/compare.py#L460
 - Add the option to specify cache life expectancy via envvar?
-- Add Dockerfile
 - Add signatures to output
 - Remove index from latex and underline "Best" systen (but not that this depends on `higher_better`)
 - Add shell script that automatically downloads the most important models/metrics. This can optionally be run before starting

@@ -1,8 +1,10 @@
 FROM ubuntu:latest
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update \
-    && apt-get -y install git software-properties-common build-essential \
-    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get -y install build-essential curl git software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN add-apt-repository ppa:deadsnakes/ppa \
     && apt update \
     && apt install -y python3.9 python3.9-dev python3-pip python3.9-distutils \
     && ln -s /usr/bin/python3.9 /usr/bin/python
@@ -20,7 +22,7 @@ ENV SERVER="localhost"
 ENV BASE=""
 ENV NO_CUDA=""
 EXPOSE $PORT
-HEALTHCHECK CMD curl --fail http://$SERVER:$PORT/_stcore/health
+HEALTHCHECK CMD curl --fail http://$SERVER:$PORT$BASE/_stcore/health
 
 WORKDIR /mateo-demo/src/mateo_st
 
