@@ -12,7 +12,7 @@ sentencepiece==0.1.97
 streamlit==1.22.0
 tensorflow==2.11.0
 torch==1.13.1
-transformers==4.26.0
+transformers==4.28.1
 unbabel-comet==1.1.3
 XlsxWriter==3.0.8
 git+https://github.com/google-research/bleurt.git@cebe7e6f996b40910cfaa520a63db47807e3bf5c
