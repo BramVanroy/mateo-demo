@@ -94,7 +94,12 @@ def load_css(name: str):
     st.markdown(f"<style>{read_file(pfcss)}</style>", unsafe_allow_html=True)
 
 
-@st.cache_data(max_entries=64)
+def load_js(name: str):
+    pfjs = Path(__file__).parent.joinpath(f"js/{name}.js")
+    st.markdown(f"<script>{read_file(pfjs)}</script>", unsafe_allow_html=True)
+
+
+# @st.cache_data(max_entries=64)
 def read_file(fin: Union[str, PathLike]):
     return Path(fin).read_text(encoding="utf-8")
 
