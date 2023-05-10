@@ -1,0 +1,297 @@
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css"
+          integrity="sha512-NmLkDIU1C/C88wi324HBc+S2kLhi08PN5GDeUVVVC/BVt/9Izdsc9SVeVfA1UZbY3sHUlDSyRXhCzHfr6hmPPw=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        .ed-container {
+            margin: 0;
+            font-family: "Source Sans Pro", sans-serif;
+            font-weight: 400;
+            line-height: 1.6;
+            color: rgb(49, 51, 63);
+            background-color: rgb(255, 255, 255);
+            text-size-adjust: 100%;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+            -webkit-font-smoothing: auto;
+            font-size: 1.2rem;
+        }
+        h2 {
+            font-family: "Source Sans Pro", sans-serif;
+            font-weight: 600;
+            color: rgb(49, 51, 63);
+            letter-spacing: -0.005em;
+            padding: 1rem 0px;
+            margin: 0;
+            line-height: 1.2;
+        }
+        h2 {
+            font-size: calc(1.35rem + 1.2vw)
+        }
+
+        @media(min-width: 1200px) {
+            h2 {
+                font-size:2.25rem
+            }
+        }
+        .ed-sub-src {
+            color: red;
+        }
+
+        .ed-sub-tgt {
+            color: green;
+        }
+
+        .ed-del {
+            color: red;
+            text-decoration: line-through;
+        }
+
+        .ed-ins {
+            color: green;
+            text-decoration: underline;
+        }
+
+        .highlight {
+            background-color: yellow;
+        }
+
+        .ed-match {
+            color: blue;
+        }
+
+        /* STRUCTURE  */
+        .ed-legend {
+            padding: 0.36em;
+            border: 2px solid #31333f;
+            text-align: center;
+            width: fit-content;
+            margin: auto;
+        }
+
+        .ed-legend li {
+            line-height: 1;
+            padding-left: 0;
+            font-size: 0.8rem;
+            list-style-type: none;
+            display: inline;
+        }
+
+        .ed-legend li:not(:first-child):before {
+            content: " | ";
+        }
+
+        .ed-legend ul {
+            margin-bottom: 0;
+            padding: 0;
+        }
+
+        main.ed-content {
+            flex: 1 1;
+        }
+
+        .ed-src p, .ed-tgt p {
+            font-size: 0.8rem;
+        }
+        .ed-src p > span, .ed-tgt p > span {
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="ed-container">
+    <aside class="ed-legend">
+        <ul>
+            <li><span class="ed-sub-src">substitution source</span></li>
+            <li><span class="ed-sub-tgt">substitution target</span></li>
+            <li><span class="ed-ins">insertion</span></li>
+            <li><span class="ed-del">deletion</span></li>
+            <li><span class="ed-match">match</span></li>
+        </ul>
+    </aside>
+    <div id="ed-char-level">
+        <h2>Characters</h2>
+        <main class="ed-content">
+            <div class="ed-src">
+                <p>Source: <span></span></p>
+                <div class="items"></div>
+            </div>
+            <div class="ed-tgt">
+                <p>Target: <span></span></p>
+                <div class="items"></div>
+            </div>
+        </main>
+    </div>
+    <div id="ed-tok-level">
+        <h2>Tokens</h2>
+        <main class="ed-content">
+            <div class="ed-src">
+                <p>Source: <span></span></p>
+                <div class="items"></div>
+            </div>
+            <div class="ed-tgt">
+                <p>Target: <span></span></p>
+                <div class="items"></div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    function sendMessageToStreamlitClient(type, data) {
+        var outData = Object.assign({
+            isStreamlitMessage: true,
+            type: type,
+        }, data);
+        window.parent.postMessage(outData, "*");
+    }
+
+    function init() {
+        sendMessageToStreamlitClient("streamlit:componentReady", {apiVersion: 1});
+    }
+
+    function setFrameHeight(height) {
+        sendMessageToStreamlitClient("streamlit:setFrameHeight", {height: height});
+    }
+
+    // The `data` argument can be any JSON-serializable value.
+    function sendDataToPython(data) {
+        sendMessageToStreamlitClient("streamlit:setComponentValue", data);
+    }
+
+    // ----------------------------------------------------
+    // Now modify this part of the code to fit your needs:
+
+    function findAlignedClass(el) {
+        const classes = el.classList;
+        let currentClass = "";
+        for (let i = 0; i < classes.length; i++) {
+            currentClass = classes[i];
+
+            if (currentClass.startsWith("a-")) {
+                break;
+            }
+        }
+        return currentClass
+    }
+
+    document.querySelector(".ed-container").addEventListener("mouseover", e => {
+        if (typeof e.target.tagName !== "undefined" && e.target.tagName.toLowerCase() === "span" && e.target.classList.contains("aligned")) {
+            const alignedClass = findAlignedClass(e.target);
+            e.target.closest(".ed-content").querySelectorAll(`.${alignedClass}`).forEach(el => el.classList.add("highlight"))
+        }
+    });
+
+    document.querySelector(".ed-container").addEventListener("mouseout", e => {
+        if (typeof e.target.tagName !== "undefined" && e.target.tagName.toLowerCase() === "span" && e.target.classList.contains("aligned")) {
+            const alignedClass = findAlignedClass(e.target);
+            e.target.closest(".ed-content").querySelectorAll(`.${alignedClass}`).forEach(el => el.classList.remove("highlight"))
+        }
+    });
+    function createSpaceEl() {
+        const container = document.createElement('span');
+        container.classList.add("space");
+        container.textContent = " "
+        return container
+    }
+
+    function build(items, container, isTokenLevel) {
+        const srcItemsCont = document.querySelector(container).querySelector(".ed-src .items")
+        const tgtItemsCont = document.querySelector(container).querySelector(".ed-tgt .items")
+
+        let srcFrag = new DocumentFragment()
+        let tgtFrag = new DocumentFragment()
+        items.forEach(([op, srcChunk, tgtChunk], idx) => {
+            if (op === "replace") {
+                const srcEl = document.createElement('span');
+                srcEl.classList.add("ed-sub-src", "aligned", `a-${idx}`)
+                srcEl.textContent = srcChunk
+                srcFrag.append(srcEl)
+
+                const tgtEl = document.createElement('span');
+                tgtEl.classList.add("ed-sub-tgt", "aligned", `a-${idx}`)
+                tgtEl.textContent = tgtChunk
+                tgtFrag.append(tgtEl)
+
+                if (isTokenLevel) {
+                    srcFrag.append(createSpaceEl())
+                    tgtFrag.append(createSpaceEl())
+                }
+            } else if (op === "delete") {
+                const srcEl = document.createElement('span');
+                srcEl.classList.add("ed-del")
+                srcEl.textContent = srcChunk
+                srcFrag.append(srcEl)
+
+                if (isTokenLevel) {
+                    srcFrag.append(createSpaceEl())
+                }
+            } else if (op === "insert") {
+                const tgtEl = document.createElement('span');
+                tgtEl.classList.add("ed-ins")
+                tgtEl.textContent = tgtChunk
+                tgtFrag.append(tgtEl)
+
+                if (isTokenLevel) {
+                    tgtFrag.append(createSpaceEl())
+                }
+            } else {
+                const srcEl = document.createElement('span');
+                srcEl.classList.add("ed-match", "aligned", `a-${idx}`)
+                srcEl.textContent = srcChunk
+                srcFrag.append(srcEl)
+
+                const tgtEl = document.createElement('span');
+                tgtEl.classList.add("ed-match", "aligned", `a-${idx}`)
+                tgtEl.textContent = tgtChunk
+                tgtFrag.append(tgtEl)
+                if (isTokenLevel) {
+                    srcFrag.append(createSpaceEl())
+                    tgtFrag.append(createSpaceEl())
+                }
+            }
+
+        })
+
+        srcItemsCont.append(srcFrag);
+        tgtItemsCont.append(tgtFrag);
+    }
+
+    function build_html(src, tgt, char, token) {
+        document.querySelector("#ed-char-level .ed-src p > span").textContent = src
+        document.querySelector("#ed-tok-level .ed-src p > span").textContent = src
+
+        document.querySelector("#ed-char-level .ed-tgt p > span").textContent = tgt
+        document.querySelector("#ed-tok-level .ed-tgt p > span").textContent = tgt
+
+        build(char, "#ed-char-level", false)
+        build(token, "#ed-tok-level", true)
+    }
+
+    // data is any JSON-serializable value you sent from Python,
+    // and it's already deserialized for you.
+    function onDataFromPython(event) {
+        if (event.data.type !== "streamlit:render") return;
+        const args = event.data.args
+        build_html(args.src, args.tgt, args.char, args.token)
+    }
+
+    // Hook things up!
+    window.addEventListener("message", onDataFromPython);
+    init();
+
+    // Hack to autoset the iframe height.
+    window.addEventListener("load", function() {
+        window.setTimeout(function() {
+            setFrameHeight(document.documentElement.clientHeight)
+        }, 0);
+    });
+</script>
+</body>
+</html>
