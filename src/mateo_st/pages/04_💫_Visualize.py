@@ -104,7 +104,7 @@ def _rotator():
         disabled=st.session_state["viz_idx"] >= len(st.session_state["viz_ref_segments"]) - 1,
         on_click=next_idx,
     )
-    sidebar_ct.info(f"#{st.session_state['viz_idx']+1}/{len(st.session_state['viz_ref_segments'])}")
+    sidebar_ct.info(f"Sentence {st.session_state['viz_idx']+1}/{len(st.session_state['viz_ref_segments'])}")
 
     sidebar_ct.markdown(
         """
