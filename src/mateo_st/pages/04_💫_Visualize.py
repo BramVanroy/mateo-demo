@@ -1,14 +1,16 @@
+from io import StringIO
+
 import streamlit as st
 from Levenshtein import opcodes
 from mateo_st.components.ed_visualizer import ed_visualizer
 from mateo_st.utils import cli_args, load_css
 
 
-def calculate_edit_distances(s1: str, s2: str):
+def _calculate_edit_distances(s1: str, s2: str):
     if type(s1) != type(s2):
         raise ValueError("Both inputs have to be of the same type")
 
-    data = {"src": s1, "tgt": s2}
+    data = {"ref": s1, "mt": s2}
     for unit in ("char", "token"):
         if unit == "token":
             s1 = s1.split()
@@ -17,16 +19,16 @@ def calculate_edit_distances(s1: str, s2: str):
         sep = "" if isinstance(s1, str) else " "
         data[unit] = []
         for op, i1, i2, j1, j2 in opcodes(s1, s2):
-            src_chunk = sep.join(s1[i1:i2])
-            tgt_chunk = sep.join(s2[j1:j2])
+            ref_chunk = sep.join(s1[i1:i2])
+            mt_chunk = sep.join(s2[j1:j2])
             if op == "replace":
-                data[unit].append(("replace", src_chunk, tgt_chunk))
+                data[unit].append(("replace", ref_chunk, mt_chunk))
             elif op == "delete":
-                data[unit].append(("delete", src_chunk, None))
+                data[unit].append(("delete", ref_chunk, None))
             elif op == "insert":
-                data[unit].append(("insert", None, tgt_chunk))
+                data[unit].append(("insert", None, mt_chunk))
             elif op == "equal":
-                data[unit].append(("equal", src_chunk, tgt_chunk))
+                data[unit].append(("equal", ref_chunk, mt_chunk))
 
     return data
 
@@ -34,21 +36,118 @@ def calculate_edit_distances(s1: str, s2: str):
 def _init():
     st.set_page_config(page_title="Visualizing Machine Translations | MATEO", page_icon="💫")
     load_css("base")
+    load_css("visualize")
+
+    if "viz_ref_segments" not in st.session_state:
+        st.session_state["viz_ref_segments"] = []
+
+    if "viz_mt_segments" not in st.session_state:
+        st.session_state["viz_mt_segments"] = []
+
+    if "viz_idx" not in st.session_state:
+        st.session_state["viz_idx"] = 0
 
     st.title("💫 Visualizing Machine Translations")
     st.markdown("Here you can visualize edit operations on the word and character-level for given input")
 
 
-def _visualize():
-    s1 = "I like your style"
-    s2 = "He likes his hair style"
-    edit_distances = calculate_edit_distances(s1, s2)
+def _data_input():
+    inp_data_heading, input_col = st.columns((3, 1))
+    inp_data_heading.markdown("## 📄 Input data")
 
-    ed_visualizer(**edit_distances)
+    fupload_check = input_col.checkbox("File upload?")
+    st.markdown(
+        "Add the data to visualize here. The reference text and MT text must contain the same number of lines. You"
+        " will then be able to compare corresponding lines in the two files."
+    )
+    st.markdown("It is expected that the data is already tokenized, important for showing token-level edit distance.")
+
+    def reset_index():
+        st.session_state["viz_idx"] = 0
+
+    ref_col, mt_col = st.columns(2)
+    if fupload_check:
+        uploaded_ref_file = ref_col.file_uploader("Reference file", on_change=reset_index)
+        if uploaded_ref_file is not None:
+            stringio = StringIO(uploaded_ref_file.getvalue().decode("utf-8"))
+            st.session_state["viz_ref_segments"] = stringio.read().splitlines()
+        else:
+            st.session_state["viz_ref_segments"] = []
+
+        uploaded_mt_file = mt_col.file_uploader("MT file", on_change=reset_index)
+        if uploaded_mt_file is not None:
+            stringio = StringIO(uploaded_mt_file.getvalue().decode("utf-8"))
+            st.session_state["viz_mt_segments"] = stringio.read().splitlines()
+        else:
+            st.session_state["viz_mt_segments"] = []
+    else:
+        st.session_state["viz_ref_segments"] = ref_col.text_area(
+            label="Reference sentences", on_change=reset_index
+        ).splitlines()
+        st.session_state["viz_mt_segments"] = mt_col.text_area(
+            label="MT sentences", on_change=reset_index
+        ).splitlines()
+
+
+def _rotator():
+    def next_idx():
+        st.session_state["viz_idx"] += 1
+
+    def prev_idx():
+        st.session_state["viz_idx"] -= 1
+
+    sidebar_ct, main_ct = st.columns((1, 3))
+    prev_col, next_col = sidebar_ct.columns(2)
+    prev_col.button("Prev", disabled=st.session_state["viz_idx"] == 0, on_click=prev_idx)
+    next_col.button(
+        "Next",
+        disabled=st.session_state["viz_idx"] >= len(st.session_state["viz_ref_segments"]) - 1,
+        on_click=next_idx,
+    )
+    sidebar_ct.info(f"#{st.session_state['viz_idx']+1}/{len(st.session_state['viz_ref_segments'])}")
+
+    sidebar_ct.markdown(
+        """
+        <aside class="ed-legend">
+        <ul>
+            <li><span class="ed-sub-ref">substitution ref</span></li>
+            <li><span class="ed-sub-mt">substitution MT</span></li>
+            <li><span class="ed-ins">insertion</span></li>
+            <li><span class="ed-del">deletion</span></li>
+            <li><span class="ed-match">match</span></li>
+        </ul>
+    </aside>""",
+        unsafe_allow_html=True,
+    )
+
+    edit_distances = _calculate_edit_distances(
+        st.session_state["viz_ref_segments"][st.session_state["viz_idx"]],
+        st.session_state["viz_mt_segments"][st.session_state["viz_idx"]],
+    )
+    with main_ct:
+        ed_visualizer(**edit_distances)
+
+
+def _visualize():
+    info_ct = st.empty()
+    if (
+        "viz_ref_segments" in st.session_state
+        and st.session_state["viz_ref_segments"]
+        and "viz_mt_segments" in st.session_state
+        and st.session_state["viz_mt_segments"]
+    ):
+        if len(st.session_state["viz_ref_segments"]) != len(st.session_state["viz_mt_segments"]):
+            info_ct.warning(f"Make sure that the reference text and MT text have the same number of lines")
+        else:
+            info_ct.empty()
+            _rotator()
+    else:
+        info_ct.warning(f"Make sure to specify content for both the reference and MT")
 
 
 def main():
     _init()
+    _data_input()
     _visualize()
 
 

@@ -20,42 +20,40 @@
             text-size-adjust: 100%;
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
             -webkit-font-smoothing: auto;
-            font-size: 1.2rem;
         }
         h2 {
             font-family: "Source Sans Pro", sans-serif;
             font-weight: 600;
             color: rgb(49, 51, 63);
             letter-spacing: -0.005em;
-            padding: 1rem 0px;
+            padding: 1rem 0;
             margin: 0;
             line-height: 1.2;
-        }
-        h2 {
-            font-size: calc(1.35rem + 1.2vw)
+            font-size: 1.35rem;
         }
 
         @media(min-width: 1200px) {
             h2 {
-                font-size:2.25rem
+                font-size:1.6rem
             }
         }
-        .ed-sub-src {
-            color: red;
-        }
 
-        .ed-sub-tgt {
-            color: green;
-        }
-
-        .ed-del {
+        .ed-sub-ref {
             color: red;
             text-decoration: line-through;
         }
 
-        .ed-ins {
+        .ed-sub-mt {
             color: green;
             text-decoration: underline;
+        }
+
+        .ed-del {
+            color: red;
+        }
+
+        .ed-ins {
+            color: green;
         }
 
         .highlight {
@@ -66,64 +64,40 @@
             color: blue;
         }
 
-        /* STRUCTURE  */
-        .ed-legend {
-            padding: 0.36em;
-            border: 2px solid #31333f;
-            text-align: center;
-            width: fit-content;
-            margin: auto;
+        /* not shown for now. Takes up too much space */
+        aside#ed-sentences {
+            padding: 0.48em 0;
+            font-size: 0.8em;
+            display: none;
         }
-
-        .ed-legend li {
-            line-height: 1;
-            padding-left: 0;
-            font-size: 0.8rem;
-            list-style-type: none;
-            display: inline;
+        #ed-char-level h2 {
+            margin-top: 0;
+            padding-top: 0;
         }
-
-        .ed-legend li:not(:first-child):before {
-            content: " | ";
-        }
-
-        .ed-legend ul {
-            margin-bottom: 0;
-            padding: 0;
-        }
-
-        main.ed-content {
+        .ed-content {
             flex: 1 1;
         }
 
-        .ed-src p, .ed-tgt p {
+        .ed-ref p, .ed-mt p {
             font-size: 0.8rem;
-        }
-        .ed-src p > span, .ed-tgt p > span {
-            font-size: 1rem;
         }
     </style>
 </head>
 <body>
 <div class="ed-container">
-    <aside class="ed-legend">
-        <ul>
-            <li><span class="ed-sub-src">substitution source</span></li>
-            <li><span class="ed-sub-tgt">substitution target</span></li>
-            <li><span class="ed-ins">insertion</span></li>
-            <li><span class="ed-del">deletion</span></li>
-            <li><span class="ed-match">match</span></li>
-        </ul>
+    <aside id="ed-sentences">
+        <p class="ed-ref-sent">Source: <span></span></p>
+        <p class="ed-mt-sent">Target: <span></span></p>
     </aside>
     <div id="ed-char-level">
         <h2>Characters</h2>
         <main class="ed-content">
-            <div class="ed-src">
-                <p>Source: <span></span></p>
+            <div class="ed-ref">
+                <p>Source</p>
                 <div class="items"></div>
             </div>
-            <div class="ed-tgt">
-                <p>Target: <span></span></p>
+            <div class="ed-mt">
+                <p>Target</p>
                 <div class="items"></div>
             </div>
         </main>
@@ -131,12 +105,12 @@
     <div id="ed-tok-level">
         <h2>Tokens</h2>
         <main class="ed-content">
-            <div class="ed-src">
-                <p>Source: <span></span></p>
+            <div class="ed-ref">
+                <p>Source</p>
                 <div class="items"></div>
             </div>
-            <div class="ed-tgt">
-                <p>Target: <span></span></p>
+            <div class="ed-mt">
+                <p>Target</p>
                 <div class="items"></div>
             </div>
         </main>
@@ -202,73 +176,74 @@
     }
 
     function build(items, container, isTokenLevel) {
-        const srcItemsCont = document.querySelector(container).querySelector(".ed-src .items")
-        const tgtItemsCont = document.querySelector(container).querySelector(".ed-tgt .items")
+        const refItemsCont = document.querySelector(container).querySelector(".ed-ref .items")
+        const mtItemsCont = document.querySelector(container).querySelector(".ed-mt .items")
 
-        let srcFrag = new DocumentFragment()
-        let tgtFrag = new DocumentFragment()
-        items.forEach(([op, srcChunk, tgtChunk], idx) => {
+        /* This will be retriggered on resize, so empty before each iteration */
+        refItemsCont.innerHTML = ""
+        mtItemsCont.innerHTML = ""
+
+        let refFrag = new DocumentFragment()
+        let mtFrag = new DocumentFragment()
+        items.forEach(([op, refChunk, mtChunk], idx) => {
             if (op === "replace") {
-                const srcEl = document.createElement('span');
-                srcEl.classList.add("ed-sub-src", "aligned", `a-${idx}`)
-                srcEl.textContent = srcChunk
-                srcFrag.append(srcEl)
+                const refEl = document.createElement('span');
+                refEl.classList.add("ed-sub-ref", "aligned", `a-${idx}`)
+                refEl.textContent = refChunk
+                refFrag.append(refEl)
 
-                const tgtEl = document.createElement('span');
-                tgtEl.classList.add("ed-sub-tgt", "aligned", `a-${idx}`)
-                tgtEl.textContent = tgtChunk
-                tgtFrag.append(tgtEl)
+                const mtEl = document.createElement('span');
+                mtEl.classList.add("ed-sub-mt", "aligned", `a-${idx}`)
+                mtEl.textContent = mtChunk
+                mtFrag.append(mtEl)
 
                 if (isTokenLevel) {
-                    srcFrag.append(createSpaceEl())
-                    tgtFrag.append(createSpaceEl())
+                    refFrag.append(createSpaceEl())
+                    mtFrag.append(createSpaceEl())
                 }
             } else if (op === "delete") {
-                const srcEl = document.createElement('span');
-                srcEl.classList.add("ed-del")
-                srcEl.textContent = srcChunk
-                srcFrag.append(srcEl)
+                const refEl = document.createElement('span');
+                refEl.classList.add("ed-del")
+                refEl.textContent = refChunk
+                refFrag.append(refEl)
 
                 if (isTokenLevel) {
-                    srcFrag.append(createSpaceEl())
+                    refFrag.append(createSpaceEl())
                 }
             } else if (op === "insert") {
-                const tgtEl = document.createElement('span');
-                tgtEl.classList.add("ed-ins")
-                tgtEl.textContent = tgtChunk
-                tgtFrag.append(tgtEl)
+                const mtEl = document.createElement('span');
+                mtEl.classList.add("ed-ins")
+                mtEl.textContent = mtChunk
+                mtFrag.append(mtEl)
 
                 if (isTokenLevel) {
-                    tgtFrag.append(createSpaceEl())
+                    mtFrag.append(createSpaceEl())
                 }
             } else {
-                const srcEl = document.createElement('span');
-                srcEl.classList.add("ed-match", "aligned", `a-${idx}`)
-                srcEl.textContent = srcChunk
-                srcFrag.append(srcEl)
+                const refEl = document.createElement('span');
+                refEl.classList.add("ed-match", "aligned", `a-${idx}`)
+                refEl.textContent = refChunk
+                refFrag.append(refEl)
 
-                const tgtEl = document.createElement('span');
-                tgtEl.classList.add("ed-match", "aligned", `a-${idx}`)
-                tgtEl.textContent = tgtChunk
-                tgtFrag.append(tgtEl)
+                const mtEl = document.createElement('span');
+                mtEl.classList.add("ed-match", "aligned", `a-${idx}`)
+                mtEl.textContent = mtChunk
+                mtFrag.append(mtEl)
                 if (isTokenLevel) {
-                    srcFrag.append(createSpaceEl())
-                    tgtFrag.append(createSpaceEl())
+                    refFrag.append(createSpaceEl())
+                    mtFrag.append(createSpaceEl())
                 }
             }
 
         })
 
-        srcItemsCont.append(srcFrag);
-        tgtItemsCont.append(tgtFrag);
+        refItemsCont.append(refFrag);
+        mtItemsCont.append(mtFrag);
     }
 
-    function build_html(src, tgt, char, token) {
-        document.querySelector("#ed-char-level .ed-src p > span").textContent = src
-        document.querySelector("#ed-tok-level .ed-src p > span").textContent = src
-
-        document.querySelector("#ed-char-level .ed-tgt p > span").textContent = tgt
-        document.querySelector("#ed-tok-level .ed-tgt p > span").textContent = tgt
+    function build_html(ref, mt, char, token) {
+        document.querySelector("#ed-sentences p.ed-ref-sent > span").textContent = ref
+        document.querySelector("#ed-sentences p.ed-mt-sent > span").textContent = mt
 
         build(char, "#ed-char-level", false)
         build(token, "#ed-tok-level", true)
@@ -279,7 +254,7 @@
     function onDataFromPython(event) {
         if (event.data.type !== "streamlit:render") return;
         const args = event.data.args
-        build_html(args.src, args.tgt, args.char, args.token)
+        build_html(args.ref, args.mt, args.char, args.token)
     }
 
     // Hook things up!

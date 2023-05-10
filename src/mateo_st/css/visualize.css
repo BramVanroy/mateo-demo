@@ -1,0 +1,37 @@
+[data-testid="column"] + [data-testid="column"] {
+    align-self: flex-end;
+    text-align: center;
+}
+
+.ed-sub-ref {
+    color: red;
+    text-decoration: line-through;
+}
+
+.ed-sub-mt {
+    color: green;
+    text-decoration: underline;
+}
+
+.ed-del {
+    color: red;
+}
+
+.ed-ins {
+    color: green;
+}
+
+.ed-match {
+    color: blue;
+}
+
+.ed-legend li {
+    padding-left: 0;
+    font-size: 0.8rem;
+    list-style-type: none;
+}
+
+.ed-legend ul {
+    margin-bottom: 0;
+    padding: 0;
+}
