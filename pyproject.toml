@@ -68,6 +68,7 @@ dev = ["flake8", "black", "isort"]
 # TOOLS
 [tool.setuptools]
 include-package-data = true
+license-files = ['LICEN[CS]E*']
 
 [tool.setuptools.packages.find]
 where = ["src"]
