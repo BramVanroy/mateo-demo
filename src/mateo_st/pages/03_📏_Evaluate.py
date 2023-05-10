@@ -415,10 +415,10 @@ def _style_df_for_display(df):
     higher_better = [c for c in numeric_col_names if "↑" in c]
     lower_better = [c for c in numeric_col_names if "↓" in c]
     styled_df = rounded_df.style.highlight_null(props="color: transparent;")
-    styled_df = styled_df.highlight_max(subset=higher_better, props="font-weight: bold;").highlight_min(subset=lower_better, props="font-weight: bold;")
-    styled_df = styled_df.format(
-        "{:,.2f}", na_rep="", subset=numeric_col_names
+    styled_df = styled_df.highlight_max(subset=higher_better, props="font-weight: bold;").highlight_min(
+        subset=lower_better, props="font-weight: bold;"
     )
+    styled_df = styled_df.format("{:,.2f}", na_rep="", subset=numeric_col_names)
     return styled_df
 
 
