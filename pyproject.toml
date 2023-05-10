@@ -38,6 +38,7 @@ dependencies = [
     "bert-score==0.3.13",
     "datasets==2.10.0",
     "evaluate==0.4.0",
+    "Levenshtein",
     "optimum==1.7.1",
     "pandas==2.0.1",
     "plotly==5.13.0",
