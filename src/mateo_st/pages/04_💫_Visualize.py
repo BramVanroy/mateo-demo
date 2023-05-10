@@ -48,19 +48,19 @@ def _init():
         st.session_state["viz_idx"] = 0
 
     st.title("💫 Visualizing Machine Translations")
-    st.markdown("Here you can visualize edit operations on the word and character-level for given input")
+    st.markdown(
+        "Here you can visualize edit operations on the word and character-level for given inputs, like a"
+        " reference  and a machine translation. A distinction is made between substitutions on the one hand"
+        " and insertions/deletions on the other, as indicated by the legend on the left."
+    )
+    st.markdown("Move your mouse over matches or substitutions to highlight the aligned items in the other sentence.")
 
 
 def _data_input():
-    inp_data_heading, input_col = st.columns((3, 1))
-    inp_data_heading.markdown("## 📄 Input data")
+    # inp_data_heading, input_col = st.columns((3, 1))
+    # inp_data_heading.markdown("## 📄 Input data")
 
-    fupload_check = input_col.checkbox("File upload?")
-    st.markdown(
-        "Add the data to visualize here. The reference text and MT text must contain the same number of lines. You"
-        " will then be able to compare corresponding lines in the two files."
-    )
-    st.markdown("It is expected that the data is already tokenized, important for showing token-level edit distance.")
+    fupload_check = st.checkbox("File upload?")
 
     def reset_index():
         st.session_state["viz_idx"] = 0

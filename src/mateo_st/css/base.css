@@ -5,3 +5,19 @@ a:hover {text-decoration: none;}
 .stProgress > div > div > div > div {
     background-color: #94bf89;
 }
+
+[data-testid="stFileUploadDropzone"], [data-testid="stFileUploader"] {
+    font-size: 0.88em;
+}
+
+[data-testid="stFileUploadDropzone"] {
+    padding: 4px 8px;
+}
+
+[data-testid="stFileUploadDropzone"] small, [data-testid="stFileUploader"] small {
+    font-size: 0.8em;
+}
+[data-testid="stFileUploader"] .uploadedFileData  {
+    font-size: 0.8em;
+}
+
