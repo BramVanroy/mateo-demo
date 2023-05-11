@@ -8,6 +8,7 @@ a:hover {text-decoration: none;}
 
 [data-testid="stFileUploadDropzone"], [data-testid="stFileUploader"] {
     font-size: 0.88em;
+    text-align: left;
 }
 
 [data-testid="stFileUploadDropzone"] {
