@@ -619,20 +619,22 @@ SUPPORTED_LANGS_REV = {
 
 
 def postprocess_result(metric_name: str, result: Dict[str, Any]):
-    """Post-processes the result that is retrieve from Metric.compute.
+    """Post-processes the result that is retrieved from Metric.compute.
 
     :param metric_name: the metric name
     :param result: score result (dictionary)
     :return: modified score result
     """
+    corpus_key = METRICS_META[metric_name].corpus_score_key
+    sentences_key = METRICS_META[metric_name].sentences_score_key
     if metric_name == "bertscore":
-        result["mean_f1"] = 100 * mean(result["f1"])
-        result["f1"] = [score * 100 for score in result["f1"]]
+        result[corpus_key] = 100 * mean(result["f1"])
+        result[sentences_key] = [score * 100 for score in result["f1"]]
     elif metric_name == "bleurt":
-        result["mean_score"] = 100 * mean(result["scores"])
-        result["scores"] = [score * 100 for score in result["scores"]]
+        result[corpus_key] = 100 * mean(result["scores"])
+        result[sentences_key] = [score * 100 for score in result["scores"]]
     elif metric_name == "comet":
-        result["mean_score"] = 100 * result["mean_score"]
-        result["scores"] = [score * 100 for score in result["scores"]]
+        result[corpus_key] = 100 * result["mean_score"]
+        result[sentences_key] = [score * 100 for score in result["scores"]]
 
     return result
