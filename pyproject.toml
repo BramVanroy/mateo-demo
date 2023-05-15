@@ -59,7 +59,6 @@ dependencies = [
 homepage = "https://github.com/BramVanroy/mateo-demo"
 documentation = "https://github.com/BramVanroy/mateo-demo"
 repository = "https://github.com/BramVanroy/mateo-demo.git"
-changelog = "https://github.com/BramVanroy/mateo-demo/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
 # https://stackoverflow.com/a/72524073/1150683
