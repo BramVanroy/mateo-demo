@@ -1,16 +1,17 @@
-<!DOCTYPE>
+<!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>Edit distance component</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css"
           integrity="sha512-NmLkDIU1C/C88wi324HBc+S2kLhi08PN5GDeUVVVC/BVt/9Izdsc9SVeVfA1UZbY3sHUlDSyRXhCzHfr6hmPPw=="
           crossorigin="anonymous"
-          referrerpolicy="no-referrer" />
+          referrerpolicy="no-referrer">
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        .ed-container {
+        #ed-container {
             margin: 0;
             font-family: "Source Sans Pro", sans-serif;
             font-weight: 400;
@@ -88,14 +89,14 @@
     </style>
 </head>
 <body>
-<div class="ed-container">
+<div id="ed-container">
     <aside id="ed-sentences">
         <p class="ed-ref-sent">Reference: <span></span></p>
         <p class="ed-mt-sent">MT: <span></span></p>
     </aside>
     <div id="ed-char-level">
         <h2>Characters</h2>
-        <main class="ed-content">
+        <div class="ed-content">
             <div class="ed-ref">
                 <p>Reference</p>
                 <div class="items"></div>
@@ -104,11 +105,11 @@
                 <p>MT</p>
                 <div class="items"></div>
             </div>
-        </main>
+        </div>
     </div>
     <div id="ed-tok-level">
         <h2>Tokens</h2>
-        <main class="ed-content">
+        <div class="ed-content">
             <div class="ed-ref">
                 <p>Reference</p>
                 <div class="items"></div>
@@ -117,13 +118,12 @@
                 <p>MT</p>
                 <div class="items"></div>
             </div>
-        </main>
+        </div>
     </div>
 </div>
-
 <script>
     function sendMessageToStreamlitClient(type, data) {
-        var outData = Object.assign({
+        let outData = Object.assign({
             isStreamlitMessage: true,
             type: type,
         }, data);
@@ -144,8 +144,6 @@
     }
 
     // ----------------------------------------------------
-    // Now modify this part of the code to fit your needs:
-
     function findAlignedClass(el) {
         const classes = el.classList;
         let currentClass = "";
@@ -159,17 +157,17 @@
         return currentClass
     }
 
-    document.querySelector(".ed-container").addEventListener("mouseover", e => {
+    document.querySelector("#ed-container").addEventListener("mouseover", e => {
         if (typeof e.target.tagName !== "undefined" && e.target.tagName.toLowerCase() === "span" && e.target.classList.contains("aligned")) {
             const alignedClass = findAlignedClass(e.target);
-            e.target.closest(".ed-content").querySelectorAll(`.${alignedClass}`).forEach(el => el.classList.add("highlight"))
+            e.target.closest(".ed-content").querySelectorAll(`.${alignedClass}`).forEach(el => el.classList.add("highlight"));
         }
     });
 
-    document.querySelector(".ed-container").addEventListener("mouseout", e => {
+    document.querySelector("#ed-container").addEventListener("mouseout", e => {
         if (typeof e.target.tagName !== "undefined" && e.target.tagName.toLowerCase() === "span" && e.target.classList.contains("aligned")) {
             const alignedClass = findAlignedClass(e.target);
-            e.target.closest(".ed-content").querySelectorAll(`.${alignedClass}`).forEach(el => el.classList.remove("highlight"))
+            e.target.closest(".ed-content").querySelectorAll(`.${alignedClass}`).forEach(el => el.classList.remove("highlight"));
         }
     });
     function createSpaceEl() {
@@ -179,7 +177,7 @@
         return container
     }
 
-    function build(items, container, isTokenLevel) {
+    function buildSection(items, container, isTokenLevel) {
         const refItemsCont = document.querySelector(container).querySelector(".ed-ref .items")
         const mtItemsCont = document.querySelector(container).querySelector(".ed-mt .items")
 
@@ -245,12 +243,13 @@
         mtItemsCont.append(mtFrag);
     }
 
-    function build_html(ref, mt, char, token) {
-        document.querySelector("#ed-sentences p.ed-ref-sent > span").textContent = ref
-        document.querySelector("#ed-sentences p.ed-mt-sent > span").textContent = mt
+    function buildHtml(ref, mt, char, token) {
+        document.querySelector("#ed-sentences p.ed-ref-sent > span").textContent = ref;
+        document.querySelector("#ed-sentences p.ed-mt-sent > span").textContent = mt;
 
-        build(char, "#ed-char-level", false)
-        build(token, "#ed-tok-level", true)
+        buildSection(char, "#ed-char-level", false);
+        buildSection(token, "#ed-tok-level", true);
+        resize();
     }
 
     // data is any JSON-serializable value you sent from Python,
@@ -258,19 +257,25 @@
     function onDataFromPython(event) {
         if (event.data.type !== "streamlit:render") return;
         const args = event.data.args
-        build_html(args.ref, args.mt, args.char, args.token)
+        buildHtml(args.ref, args.mt, args.char, args.token)
     }
 
     // Hook things up!
     window.addEventListener("message", onDataFromPython);
     init();
 
-    // Hack to autoset the iframe height.
+    function resize() {
+        window.setTimeout(function() {
+            setFrameHeight(document.documentElement.clientHeight);
+        }, 50);
+    }
+
     window.addEventListener("load", function() {
         window.setTimeout(function() {
-            setFrameHeight(document.documentElement.clientHeight)
-        }, 0);
+            setFrameHeight(document.body.clientHeight);
+        }, 50);
     });
 </script>
+
 </body>
 </html>
