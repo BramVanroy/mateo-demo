@@ -1,7 +1,8 @@
 import re
 
 import streamlit as st
-from mateo_st.metrics_constants import METRICS_META, SUPPORTED_LANGS
+from mateo_st.metrics_constants import METRICS_META
+from mateo_st.metrics_lang_support import SUPPORTED_LANGS
 from mateo_st.utils import cli_args, load_css
 
 
