@@ -200,41 +200,46 @@ def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame]:
     # For display
     display_data = postprocess_data(bs_data, for_display=True)
     display_df = pd.DataFrame(display_data)
+    styled_display_df = display_df.style
     column_names = display_df.columns
-
-    def highlight_asterisk(row: pd.Series):
-        return ["color: red" if not cell.endswith("*") else "" for cell in row]
 
     def color_baseline(row: pd.Series):
         return ["color: #aeae22" for _ in row]
 
-    styled_display_df = display_df.style.apply(highlight_asterisk, subset=column_names[1:])
-    # Color the baseline row
-    styled_display_df = styled_display_df.apply(color_baseline, subset=pd.IndexSlice[0, :])
+    if st.session_state["num_sys"] > 1:
+        # Color the baseline row
+        styled_display_df = styled_display_df.apply(color_baseline, subset=pd.IndexSlice[0, :])
+
     styled_display_df = styled_display_df.set_properties(
         **{"white-space": "pre-wrap", "text-align": "center !important"}, subset=column_names[1:]
     ).set_properties(**{"text-align": "right !important"}, subset=column_names[0])
 
-    higher_better = [c for c in column_names if c not in ("TER (μ ± 95% CI)", "system")]
-    lower_better = ["TER (μ ± 95% CI)"] if "TER (μ ± 95% CI)" in column_names else []
     styled_display_df = styled_display_df.highlight_null(props="color: transparent;")
-    styled_display_df = styled_display_df.highlight_max(
-        subset=higher_better, props="font-weight: bold;"
-    ).highlight_min(subset=lower_better, props="font-weight: bold;")
+    if st.session_state["num_sys"] > 1:
+        higher_better = [c for c in column_names if c not in ("TER (μ ± 95% CI)", "system")]
+        lower_better = ["TER (μ ± 95% CI)"] if "TER (μ ± 95% CI)" in column_names else []
+        styled_display_df = styled_display_df.highlight_max(
+            subset=higher_better, props="font-weight: bold;"
+        ).highlight_min(subset=lower_better, props="font-weight: bold;")
 
     # For LaTeX
     latex_data = postprocess_data(bs_data, for_display=False)
     latex_df = pd.DataFrame(latex_data)
-    column_names = latex_df.columns
     styled_latex_df = latex_df.style
-    higher_better = [c for c in column_names if c not in ("TER", "system")]
-    lower_better = ["TER"] if "TER" in column_names else []
+    column_names = latex_df.columns
+    styled_latex_df = styled_latex_df.set_properties(
+        **{"white-space": "pre-wrap", "text-align": "center !important"}, subset=column_names[1:]
+    ).set_properties(**{"text-align": "right !important"}, subset=column_names[0])
+
     styled_latex_df = styled_latex_df.highlight_null(props="color: transparent;")
-    styled_latex_df = (
-        styled_latex_df.highlight_max(subset=higher_better, props="font-weight: bold;")
-        .highlight_min(subset=lower_better, props="font-weight: bold;")
-        .hide()
-    )
+    if st.session_state["num_sys"] > 1:
+        higher_better = [c for c in column_names if c not in ("TER", "system")]
+        lower_better = ["TER"] if "TER" in column_names else []
+        styled_latex_df = styled_latex_df.highlight_max(
+            subset=higher_better, props="font-weight: bold;"
+        ).highlight_min(subset=lower_better, props="font-weight: bold;")
+
+    styled_latex_df = styled_latex_df.hide()
 
     # DataFrame to create figures and for users to download
     graphic_df = deepcopy(latex_df)
