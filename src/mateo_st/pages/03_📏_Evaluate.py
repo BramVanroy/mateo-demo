@@ -140,8 +140,11 @@ def _data_input():
     max_sys_inp_col, _ = st.columns(2)
     max_sys = cli_args().eval_max_sys
     max_sys_inp_col.number_input(
-        f"How many systems do you wish to compare? (max. {max_sys})", step=1, min_value=1, max_value=max_sys,
-        key="num_sys"
+        f"How many systems do you wish to compare? (max. {max_sys})",
+        step=1,
+        min_value=1,
+        max_value=max_sys,
+        key="num_sys",
     )
 
     # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
@@ -448,8 +451,10 @@ def _evaluate():
     _compute_metrics()
 
     if "results" in st.session_state and st.session_state["results"]:
-        st.markdown("📊 **Figures**: You can download figures by hovering over them and clicking the"
-                    " camera icon in the top right.")
+        st.markdown(
+            "📊 **Figures**: You can download figures by hovering over them and clicking the"
+            " camera icon in the top right."
+        )
         # First build a df solely based on corpus results -- without bootstrap resampling
         # We do this so the user already has something to look at while bootstrap is being done in the background
         corpus_df = _build_corpus_df()
@@ -460,15 +465,19 @@ def _evaluate():
         # 1: to display as table; 2: to .to_latex and show as code; 3. to download (with CI); 4. to use to calculate visualizations and
         styled_display_df, styled_latex_df, download_ci_df, download_wo_ci_df = get_bootstrap_dataframe()
         if "bootstrap_results" in st.session_state and st.session_state["bootstrap_results"]:
-            st.markdown("🗄️ **Table**: this table includes corpus-level results as well as the mean and 95% confidence"
-                        " intervals between brackets that have been calculated with (paired) bootstrap resampling"
-                        " (n=1000), compatible with the implementation in"
-                        " [SacreBLEU](https://github.com/mjpost/sacrebleu/blob/38256a74f15d35d07f24976f709edefe7a027f0b/sacrebleu/significance.py#L199).")
+            st.markdown(
+                "🗄️ **Table**: this table includes corpus-level results as well as the mean and 95% confidence"
+                " intervals between brackets that have been calculated with (paired) bootstrap resampling"
+                " (n=1000), compatible with the implementation in"
+                " [SacreBLEU](https://github.com/mjpost/sacrebleu/blob/38256a74f15d35d07f24976f709edefe7a027f0b/sacrebleu/significance.py#L199)."
+            )
 
             if st.session_state["num_sys"] > 1:
-                st.markdown("The p-values indicate the significance of the difference between a system and the baseline."
-                            " An asterisk * indicates that a system differs significantly from the baseline (p<0.05). The"
-                            " best system is highlighted in **bold**.")
+                st.markdown(
+                    "The p-values indicate the significance of the difference between a system and the baseline."
+                    " An asterisk * indicates that a system differs significantly from the baseline (p<0.05). The"
+                    " best system is highlighted in **bold**."
+                )
 
             bs_info.empty()
             st.table(styled_display_df)
@@ -476,28 +485,36 @@ def _evaluate():
             # Download tables
             excel_link_with_ci = create_download_link(download_ci_df, "mateo-evaluation-ci.xlsx", "Excel file")
             txt_link_with_ci = create_download_link(
-                download_ci_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-evaluation-ci.tsv", "tab-separated file"
+                download_ci_df.to_csv(index=False, encoding="utf-8", sep="\t"),
+                "mateo-evaluation-ci.tsv",
+                "tab-separated file",
             )
             excel_link_wo_ci = create_download_link(download_wo_ci_df, "mateo-evaluation.xlsx", "Excel file")
             txt_link_wo_ci = create_download_link(
-                download_wo_ci_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-evaluation.tsv", "tab-separated file"
+                download_wo_ci_df.to_csv(index=False, encoding="utf-8", sep="\t"),
+                "mateo-evaluation.tsv",
+                "tab-separated file",
             )
             st.markdown(
                 f"📥 **Download** the table with or without confidence intervals and full p-values:\n"
                 f"- with: {excel_link_with_ci} / {txt_link_with_ci}\n"
                 f"- without: {excel_link_wo_ci} / {txt_link_wo_ci}",
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
             # Signatures
             if "bootstrap_signatures" in st.session_state and st.session_state["bootstrap_signatures"]:
-                st.markdown("💡 **Signatures**: it's a good idea to report these in your paper so others know exactly"
-                            " which configuration you used!")
+                st.markdown(
+                    "💡 **Signatures**: it's a good idea to report these in your paper so others know exactly"
+                    " which configuration you used!"
+                )
                 signatures = [f"{metric}: {sig}" for metric, sig in st.session_state["bootstrap_signatures"].items()]
                 st.text("\n".join(signatures))
 
             # Latex
-            st.markdown("📝 **LaTeX**: Make sure to include `booktabs` at the top of your LaTeX file: `\\usepackage{booktabs}`")
+            st.markdown(
+                "📝 **LaTeX**: Make sure to include `booktabs` at the top of your LaTeX file: `\\usepackage{booktabs}`"
+            )
             latex_caption = "Evaluation results generated with MATEO."
             if st.session_state["num_sys"] > 1:
                 latex_caption += " * indicates a significant difference with the first row (baseline)."
