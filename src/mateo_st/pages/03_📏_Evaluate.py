@@ -457,11 +457,13 @@ def _evaluate():
 
         # We need the resampled results to show the table
         bs_info = st.info("Bootstrap resampling...")
-        styled_display_df, styled_latex_df, graphic_df = get_bootstrap_dataframe()
+        # 1: to display as table; 2: to .to_latex and show as code; 3. to download (with CI); 4. to use to calculate visualizations and
+        styled_display_df, styled_latex_df, download_ci_df, download_wo_ci_df = get_bootstrap_dataframe()
         if "bootstrap_results" in st.session_state and st.session_state["bootstrap_results"]:
             st.markdown("🗄️ **Table**: this table includes corpus-level results as well as the mean and 95% confidence"
-                        " intervals between brackets that have been calculated with paired bootstrap resampling (n=1000),"
-                        " compatible with the implementation in [SacreBLEU](https://github.com/mjpost/sacrebleu/blob/38256a74f15d35d07f24976f709edefe7a027f0b/sacrebleu/significance.py#L199).")
+                        " intervals between brackets that have been calculated with (paired) bootstrap resampling"
+                        " (n=1000), compatible with the implementation in"
+                        " [SacreBLEU](https://github.com/mjpost/sacrebleu/blob/38256a74f15d35d07f24976f709edefe7a027f0b/sacrebleu/significance.py#L199).")
 
             if st.session_state["num_sys"] > 1:
                 st.markdown("The p-values indicate the significance of the difference between a system and the baseline."
@@ -472,12 +474,20 @@ def _evaluate():
             st.table(styled_display_df)
 
             # Download tables
-            excel_link = create_download_link(graphic_df, "mateo-evaluation.xlsx", "Excel file")
-            txt_link = create_download_link(
-                graphic_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-evaluation.tsv", "tab-separated file"
+            excel_link_with_ci = create_download_link(download_ci_df, "mateo-evaluation-ci.xlsx", "Excel file")
+            txt_link_with_ci = create_download_link(
+                download_ci_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-evaluation-ci.tsv", "tab-separated file"
             )
-
-            st.markdown(f"You can download the table as an {excel_link}, or as a {txt_link}.", unsafe_allow_html=True)
+            excel_link_wo_ci = create_download_link(download_wo_ci_df, "mateo-evaluation.xlsx", "Excel file")
+            txt_link_wo_ci = create_download_link(
+                download_wo_ci_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-evaluation.tsv", "tab-separated file"
+            )
+            st.markdown(
+                f"📥 **Download** the table with or without confidence intervals and full p-values:\n"
+                f"- with: {excel_link_with_ci} / {txt_link_with_ci}\n"
+                f"- without: {excel_link_wo_ci} / {txt_link_wo_ci}",
+                unsafe_allow_html=True
+            )
 
             # Signatures
             if "bootstrap_signatures" in st.session_state and st.session_state["bootstrap_signatures"]:
@@ -526,11 +536,11 @@ def _evaluate():
                     metricdf = metricdf.drop(columns="metric").reset_index(drop=True)
                     tab.dataframe(metricdf)
 
-                excel_link = create_download_link(
+                excel_link_wo_ci = create_download_link(
                     sentence_df, "mateo-sentences.xlsx", "Excel file", df_groupby="metric"
                 )
                 st.markdown(
-                    f"You can download the table as an {excel_link}. Metrics are separated in sheets.",
+                    f"You can download the table as an {excel_link_wo_ci}. Metrics are separated in sheets.",
                     unsafe_allow_html=True,
                 )
         else:

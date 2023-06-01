@@ -134,7 +134,7 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
     """SacreBLEU"""
     args = Namespace(
         format="json",
-        short=True,
+        short=False,
         paired_bs=True,
         paired_ar=False,
         paired_bs_n=paired_bs_n,
@@ -166,7 +166,7 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
     return bs_data
 
 
-def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame]:
+def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame, pd.DataFrame]:
     bs_data = do_bootstrap_resampling()
 
     def postprocess_data(data, *, for_display: bool = True):
@@ -241,9 +241,15 @@ def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame]:
 
     styled_latex_df = styled_latex_df.hide()
 
-    # DataFrame to create figures and for users to download
-    graphic_df = deepcopy(latex_df)
-    for column in graphic_df.columns[1:]:
-        graphic_df[column] = graphic_df[column].str.replace("*", "").astype(float)
+    # DataFrame for users to download without CI or p-values or asterisks
+    # The main idea is for users to use this type of excel/sheet for analysis
+    download_wo_ci_df = deepcopy(latex_df)
+    for column in download_wo_ci_df.columns[1:]:
+        download_wo_ci_df[column] = download_wo_ci_df[column].str.replace("*", "").astype(float)
 
-    return styled_display_df, styled_latex_df, graphic_df
+    # For download with CI -- for the download without CI we use graphic_df
+    download_ci_df = deepcopy(display_df)
+    # Remove newlines
+    download_ci_df = download_ci_df.replace({r'\s+$': '', r'^\s+': ''}, regex=True).replace(r'\n',  ' ', regex=True)
+
+    return styled_display_df, styled_latex_df, download_ci_df, download_wo_ci_df
