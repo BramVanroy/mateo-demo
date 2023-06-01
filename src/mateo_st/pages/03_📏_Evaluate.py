@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Type, Union
 
 import evaluate
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -15,6 +14,7 @@ from mateo_st.significance import get_bootstrap_dataframe
 from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
 from sacrebleu.metrics.base import Metric as SbMetric
 
+import altair as alt
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -420,7 +420,7 @@ def _draw_corpus_scores(df):
         df_melt,
         x="metric",
         y="score",
-        color="system" if len(st.session_state["sys_files"]) > 1 else None,
+        color="system" if st.session_state["num_sys"] > 1 else None,
         barmode="group",
         template="plotly",
     )
@@ -445,6 +445,40 @@ def _draw_corpus_scores(df):
     radar_fig.update_layout(showlegend=True, template="plotly")
     radar_plot_tab.plotly_chart(radar_fig)
 
+def _segment_level_comparison(sentence_df: pd.DataFrame):
+    metric_names = sentence_df["metric"].unique().tolist()
+    grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}
+    pretty_names = [METRICS_META[metric_name].name for metric_name in metric_names]
+
+    for metric_name, tab in zip(metric_names, st.tabs(pretty_names)):
+        metricdf = grouped_df[metric_name]
+        metricdf["sample"] = range(1, len(metricdf.index)+1)
+        metricdf = metricdf.drop(columns="metric").reset_index(drop=True)
+
+        def normalize_score_col(colname: str) -> str:
+            return colname.replace("_score", "").replace('.', '-')
+
+        # Rename columns so that score columns have no special ending, and columns with translations end in _text
+        sys_score_cols = [c for c in metricdf.columns if c.endswith("_score")]
+        # Have to get rid of dots in filenames
+        # https://github.com/altair-viz/altair/issues/990
+        metricdf = metricdf.rename(columns={c.replace("_score", ""): f"{normalize_score_col(c)}_text" for c in sys_score_cols})
+        metricdf = metricdf.rename(columns={c: normalize_score_col(c) for c in sys_score_cols})
+
+        sys_score_cols = [normalize_score_col(c) for c in sys_score_cols]
+        sys_text_names = [f"{c}_text" for c in sys_score_cols]
+
+        id_vars = ['sample', 'src', 'ref'] + sys_text_names
+        df_melt = metricdf.melt(id_vars=id_vars, value_vars=sys_score_cols,
+                                var_name='system', value_name='score')
+
+        chart = alt.Chart(df_melt).mark_circle().encode(
+            x=alt.X('sample:O', title='Sample', axis=alt.Axis(labels=False)),
+            y=alt.Y('score:Q', title='Score'),
+            color='system:N',
+            tooltip=id_vars+["system", "score"]
+        )
+        tab.altair_chart(chart, use_container_width=True)
 
 def _evaluate():
     st.markdown("## 🎁 Evaluation results (corpus)")
@@ -462,7 +496,8 @@ def _evaluate():
 
         # We need the resampled results to show the table
         bs_info = st.info("Bootstrap resampling...")
-        # 1: to display as table; 2: to .to_latex and show as code; 3. to download (with CI); 4. to use to calculate visualizations and
+        # 1: to display as table; 2: to .to_latex and show as code;
+        # 3. to download (with CI); 4. to download (without CI)
         styled_display_df, styled_latex_df, download_ci_df, download_wo_ci_df = get_bootstrap_dataframe()
         if "bootstrap_results" in st.session_state and st.session_state["bootstrap_results"]:
             st.markdown(
@@ -560,6 +595,8 @@ def _evaluate():
                     f"You can download the table as an {excel_link_wo_ci}. Metrics are separated in sheets.",
                     unsafe_allow_html=True,
                 )
+
+                _segment_level_comparison(sentence_df)
         else:
             segment_level_metrics = [meta.name for m, meta in METRICS_META.items() if meta.segment_level]
             st.info(
