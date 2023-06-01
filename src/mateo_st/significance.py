@@ -11,11 +11,12 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from mateo_st.metrics_constants import METRICS_META
+from mateo_st.utils import build_signature
+from pandas.io.formats.style import Styler
 from sacrebleu.metrics.base import Metric as SbMetric
 from sacrebleu.significance import PairedTest, Result, _compute_p_value, estimate_ci
 from sacrebleu.utils import print_results_table
 
-from pandas.io.formats.style import Styler
 
 def paired_bs(
     metric_sentence_scores: Dict[str, List[List[float]]],
@@ -108,9 +109,7 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
                 (f"Baseline: {sys_name}" if sys_idx == 0 else sys_name, st.session_state["sys_segments"][sys_idx])
             )
         else:
-            named_systems.append(
-                (sys_name, st.session_state["sys_segments"][sys_idx])
-            )
+            named_systems.append((sys_name, st.session_state["sys_segments"][sys_idx]))
 
         for metric_name, metric_res in results.items():
             opts = st.session_state["metrics"][metric_name].copy()  # Copy to not pop globally
@@ -119,7 +118,8 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
             # If we already pre-calculated sentence-level scores, we can just use those directly for bootstrapping
             # If not, we are probably using sacrebleu, in which case we calculate them again later for all partitions
             if metric_res["sentences"] is not None:
-                signatures[metric_name] = f"#:1|bs:{paired_bs_n}|rs:{seed}|v:{meta.version}"
+                metric_opts = st.session_state["metrics"][metric_name]
+                signatures[metric_name] = build_signature(paired_bs_n, seed, meta.version, metric_opts)
                 metric_sentence_scores[metric_name].append(metric_res["sentences"])
             else:
                 opts.pop("config_name", None)
@@ -250,6 +250,6 @@ def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame, pd.DataFram
     # For download with CI -- for the download without CI we use graphic_df
     download_ci_df = deepcopy(display_df)
     # Remove newlines
-    download_ci_df = download_ci_df.replace({r'\s+$': '', r'^\s+': ''}, regex=True).replace(r'\n',  ' ', regex=True)
+    download_ci_df = download_ci_df.replace({r"\s+$": "", r"^\s+": ""}, regex=True).replace(r"\n", " ", regex=True)
 
     return styled_display_df, styled_latex_df, download_ci_df, download_wo_ci_df

@@ -18,14 +18,24 @@ from mateo_st.translator import (
 
 def create_download_link(
     data: Union[str, pd.DataFrame], filename: str, link_text: str = "Download", df_groupby: Optional[str] = None
-):
+) -> str:
+    """Given a string or dataframe, turn it into an in-memory object that can be downloaded
+    :param data: data to include
+    :param filename: name of the filename that we create in-memory
+    :param link_text: text of the hyperlink that will be created
+    :param df_groupby: whether to create separate sheets for a given "df_groupby" column. Only used if 'data' is
+     a DataFrame
+    :return: an HTML <a> link that contains the download item as base64 encoded content
+    """
     if isinstance(data, pd.DataFrame):
         # Write the DataFrame to an in-memory bytes object
         bytes_io = BytesIO()
         with pd.ExcelWriter(bytes_io, "xlsxwriter") as writer:
+            # df_groupby is used especially in the sentence-level Excel sheet where we want to create
+            # separate sheets per metric
             if df_groupby is not None:
                 for groupname, groupdf in data.groupby(df_groupby):
-                    groupdf = groupdf.drop(columns="metric").reset_index(drop=True)
+                    groupdf = groupdf.drop(columns=df_groupby).reset_index(drop=True)
                     groupdf.to_excel(writer, index=False, sheet_name=groupname)
             else:
                 data.to_excel(writer, index=False)
@@ -90,16 +100,23 @@ def cli_args():
 
 
 def load_css(name: str):
+    """Load a given CSS file in streamlit. The given "name".css will be looked for in the css directory.
+    :param name: filename without extension to load
+    """
     pfcss = Path(__file__).parent.joinpath(f"css/{name}.css")
-    st.markdown(f"<style>{read_file(pfcss)}</style>", unsafe_allow_html=True)
+    st.markdown(f"<style>{read_local_file(pfcss)}</style>", unsafe_allow_html=True)
 
 
 @st.cache_data(max_entries=64)
-def read_file(fin: Union[str, PathLike]):
+def read_local_file(fin: Union[str, PathLike]):
     return Path(fin).read_text(encoding="utf-8")
 
 
 def isfloat(item: str):
+    """Check whether the given item can in fact be a float
+    :param item: the item to check
+    :return: True if it could be a float, False if not
+    """
     try:
         float(item)
     except (TypeError, ValueError):
@@ -108,7 +125,11 @@ def isfloat(item: str):
         return True
 
 
-def isint(item: str):
+def isint(item: str) -> bool:
+    """Check whether the given item can in fact be an integer
+    :param item: the item to check
+    :return: True if it could be an int, False if not
+    """
     try:
         item_float = float(item)
         item_int = int(item)
@@ -116,3 +137,35 @@ def isint(item: str):
         return False
     else:
         return item_float == item_int
+
+
+def build_signature(paired_bs_n: int, seed: int, library_version: str, metric_options: dict) -> str:
+    """Builds a signature for a metric that does not support it out of the box (SacreBLEU does)
+    :param paired_bs_n: number of resamples in bootstrap resampling
+    :param seed: random seed used in bootstrap resampling
+    :param library_version: version of the library that this metric belongs to
+    :param metric_options: additional options that were specified in this metric
+    :return:
+    """
+    # Sort options to ensure determinism in abbreviations
+    metric_options = {prop: metric_options[prop] for prop in sorted(metric_options.keys())}
+
+    sig = f"nrefs:1|bs:{paired_bs_n}|seed:{seed}"
+
+    abbrs = set()
+    # Iteratively add all the options. As keys in the signature, just use the first letter
+    # of the property. If it already exists, use the first two letters, etc.
+    for prop, value in metric_options.items():
+        if value == "" or value is None:
+            continue
+        idx = 1
+        abbr = prop[:idx]
+        while abbr in abbrs:
+            idx += 1
+            abbr = prop[:idx]
+        abbrs.add(abbr)
+        sig += f"|{abbr}:{value}"
+
+    sig += f"|version:{library_version}"
+
+    return sig
