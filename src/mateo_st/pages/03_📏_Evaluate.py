@@ -1,7 +1,7 @@
 import warnings
 from io import StringIO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import evaluate
 import numpy as np
@@ -11,7 +11,9 @@ import plotly.graph_objects as go
 import streamlit as st
 from evaluate import EvaluationModule
 from mateo_st.metrics_constants import METRICS_META, MetricMeta, MetricOption, postprocess_result
+from mateo_st.significance import get_bootstrap_dataframe
 from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
+from sacrebleu.metrics.base import Metric as SbMetric
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -20,6 +22,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 def _init():
     st.set_page_config(page_title="Evaluate Machine Translations | MATEO", page_icon="📏")
     load_css("base")
+    load_css("evaluate")
 
     if "ref_segments" not in st.session_state:
         st.session_state["ref_segments"] = []
@@ -87,7 +90,7 @@ def _metric_selection():
                         if opt.empty_str_is_none:
                             expander.text_input(**kwargs)
                         else:
-                            expander.number_input(**kwargs, step=0.01 if float in opt.types else 1)
+                            expander.number_input(**kwargs, step=0.01 if float in opt.types else 1, min_value=0)
                     elif dtype is bool:
                         expander.checkbox(**kwargs)
 
@@ -137,7 +140,10 @@ def _data_input():
     for sys_idx in range(1, max_sys + 1):
         if sys_idx <= num_sys:
             sys_container = sys_inp_col_left if sys_idx % 2 != 0 else sys_inp_col_right
-            sys_file = sys_container.file_uploader(f"System #{sys_idx} file")
+            if num_sys > 1 and sys_idx == 1:
+                sys_file = sys_container.file_uploader(f"System #{sys_idx} (serves as baseline)")
+            else:
+                sys_file = sys_container.file_uploader(f"System #{sys_idx} file")
             st.session_state["sys_segments"][sys_idx] = read_file(sys_file)
             st.session_state["sys_files"][sys_idx] = Path(sys_file.name).stem if sys_file else None
         else:
@@ -252,6 +258,15 @@ def _load_metric(metric_name: str, config_name: Optional[str] = None) -> Evaluat
     return evaluate.load(metric_name, config_name=config_name)
 
 
+@st.cache_resource(show_spinner=False, max_entries=24, ttl=86400)
+def _load_sacrebleu_metric(sb_class: Type[SbMetric], **options) -> SbMetric:
+    """Load an individual metric
+    :param sb_class: a sacrebleu Class to instantiate this metric with
+    :return: loaded sacrebleu metric
+    """
+    return sb_class(**options)
+
+
 @st.cache_data(show_spinner=False, ttl=86400)
 def _compute_metric(
     metric_name: str,
@@ -260,13 +275,18 @@ def _compute_metric(
     references: List[str],
     sources: Optional[List[str]] = None,
     config_name: Optional[str] = None,
+    sb_class: Optional[Type[SbMetric]] = None,
     **kwargs,
 ):
-    metric = _load_metric(metric_name, config_name)
-    if sources:
-        return metric.compute(predictions=predictions, references=references, sources=sources, **kwargs)
+    if sb_class is None:
+        metric = _load_metric(metric_name, config_name)
+        if sources:
+            return metric.compute(predictions=predictions, references=references, sources=sources, **kwargs)
+        else:
+            return metric.compute(predictions=predictions, references=references, **kwargs)
     else:
-        return metric.compute(predictions=predictions, references=references, **kwargs)
+        metric = _load_sacrebleu_metric(sb_class, **kwargs)
+        return metric.corpus_score(hypotheses=predictions, references=[references])
 
 
 def _compute_metrics():
@@ -305,11 +325,18 @@ def _compute_metrics():
                 references=st.session_state["ref_segments"],
                 sources=st.session_state["src_segments"] if meta.requires_source else None,
                 config_name=opts.pop("config_name", None),
+                sb_class=meta.sb_class,
                 **opts,
             )
+            print(result)
+            # Sacrebleu returns special Score classes -- convert to dict
+            if meta.sb_class is not None:
+                result = vars(result)
 
+            print(result)
             result = postprocess_result(metric_evaluate_name, result)
 
+            print(result)
             results[sys_idx][metric_evaluate_name] = {
                 "corpus": result[meta.corpus_score_key],
                 "sentences": result[meta.sentences_score_key] if meta.sentences_score_key else None,
@@ -497,6 +524,22 @@ def _evaluate():
             )
 
 
+def _bootstrap():
+    styled_df, latex_df = get_bootstrap_dataframe()
+    st.table(styled_df)
+
+    st.markdown("Make sure to include the `booktabs` package at the top of your LaTeX file: `\\usepackage{booktabs}`")
+    st.code(
+        latex_df.to_latex(
+            caption="Machine translation results. * indicates a significant difference with the first row (baseline)."
+            " Generated with MATEO.",
+            convert_css=True,
+            hrules=True,
+        ),
+        language="latex",
+    )
+
+
 def main():
     _init()
     _metric_selection()
@@ -513,6 +556,7 @@ def main():
         if st.button("Evaluate MT"):
             _add_metrics_selection_to_state()
             _evaluate()
+            _bootstrap()
         else:
             st.write("Click the button above to start calculating the automatic evaluation scores for your data")
 

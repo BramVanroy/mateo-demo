@@ -5,7 +5,8 @@ from typing import Any, Dict, Literal, Optional, Tuple, Type
 import bert_score
 import comet
 import sacrebleu
-from sacrebleu import BLEU, CHRF
+from sacrebleu import BLEU, CHRF, TER
+from sacrebleu.metrics.base import Metric as SbMetric
 from sacrebleu.metrics.bleu import _TOKENIZERS as SBTOKENIZERS
 
 
@@ -41,6 +42,7 @@ class MetricMeta:
     version: Optional[str] = None
     options: Optional[Tuple[MetricOption, ...]] = field(default_factory=tuple)
     requires_source: bool = False
+    sb_class: Optional[Type[SbMetric]] = None
     corpus_score_key: str = "score"
     sentences_score_key: Optional[str] = None
     segment_level: bool = True
@@ -109,7 +111,7 @@ METRICS_META = {
             # to calculate baseline/idf scores on
         ),
     ),
-    "sacrebleu": MetricMeta(
+    "bleu": MetricMeta(
         name="BLEU",
         metric_class="baseline",
         full_name="BiLingual Evaluation Understudy",
@@ -122,7 +124,20 @@ METRICS_META = {
         implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
         is_default_selected=True,
         version=sacrebleu.__version__,
+        sb_class=BLEU,
         options=(
+            MetricOption(
+                name="lowercase",
+                description="If True, lowercased BLEU is computed.",
+                default=False,
+                types=(bool,),
+            ),
+            MetricOption(
+                name="tokenize",
+                description="The tokenizer to use",
+                default=BLEU.TOKENIZER_DEFAULT,
+                choices=tuple(SBTOKENIZERS.keys()),
+            ),
             MetricOption(
                 name="smooth_method",
                 description="Smoothing method to use",
@@ -136,12 +151,11 @@ METRICS_META = {
                 types=(float, int),
                 empty_str_is_none=True,
             ),
-            MetricOption(name="lowercase", description="Whether to lowercase the data", default=False, types=(bool,)),
             MetricOption(
-                name="tokenize",
-                description="Tokenizer to use",
-                default=BLEU.TOKENIZER_DEFAULT,
-                choices=tuple(SBTOKENIZERS.keys()),
+                name="max_ngram_order",
+                description="The maximum n-gram order when computing precisions",
+                default=4,
+                types=(int,),
             ),
         ),
         segment_level=False,
@@ -193,6 +207,7 @@ METRICS_META = {
         implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
         is_default_selected=True,
         version=sacrebleu.__version__,
+        sb_class=CHRF,
         options=(
             MetricOption(
                 name="char_order", description="Character n-gram order", default=CHRF.CHAR_ORDER, types=(int,)
@@ -272,22 +287,23 @@ METRICS_META = {
         is_default_selected=True,
         higher_better=False,
         version=sacrebleu.__version__,
+        sb_class=TER,
         options=(
             MetricOption(
                 name="normalized",
-                description="Whether to enable character normalization",
+                description="Whether to enable character normalization. If enabled, by default, normalizes a couple of things such as newlines being stripped, retrieving XML encoded characters, and fixing tokenization for punctuation. When 'asian_support' is enabled, also normalizes specific Asian (CJK) character sequences, i.e. split them down to the character level.",
                 default=False,
                 types=(bool,),
             ),
             MetricOption(
-                name="ignore_punct",
-                description="Whether to removes punctuations from sentences",
+                name="no_punct",
+                description="Whether to removes punctuations from sentences. Can be used in conjunction with 'asian_support' to also remove typical punctuation markers in Asian languages (CJK)",
                 default=False,
                 types=(bool,),
             ),
             MetricOption(
-                name="support_zh_ja_chars",
-                description="Whether to add support for Asian character processing",
+                name="asian_support",
+                description="Enable special treatment of Asian characters. This option only has an effect when 'normalized' and/or 'no_punct' is enabled. If 'normalized' is also enabled, then Asian (CJK) characters are split down to the character level. If 'no_punct' is enabled alongside 'asian_support', specific unicode ranges for CJK and full-width punctuations are also removed.",
                 default=False,
                 types=(bool,),
             ),
