@@ -164,6 +164,11 @@ def build_signature(paired_bs_n: int, seed: int, library_version: str, metric_op
             idx += 1
             abbr = prop[:idx]
         abbrs.add(abbr)
+
+        # Convert bools to yes/no
+        if isinstance(value, bool):
+            value = "yes" if value is True else "no"
+            
         sig += f"|{abbr}:{value}"
 
     sig += f"|version:{library_version}"
