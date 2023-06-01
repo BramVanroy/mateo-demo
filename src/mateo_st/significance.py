@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import sys
 from argparse import Namespace
 from collections import defaultdict
@@ -109,9 +108,11 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
         for metric_name, metric_res in results.items():
             opts = st.session_state["metrics"][metric_name].copy()  # Copy to not pop globally
             meta = METRICS_META[metric_name]
-            signatures[metric_name] = f"#:1|bs:{paired_bs_n}|rs:{seed}|v:{meta.version}"
 
+            # If we already pre-calculated sentence-level scores, we can just use those directly for bootstrapping
+            # If not, we are probably using sacrebleu, in which case we calculate them again later for all partitions
             if metric_res["sentences"] is not None:
+                signatures[metric_name] = f"#:1|bs:{paired_bs_n}|rs:{seed}|v:{meta.version}"
                 metric_sentence_scores[metric_name].append(metric_res["sentences"])
             else:
                 opts.pop("config_name", None)
@@ -152,15 +153,13 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
     bs_data = json.loads(result_table_print.getvalue())
     sys.stdout = os_stdout
 
+    st.session_state["bootstrap_results"] = bs_data
+    st.session_state["bootstrap_signatures"] = signatures
+
     return bs_data
 
 
 def get_bootstrap_dataframe() -> pd.DataFrame:
-    """TODO:
-    - Only show the table with CI and all that stuff, put best system in bold
-    - But also give the latex, but which does not contain the confidence interval but only the asterisk to indicate significance
-    - Add explanation
-    """
     bs_data = do_bootstrap_resampling()
 
     def postprocess_data(data, *, for_display: bool = True):
@@ -230,4 +229,9 @@ def get_bootstrap_dataframe() -> pd.DataFrame:
         .hide()
     )
 
-    return styled_display_df, styled_latex_df
+    # DataFrame to create figures and for users to download
+    graphic_df = deepcopy(latex_df)
+    for column in graphic_df.columns[1:]:
+        graphic_df[column] = graphic_df[column].str.replace("*", "").astype(float)
+
+    return styled_display_df, styled_latex_df, graphic_df

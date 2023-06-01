@@ -48,6 +48,12 @@ def _init():
     if "results" not in st.session_state:
         st.session_state["results"] = dict()
 
+    if "bootstrap_results" not in st.session_state:
+        st.session_state["bootstrap_results"] = dict()
+
+    if "bootstrap_signatures" not in st.session_state:
+        st.session_state["bootstrap_signatures"] = dict()
+
     st.title("📏 Evaluate")
     st.markdown("First specify the metrics and metric options to use, and then upload your data.")
 
@@ -328,15 +334,13 @@ def _compute_metrics():
                 sb_class=meta.sb_class,
                 **opts,
             )
-            print(result)
+
             # Sacrebleu returns special Score classes -- convert to dict
             if meta.sb_class is not None:
                 result = vars(result)
 
-            print(result)
             result = postprocess_result(metric_evaluate_name, result)
 
-            print(result)
             results[sys_idx][metric_evaluate_name] = {
                 "corpus": result[meta.corpus_score_key],
                 "sentences": result[meta.sentences_score_key] if meta.sentences_score_key else None,
@@ -348,6 +352,7 @@ def _compute_metrics():
     pbar_text_ct.empty()
     pbar.empty()
     st.session_state["results"] = results
+
 
 
 def _build_corpus_df():
@@ -450,37 +455,46 @@ def _style_df_for_display(df):
 
 
 def _evaluate():
-    st.markdown("## 🎁 Evaluation results")
+    st.markdown("## 🎁 Evaluation results (corpus)")
     _compute_metrics()
 
     if "results" in st.session_state and st.session_state["results"]:
-        st.write("Below you can find the corpus results for your dataset.")
-
-        corpus_df = _build_corpus_df()
         st.markdown("### 📊 Chart")
+        # First build a df solely based on corpus results -- without bootstrap resampling
+        # We do this so the user already has something to look at while bootstrap is being done in the background
+        corpus_df = _build_corpus_df()
         _draw_corpus_scores(corpus_df)
 
         st.markdown("### 🗄️ Table(s)")
-        st.markdown("#### Corpus")
-        styled_df = _style_df_for_display(corpus_df)
-        st.table(styled_df)
 
-        excel_link = create_download_link(corpus_df, "mateo-corpus.xlsx", "Excel file")
+        bs_info = st.info("Bootstrap resampling for significance testing...")
+        styled_display_df, styled_latex_df, graphic_df = get_bootstrap_dataframe()
+        bs_info.empty()
+        st.table(styled_display_df)
+
+        # Download tables
+        excel_link = create_download_link(graphic_df, "mateo-evaluation.xlsx", "Excel file")
         txt_link = create_download_link(
-            corpus_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-corpus.tsv", "tab-separated file"
+            graphic_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-evaluation.tsv", "tab-separated file"
         )
+
         st.markdown(f"You can download the table as an {excel_link}, or as a {txt_link}.", unsafe_allow_html=True)
 
-        # LATEX
-        st.markdown("##### LaTeX")
-        latex_col_format = "l" + ("r" * len(st.session_state["metrics"]))
-        pretty_metrics = ", ".join(METRICS_META[m].name for m in st.session_state["metrics"])
+        # Signatures
+        if "bootstrap_signatures" in st.session_state and st.session_state["bootstrap_signatures"]:
+            st.markdown("💡 **Signatures**: it's a good idea to report these in your paper so others know exactly"
+                        " which configuration you used!")
+            signatures = [f"{metric}: {sig}" for metric, sig in st.session_state["bootstrap_signatures"].items()]
+            st.text("\n".join(signatures))
+
+        # Latex
+        st.markdown("📝 **LaTeX**: Make sure to include `booktabs` at the top of your LaTeX file: `\\usepackage{booktabs}`")
         st.code(
-            styled_df.hide(axis="index").to_latex(
+            styled_latex_df.to_latex(
+                caption="Machine translation results. * indicates a significant difference with the first row (baseline)."
+                        " Generated with MATEO.",
                 convert_css=True,
-                column_format=latex_col_format,
-                caption=f"Metric scores ({pretty_metrics}) for"
-                f" {len(st.session_state['results'])} system(s), calculated with MATEO.",
+                hrules=True,
             ),
             language="latex",
         )
@@ -494,7 +508,7 @@ def _evaluate():
                 " scores. This is not the case for all metrics. Corpus BLEU for instance, is not simply the"
                 " arithmetic mean of all sentence-level BLEU scores but is calculated by its geometric mean and"
                 " modified by a brevity penalty. As such, sentence-level BLEU scores, or similar, are not given"
-                " because they individually not a good representation of a system's performance."
+                " because they individually do not give a good representation of a system's performance."
             )
 
         sentence_df = _build_sentence_df(include_sys_translations=True)
@@ -524,22 +538,6 @@ def _evaluate():
             )
 
 
-def _bootstrap():
-    styled_df, latex_df = get_bootstrap_dataframe()
-    st.table(styled_df)
-
-    st.markdown("Make sure to include the `booktabs` package at the top of your LaTeX file: `\\usepackage{booktabs}`")
-    st.code(
-        latex_df.to_latex(
-            caption="Machine translation results. * indicates a significant difference with the first row (baseline)."
-            " Generated with MATEO.",
-            convert_css=True,
-            hrules=True,
-        ),
-        language="latex",
-    )
-
-
 def main():
     _init()
     _metric_selection()
@@ -556,7 +554,6 @@ def main():
         if st.button("Evaluate MT"):
             _add_metrics_selection_to_state()
             _evaluate()
-            _bootstrap()
         else:
             st.write("Click the button above to start calculating the automatic evaluation scores for your data")
 
