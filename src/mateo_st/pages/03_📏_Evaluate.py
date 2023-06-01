@@ -54,6 +54,9 @@ def _init():
     if "bootstrap_signatures" not in st.session_state:
         st.session_state["bootstrap_signatures"] = dict()
 
+    if "num_sys" not in st.session_state:
+        st.session_state["num_sys"] = 1
+
     st.title("📏 Evaluate")
     st.markdown("First specify the metrics and metric options to use, and then upload your data.")
 
@@ -136,17 +139,18 @@ def _data_input():
 
     max_sys_inp_col, _ = st.columns(2)
     max_sys = cli_args().eval_max_sys
-    num_sys = max_sys_inp_col.number_input(
-        f"How many systems do you wish to compare? (max. {max_sys})", step=1, min_value=1, max_value=max_sys
+    max_sys_inp_col.number_input(
+        f"How many systems do you wish to compare? (max. {max_sys})", step=1, min_value=1, max_value=max_sys,
+        key="num_sys"
     )
 
     # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
     # This can happen when a user first has three systems and then changes it back to 1
     sys_inp_col_left, sys_inp_col_right = st.columns(2)
     for sys_idx in range(1, max_sys + 1):
-        if sys_idx <= num_sys:
+        if sys_idx <= st.session_state["num_sys"]:
             sys_container = sys_inp_col_left if sys_idx % 2 != 0 else sys_inp_col_right
-            if num_sys > 1 and sys_idx == 1:
+            if st.session_state["num_sys"] > 1 and sys_idx == 1:
                 sys_file = sys_container.file_uploader(f"System #{sys_idx} (serves as baseline)")
             else:
                 sys_file = sys_container.file_uploader(f"System #{sys_idx} file")
@@ -354,7 +358,6 @@ def _compute_metrics():
     st.session_state["results"] = results
 
 
-
 def _build_corpus_df():
     data = []
     for sys_idx, results in st.session_state["results"].items():
@@ -440,77 +443,77 @@ def _draw_corpus_scores(df):
     radar_plot_tab.plotly_chart(radar_fig)
 
 
-def _style_df_for_display(df):
-    rounded_df = df.replace(pd.NA, np.nan)
-    rounded_df.iloc[:, 1:] = rounded_df.iloc[:, 1:].astype(float).round(decimals=2).copy()
-    numeric_col_names = rounded_df.columns[1:].tolist()
-    higher_better = [c for c in numeric_col_names if "↑" in c]
-    lower_better = [c for c in numeric_col_names if "↓" in c]
-    styled_df = rounded_df.style.highlight_null(props="color: transparent;")
-    styled_df = styled_df.highlight_max(subset=higher_better, props="font-weight: bold;").highlight_min(
-        subset=lower_better, props="font-weight: bold;"
-    )
-    styled_df = styled_df.format("{:,.2f}", na_rep="", subset=numeric_col_names)
-    return styled_df
-
-
 def _evaluate():
     st.markdown("## 🎁 Evaluation results (corpus)")
     _compute_metrics()
 
     if "results" in st.session_state and st.session_state["results"]:
-        st.markdown("### 📊 Chart")
+        st.markdown("📊 **Figures**: You can download figures by hovering over them and clicking the"
+                    " camera icon in the top right.")
         # First build a df solely based on corpus results -- without bootstrap resampling
         # We do this so the user already has something to look at while bootstrap is being done in the background
         corpus_df = _build_corpus_df()
         _draw_corpus_scores(corpus_df)
 
-        st.markdown("### 🗄️ Table(s)")
-
+        # We need the resampled results to show the table
         bs_info = st.info("Bootstrap resampling for significance testing...")
         styled_display_df, styled_latex_df, graphic_df = get_bootstrap_dataframe()
-        bs_info.empty()
-        st.table(styled_display_df)
+        if "bootstrap_results" in st.session_state and st.session_state["bootstrap_results"]:
+            st.markdown("🗄️ **Table**: this table includes corpus-level results as well as the mean and 95% confidence"
+                        " intervals between brackets that have been calculated with paired bootstrap resampling (n=1000),"
+                        " compatible with the implementation in [SacreBLEU](https://github.com/mjpost/sacrebleu/blob/38256a74f15d35d07f24976f709edefe7a027f0b/sacrebleu/significance.py#L199).")
 
-        # Download tables
-        excel_link = create_download_link(graphic_df, "mateo-evaluation.xlsx", "Excel file")
-        txt_link = create_download_link(
-            graphic_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-evaluation.tsv", "tab-separated file"
-        )
+            if st.session_state["num_sys"] > 1:
+                st.markdown("The p-values indicate the significance of the difference between a system and the baseline."
+                            " An asterisk * indicates that a system differs significantly from the baseline (p<0.05). The"
+                            " best system is highlighted in **bold**.")
 
-        st.markdown(f"You can download the table as an {excel_link}, or as a {txt_link}.", unsafe_allow_html=True)
+            bs_info.empty()
+            st.table(styled_display_df)
 
-        # Signatures
-        if "bootstrap_signatures" in st.session_state and st.session_state["bootstrap_signatures"]:
-            st.markdown("💡 **Signatures**: it's a good idea to report these in your paper so others know exactly"
-                        " which configuration you used!")
-            signatures = [f"{metric}: {sig}" for metric, sig in st.session_state["bootstrap_signatures"].items()]
-            st.text("\n".join(signatures))
-
-        # Latex
-        st.markdown("📝 **LaTeX**: Make sure to include `booktabs` at the top of your LaTeX file: `\\usepackage{booktabs}`")
-        st.code(
-            styled_latex_df.to_latex(
-                caption="Machine translation results. * indicates a significant difference with the first row (baseline)."
-                        " Generated with MATEO.",
-                convert_css=True,
-                hrules=True,
-            ),
-            language="latex",
-        )
-
-        # Sentence
-        st.markdown("#### Sentences")
-        with st.expander("About sentence-level scores"):
-            st.write(
-                "Some metrics have a corresponding sentence-level score, which you can then download here. For"
-                " instance,  the COMET corpus score is simply the average (arithmetic mean) of all the sentence"
-                " scores. This is not the case for all metrics. Corpus BLEU for instance, is not simply the"
-                " arithmetic mean of all sentence-level BLEU scores but is calculated by its geometric mean and"
-                " modified by a brevity penalty. As such, sentence-level BLEU scores, or similar, are not given"
-                " because they individually do not give a good representation of a system's performance."
+            # Download tables
+            excel_link = create_download_link(graphic_df, "mateo-evaluation.xlsx", "Excel file")
+            txt_link = create_download_link(
+                graphic_df.to_csv(index=False, encoding="utf-8", sep="\t"), "mateo-evaluation.tsv", "tab-separated file"
             )
 
+            st.markdown(f"You can download the table as an {excel_link}, or as a {txt_link}.", unsafe_allow_html=True)
+
+            # Signatures
+            if "bootstrap_signatures" in st.session_state and st.session_state["bootstrap_signatures"]:
+                st.markdown("💡 **Signatures**: it's a good idea to report these in your paper so others know exactly"
+                            " which configuration you used!")
+                signatures = [f"{metric}: {sig}" for metric, sig in st.session_state["bootstrap_signatures"].items()]
+                st.text("\n".join(signatures))
+
+            # Latex
+            st.markdown("📝 **LaTeX**: Make sure to include `booktabs` at the top of your LaTeX file: `\\usepackage{booktabs}`")
+            latex_caption = "Evaluation results generated with MATEO."
+            if st.session_state["num_sys"] > 1:
+                latex_caption += " * indicates a significant difference with the first row (baseline)."
+
+            st.code(
+                styled_latex_df.to_latex(
+                    caption=latex_caption,
+                    convert_css=True,
+                    hrules=True,
+                ),
+                language="latex",
+            )
+
+    # Sentence
+    st.markdown("## 🎁 Evaluation results (sentences)")
+    with st.expander("About sentence-level scores"):
+        st.write(
+            "Some metrics have a corresponding sentence-level score, which you can then download here. For"
+            " instance,  the COMET corpus score is simply the average (arithmetic mean) of all the sentence"
+            " scores. This is not the case for all metrics. Corpus BLEU for instance, is not simply the"
+            " arithmetic mean of all sentence-level BLEU scores but is calculated by its geometric mean and"
+            " modified by a brevity penalty. As such, sentence-level BLEU scores, or similar, are not given"
+            " because they individually do not give a good representation of a system's performance."
+        )
+
+    if "results" in st.session_state and st.session_state["results"]:
         sentence_df = _build_sentence_df(include_sys_translations=True)
         if not sentence_df.empty:
             metric_names = sentence_df["metric"].unique().tolist()

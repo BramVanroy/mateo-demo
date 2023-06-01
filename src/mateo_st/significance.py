@@ -15,6 +15,7 @@ from sacrebleu.metrics.base import Metric as SbMetric
 from sacrebleu.significance import PairedTest, Result, _compute_p_value, estimate_ci
 from sacrebleu.utils import print_results_table
 
+from pandas.io.formats.style import Styler
 
 def paired_bs(
     metric_sentence_scores: Dict[str, List[List[float]]],
@@ -102,9 +103,15 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
     seed = int(os.environ.get("SACREBLEU_SEED", "12345"))
     for sys_idx, results in st.session_state["results"].items():
         sys_name = st.session_state["sys_files"][sys_idx]
-        named_systems.append(
-            (f"Baseline: {sys_name}" if sys_idx == 0 else sys_name, st.session_state["sys_segments"][sys_idx])
-        )
+        if st.session_state["num_sys"] > 1:
+            named_systems.append(
+                (f"Baseline: {sys_name}" if sys_idx == 0 else sys_name, st.session_state["sys_segments"][sys_idx])
+            )
+        else:
+            named_systems.append(
+                (sys_name, st.session_state["sys_segments"][sys_idx])
+            )
+
         for metric_name, metric_res in results.items():
             opts = st.session_state["metrics"][metric_name].copy()  # Copy to not pop globally
             meta = METRICS_META[metric_name]
@@ -159,7 +166,7 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
     return bs_data
 
 
-def get_bootstrap_dataframe() -> pd.DataFrame:
+def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame]:
     bs_data = do_bootstrap_resampling()
 
     def postprocess_data(data, *, for_display: bool = True):
@@ -168,7 +175,7 @@ def get_bootstrap_dataframe() -> pd.DataFrame:
             for colname in list(row.keys()):
                 if colname == "system":
                     if row_idx == 0:
-                        row[colname] = f"Baseline: {row[colname]}"
+                        row[colname] = f"Baseline: {row[colname]}" if st.session_state["num_sys"] > 1 else row[colname]
                     continue
 
                 content = row[colname]
@@ -209,7 +216,7 @@ def get_bootstrap_dataframe() -> pd.DataFrame:
     ).set_properties(**{"text-align": "right !important"}, subset=column_names[0])
 
     higher_better = [c for c in column_names if c not in ("TER (μ ± 95% CI)", "system")]
-    lower_better = ["TER (μ ± 95% CI)"]
+    lower_better = ["TER (μ ± 95% CI)"] if "TER (μ ± 95% CI)" in column_names else []
     styled_display_df = styled_display_df.highlight_null(props="color: transparent;")
     styled_display_df = styled_display_df.highlight_max(
         subset=higher_better, props="font-weight: bold;"
@@ -221,7 +228,7 @@ def get_bootstrap_dataframe() -> pd.DataFrame:
     column_names = latex_df.columns
     styled_latex_df = latex_df.style
     higher_better = [c for c in column_names if c not in ("TER", "system")]
-    lower_better = ["TER"]
+    lower_better = ["TER"] if "TER" in column_names else []
     styled_latex_df = styled_latex_df.highlight_null(props="color: transparent;")
     styled_latex_df = (
         styled_latex_df.highlight_max(subset=higher_better, props="font-weight: bold;")
