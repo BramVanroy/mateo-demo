@@ -456,7 +456,7 @@ def _evaluate():
         _draw_corpus_scores(corpus_df)
 
         # We need the resampled results to show the table
-        bs_info = st.info("Bootstrap resampling for significance testing...")
+        bs_info = st.info("Bootstrap resampling...")
         styled_display_df, styled_latex_df, graphic_df = get_bootstrap_dataframe()
         if "bootstrap_results" in st.session_state and st.session_state["bootstrap_results"]:
             st.markdown("🗄️ **Table**: this table includes corpus-level results as well as the mean and 95% confidence"
