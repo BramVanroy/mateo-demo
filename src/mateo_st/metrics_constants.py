@@ -284,7 +284,6 @@ METRICS_META = {
         " ('phrase') shifts.</p>",
         paper_url="https://aclanthology.org/2006.amta-papers.25/",
         implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
-        is_default_selected=True,
         higher_better=False,
         version=sacrebleu.__version__,
         sb_class=TER,
