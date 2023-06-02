@@ -15,11 +15,12 @@ def main():
     st.markdown(
         "We currently support the following evaluation metrics. A short description is given alongside"
         " references to their paper 📝, and the original underlying implementation 💻. We use"
-        " [`evaluate`](https://github.com/huggingface/evaluate) as the main evaluation framework."
+        " [`sacrebleu`](https://github.com/mjpost/sacrebleu) and"
+        " [`evaluate`](https://github.com/huggingface/evaluate) as the main evaluation frameworks."
     )
     st.markdown(
         """
-- 💡 baseline metric (faster, lower correlation with quality judgment by humans);
+- 💡 baseline metric (faster, often a lower correlation with quality judgment by humans);
 - 🚀 neural metric (slower, higher correlation).
 """
     )
