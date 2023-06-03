@@ -445,7 +445,12 @@ def _draw_corpus_scores(df):
     radar_fig.update_layout(showlegend=True, template="plotly")
     radar_plot_tab.plotly_chart(radar_fig)
 
-def _segment_level_comparison(sentence_df: pd.DataFrame):
+
+def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
+    st.markdown(
+        "📊 **Figure**: Here you can get a glance of how the system(s) perform on a per-sample level. If you are"
+        " evaluating multiple systems, this can be useful to find samples for which two systems perform similarly or very differently."
+    )
     metric_names = sentence_df["metric"].unique().tolist()
     grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}
     pretty_names = [METRICS_META[metric_name].name for metric_name in metric_names]
@@ -456,12 +461,13 @@ def _segment_level_comparison(sentence_df: pd.DataFrame):
         metricdf = metricdf.drop(columns="metric").reset_index(drop=True)
 
         def normalize_score_col(colname: str) -> str:
+            # Have to get rid of dots in filenames
+            # https://github.com/altair-viz/altair/issues/990
             return colname.replace("_score", "").replace('.', '-')
 
         # Rename columns so that score columns have no special ending, and columns with translations end in _text
         sys_score_cols = [c for c in metricdf.columns if c.endswith("_score")]
-        # Have to get rid of dots in filenames
-        # https://github.com/altair-viz/altair/issues/990
+
         metricdf = metricdf.rename(columns={c.replace("_score", ""): f"{normalize_score_col(c)}_text" for c in sys_score_cols})
         metricdf = metricdf.rename(columns={c: normalize_score_col(c) for c in sys_score_cols})
 
@@ -472,13 +478,29 @@ def _segment_level_comparison(sentence_df: pd.DataFrame):
         df_melt = metricdf.melt(id_vars=id_vars, value_vars=sys_score_cols,
                                 var_name='system', value_name='score')
 
+        nearest_sample = alt.selection(type="single", nearest=True, on="mouseover", fields=["sample"], empty="none")
         chart = alt.Chart(df_melt).mark_circle().encode(
             x=alt.X('sample:O', title='Sample', axis=alt.Axis(labels=False)),
             y=alt.Y('score:Q', title='Score'),
             color='system:N',
             tooltip=id_vars+["system", "score"]
+        ).add_selection(
+            nearest_sample
         )
-        tab.altair_chart(chart, use_container_width=True)
+
+        # Draw a vertical rule at the location of the selection
+        vertical_line = alt.Chart(df_melt).mark_rule(color="gray").encode(
+            x="sample:O",
+        ).transform_filter(
+            nearest_sample
+        )
+
+        # Combine the chart and vertical_line
+        layer = alt.layer(
+            chart, vertical_line
+        )
+
+        tab.altair_chart(layer, use_container_width=True)
 
 def _evaluate():
     st.markdown("## 🎁 Evaluation results (corpus)")
@@ -524,7 +546,7 @@ def _evaluate():
                 "mateo-evaluation-ci.tsv",
                 "tab-separated file",
             )
-            excel_link_wo_ci = create_download_link(download_wo_ci_df, "mateo-evaluation.xlsx", "Excel file")
+            excel_sentences = create_download_link(download_wo_ci_df, "mateo-evaluation.xlsx", "Excel file")
             txt_link_wo_ci = create_download_link(
                 download_wo_ci_df.to_csv(index=False, encoding="utf-8", sep="\t"),
                 "mateo-evaluation.tsv",
@@ -533,7 +555,7 @@ def _evaluate():
             st.markdown(
                 f"📥 **Download** the table with or without confidence intervals and full p-values:\n"
                 f"- with: {excel_link_with_ci} / {txt_link_with_ci}\n"
-                f"- without: {excel_link_wo_ci} / {txt_link_wo_ci}",
+                f"- without: {excel_sentences} / {txt_link_wo_ci}",
                 unsafe_allow_html=True,
             )
 
@@ -580,6 +602,14 @@ def _evaluate():
         if not sentence_df.empty:
             metric_names = sentence_df["metric"].unique().tolist()
             if metric_names:
+                # Visualization segment-level
+                _segment_level_comparison_viz(sentence_df)
+
+                # Table segment-level
+                st.markdown(
+                    "🗄️ **Table**: In this large table you have access to all sentence-level scores for appropriate"
+                    " metrics. You can use this data for a fine-grained or qualitative analysis on a per-sample basis."
+                )
                 grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}
                 pretty_names = [METRICS_META[metric_name].name for metric_name in metric_names]
 
@@ -588,15 +618,13 @@ def _evaluate():
                     metricdf = metricdf.drop(columns="metric").reset_index(drop=True)
                     tab.dataframe(metricdf)
 
-                excel_link_wo_ci = create_download_link(
+                excel_sentences = create_download_link(
                     sentence_df, "mateo-sentences.xlsx", "Excel file", df_groupby="metric"
                 )
                 st.markdown(
-                    f"You can download the table as an {excel_link_wo_ci}. Metrics are separated in sheets.",
+                    f"You can download the table as an {excel_sentences}. Metrics are separated in sheets.",
                     unsafe_allow_html=True,
                 )
-
-                _segment_level_comparison(sentence_df)
         else:
             segment_level_metrics = [meta.name for m, meta in METRICS_META.items() if meta.segment_level]
             st.info(
