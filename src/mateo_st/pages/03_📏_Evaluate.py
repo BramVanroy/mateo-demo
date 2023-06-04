@@ -10,8 +10,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from evaluate import EvaluationModule
-from mateo_st.metrics_constants import METRICS_META, postprocess_result
 from mateo_st.metrics.base import MetricMeta, MetricOption
+from mateo_st.metrics_constants import METRICS_META, merge_batched_results, postprocess_result
 from mateo_st.significance import get_bootstrap_dataframe
 from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
 from sacrebleu.metrics.base import Metric as SbMetric
@@ -66,9 +66,11 @@ def _metric_selection():
     st.markdown("## ✨ Metric selection")
 
     if cli_args().demo_mode:
-        st.info("Some advanced (non-default) options for the neural metrics are not available on this web"
-                    " page but can be activated easily when you run the demo on your own device or server.",
-                icon="ℹ️")
+        st.info(
+            "Some advanced (non-default) options for the neural metrics are not available on this web"
+            " page but can be activated easily when you run the demo on your own device or server.",
+            icon="ℹ️",
+        )
 
     metric_inp_col_left, metric_inp_col_right = st.columns(2)
 
@@ -95,7 +97,9 @@ def _metric_selection():
                 # If this option is one with choices or with free input
                 if has_choices:
                     if cli_args().demo_mode:
-                        expander.selectbox(options=opt.demo_choices, index=opt.demo_choices.index(opt.default), **kwargs)
+                        expander.selectbox(
+                            options=opt.demo_choices, index=opt.demo_choices.index(opt.default), **kwargs
+                        )
                     else:
                         expander.selectbox(options=opt.choices, index=opt.choices.index(opt.default), **kwargs)
                 else:
@@ -289,6 +293,18 @@ def _load_sacrebleu_metric(sb_class: Type[SbMetric], **options) -> SbMetric:
     return sb_class(**options)
 
 
+def batchify(predictions: List[str], references: List[str], sources: Optional[List[str]] = None, batch_size: int = 16):
+    samples = list(zip(predictions, references, sources if sources else ([""] * len(references))))
+
+    for i in range(0, len(samples), batch_size):
+        batch = samples[i : i + batch_size]
+        preds, refs, srcs = list(zip(*batch))
+        batch = {"predictions": preds, "references": refs}
+        if sources:
+            batch["sources"] = srcs
+        yield batch
+
+
 @st.cache_data(show_spinner=False, ttl=86400)
 def _compute_metric(
     metric_name: str,
@@ -298,17 +314,58 @@ def _compute_metric(
     sources: Optional[List[str]] = None,
     config_name: Optional[str] = None,
     sb_class: Optional[Type[SbMetric]] = None,
+    sys_idx: Optional[int] = None,
+    dummy_batch_size: int = 16,
     **kwargs,
 ):
     if sb_class is None:
         metric = _load_metric(metric_name, config_name)
-        if sources:
-            return metric.compute(predictions=predictions, references=references, sources=sources, **kwargs)
+        if metric_name in ("bertscore", "bleurt", "comet"):
+            # While not necessary in terms of computation, we still want to give users more feedback
+            # when the neural metrics are being calculated. That's why we give the user feedback every 'dummy_batch_size'
+            # chunks by process metric.compute in batches.
+            # !NOTE! This is not the same as the actual on-device batch size! It is likely that metric.compute
+            # is still doing other batching under the hood
+            msg = f"Calculating {metric_name}{' for system #'+str(sys_idx) if sys_idx is not None else ''}"
+            pbar_text_ct = st.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
+            pbar = st.progress(0)
+            num_batches = len(references) // dummy_batch_size
+            increment = 100 // num_batches
+            progress = 0
+            results = []
+            for batch in batchify(predictions, references, sources):
+                if sources and "sources" in batch:
+                    results.append(
+                        metric.compute(
+                            predictions=batch["predictions"],
+                            references=batch["references"],
+                            sources=batch["sources"],
+                            **kwargs,
+                        )
+                    )
+                else:
+                    results.append(
+                        metric.compute(predictions=batch["predictions"], references=batch["references"], **kwargs)
+                    )
+                progress += increment
+                pbar.progress(min(progress, 100))
+
+            pbar.empty()
+            pbar_text_ct.empty()
+            result = merge_batched_results(metric_name, results)
         else:
-            return metric.compute(predictions=predictions, references=references, **kwargs)
+            if sources:
+                result = metric.compute(predictions=predictions, references=references, sources=sources, **kwargs)
+            else:
+                result = metric.compute(predictions=predictions, references=references, **kwargs)
     else:
         metric = _load_sacrebleu_metric(sb_class, **kwargs)
-        return metric.corpus_score(hypotheses=predictions, references=[references])
+        result = metric.corpus_score(hypotheses=predictions, references=[references])
+        # Sacrebleu returns special Score classes -- convert to dict
+        result = vars(result)
+
+    result = postprocess_result(metric_name, result)
+    return result
 
 
 def _compute_metrics():
@@ -348,14 +405,9 @@ def _compute_metrics():
                 sources=st.session_state["src_segments"] if meta.requires_source else None,
                 config_name=opts.pop("config_name", None),
                 sb_class=meta.sb_class,
+                sys_idx=sys_idx,
                 **opts,
             )
-
-            # Sacrebleu returns special Score classes -- convert to dict
-            if meta.sb_class is not None:
-                result = vars(result)
-
-            result = postprocess_result(metric_evaluate_name, result)
 
             results[sys_idx][metric_evaluate_name] = {
                 "corpus": result[meta.corpus_score_key],
@@ -383,7 +435,7 @@ def _build_corpus_df():
     # Remove "sacre" (bleu's output with sacrebleu is "sacrebleu")
     def col_mapper(colname: str):
         if colname in METRICS_META:
-            return f"{colname} {'↑' if METRICS_META[colname].higher_better  else '↓'}"
+            return f"{colname} {'↑' if METRICS_META[colname].higher_better else '↓'}"
         else:
             return colname
 
@@ -460,6 +512,11 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
         "📊 **Figure**: Here you can get a glance of how the system(s) perform on a per-sample level. If you are"
         " evaluating multiple systems, this can be useful to find samples for which two systems perform similarly or very differently."
     )
+
+    if len(st.session_state["ref_segments"]) > 500:
+        st.warning(f"Your dataset is relatively large ({len(st.session_state['ref_segments']):,d}) so this figure may not be"
+                   f" as useful and it may be slow.")
+
     metric_names = sentence_df["metric"].unique().tolist()
     grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}
     pretty_names = [METRICS_META[metric_name].name for metric_name in metric_names]
@@ -487,7 +544,9 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
 
         id_vars = ["sample", "src", "ref"] + sys_text_names
         df_melt = metricdf.melt(id_vars=id_vars, value_vars=sys_score_cols, var_name="system", value_name="score")
-        nearest_sample = alt.selection(type="single", nearest=True, on="mouseover", fields=["sample"], empty="none", clear="mouseout")
+        nearest_sample = alt.selection(
+            type="single", nearest=True, on="mouseover", fields=["sample"], empty="none", clear="mouseout"
+        )
         chart = (
             alt.Chart(df_melt)
             .mark_circle()
@@ -503,14 +562,14 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
 
         # Draw a vertical rule at the location of the selection
         vertical_line = (
-                alt.Chart(df_melt)
-                .mark_rule(color="gray")
-                .encode(
-                    x="sample:Q",
-                    opacity=alt.condition(nearest_sample, alt.value(1.0), alt.value(0.0)),
-                )
-                .transform_filter(nearest_sample)
+            alt.Chart(df_melt)
+            .mark_rule(color="gray")
+            .encode(
+                x="sample:Q",
+                opacity=alt.condition(nearest_sample, alt.value(1.0), alt.value(0.0)),
             )
+            .transform_filter(nearest_sample)
+        )
 
         # Combine the chart and vertical_line
         layer = alt.layer(chart, vertical_line)
@@ -619,7 +678,12 @@ def _evaluate():
             metric_names = sentence_df["metric"].unique().tolist()
             if metric_names:
                 # Visualization segment-level
-                _segment_level_comparison_viz(sentence_df)
+                if len(st.session_state["ref_segments"]) <= 1000:
+                    _segment_level_comparison_viz(sentence_df)
+                else:
+                    st.warning(f"Your dataset is relatively large (1000<{len(st.session_state['ref_segments']):,d}) so"
+                               f" the figure to visualize sentence-level performances is disabled. It would be slow"
+                               f" and hard to navigate. Instead you can manually analyse the data in the table below.")
 
                 # Table segment-level
                 st.markdown(
