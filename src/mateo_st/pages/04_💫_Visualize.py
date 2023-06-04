@@ -137,12 +137,12 @@ def _visualize():
         and st.session_state["viz_mt_segments"]
     ):
         if len(st.session_state["viz_ref_segments"]) != len(st.session_state["viz_mt_segments"]):
-            info_ct.warning(f"Make sure that the reference text and MT text have the same number of lines")
+            info_ct.warning("Make sure that the reference text and MT text have the same number of lines")
         else:
             info_ct.empty()
             _rotator()
     else:
-        info_ct.warning(f"Make sure to specify content for both the reference and MT")
+        info_ct.warning("Make sure to specify content for both the reference and MT")
 
 
 def main():
