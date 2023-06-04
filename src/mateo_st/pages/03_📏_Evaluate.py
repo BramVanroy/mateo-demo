@@ -318,54 +318,61 @@ def _compute_metric(
     dummy_batch_size: int = 16,
     **kwargs,
 ):
-    if sb_class is None:
-        metric = _load_metric(metric_name, config_name)
-        if metric_name in ("bertscore", "bleurt", "comet"):
-            # While not necessary in terms of computation, we still want to give users more feedback
-            # when the neural metrics are being calculated. That's why we give the user feedback every 'dummy_batch_size'
-            # chunks by process metric.compute in batches.
-            # !NOTE! This is not the same as the actual on-device batch size! It is likely that metric.compute
-            # is still doing other batching under the hood
-            msg = f"Calculating {metric_name}{' for system #'+str(sys_idx) if sys_idx is not None else ''}"
-            pbar_text_ct = st.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
-            pbar = st.progress(0)
-            num_batches = len(references) // dummy_batch_size
-            increment = 100 // num_batches
-            progress = 0
-            results = []
-            for batch in batchify(predictions, references, sources):
-                if sources and "sources" in batch:
-                    results.append(
-                        metric.compute(
-                            predictions=batch["predictions"],
-                            references=batch["references"],
-                            sources=batch["sources"],
-                            **kwargs,
+    pbar_text_ct = st.empty()
+    pbar = st.empty()
+    try:
+        if sb_class is None:
+            metric = _load_metric(metric_name, config_name)
+            if metric_name in ("bertscore", "bleurt", "comet"):
+                # While not necessary in terms of computation, we still want to give users more feedback
+                # when the neural metrics are being calculated. That's why we give the user feedback every 'dummy_batch_size'
+                # chunks by process metric.compute in batches.
+                # !NOTE! This is not the same as the actual on-device batch size! It is likely that metric.compute
+                # is still doing other batching under the hood
+                msg = f"Calculating {metric_name}{' for system #'+str(sys_idx) if sys_idx is not None else ''}"
+                pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
+                pbar.progress(0)
+                num_batches = len(references) // dummy_batch_size
+                increment = 100 // num_batches
+                progress = 0
+                results = []
+                for batch in batchify(predictions, references, sources):
+                    if sources and "sources" in batch:
+                        results.append(
+                            metric.compute(
+                                predictions=batch["predictions"],
+                                references=batch["references"],
+                                sources=batch["sources"],
+                                **kwargs,
+                            )
                         )
-                    )
-                else:
-                    results.append(
-                        metric.compute(predictions=batch["predictions"], references=batch["references"], **kwargs)
-                    )
-                progress += increment
-                pbar.progress(min(progress, 100))
+                    else:
+                        results.append(
+                            metric.compute(predictions=batch["predictions"], references=batch["references"], **kwargs)
+                        )
+                    progress += increment
+                    pbar.progress(min(progress, 100))
 
-            pbar.empty()
-            pbar_text_ct.empty()
-            result = merge_batched_results(metric_name, results)
-        else:
-            if sources:
-                result = metric.compute(predictions=predictions, references=references, sources=sources, **kwargs)
+                pbar.empty()
+                pbar_text_ct.empty()
+                result = merge_batched_results(metric_name, results)
             else:
-                result = metric.compute(predictions=predictions, references=references, **kwargs)
+                if sources:
+                    result = metric.compute(predictions=predictions, references=references, sources=sources, **kwargs)
+                else:
+                    result = metric.compute(predictions=predictions, references=references, **kwargs)
+        else:
+            metric = _load_sacrebleu_metric(sb_class, **kwargs)
+            result = metric.corpus_score(hypotheses=predictions, references=[references])
+            # Sacrebleu returns special Score classes -- convert to dict
+            result = vars(result)
+    except Exception as exc:
+        pbar.empty()
+        pbar_text_ct.empty()
+        raise exc
     else:
-        metric = _load_sacrebleu_metric(sb_class, **kwargs)
-        result = metric.corpus_score(hypotheses=predictions, references=[references])
-        # Sacrebleu returns special Score classes -- convert to dict
-        result = vars(result)
-
-    result = postprocess_result(metric_name, result)
-    return result
+        result = postprocess_result(metric_name, result)
+        return result
 
 
 def _compute_metrics():
@@ -375,7 +382,11 @@ def _compute_metrics():
     increment = 100 // (len(st.session_state["sys_segments"]) * len(st.session_state["metrics"]))
     progress = 0
 
+    error_ct = st.empty()
+    got_exception = False
     for sys_idx, sys_segs in st.session_state["sys_segments"].items():
+        if got_exception:
+            break
         results[sys_idx] = {}
         for metric_evaluate_name, opts in st.session_state["metrics"].items():
             opts: Dict[str, Union[MetricOption, MetricMeta]] = opts.copy()  # Copy to not pop globally
@@ -398,28 +409,38 @@ def _compute_metrics():
 
             pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
 
-            result = _compute_metric(
-                metric_evaluate_name,
-                predictions=sys_segs,
-                references=st.session_state["ref_segments"],
-                sources=st.session_state["src_segments"] if meta.requires_source else None,
-                config_name=opts.pop("config_name", None),
-                sb_class=meta.sb_class,
-                sys_idx=sys_idx,
-                **opts,
-            )
+            try:
+                result = _compute_metric(
+                    metric_evaluate_name,
+                    predictions=sys_segs,
+                    references=st.session_state["ref_segments"],
+                    sources=st.session_state["src_segments"] if meta.requires_source else None,
+                    config_name=opts.pop("config_name", None),
+                    sb_class=meta.sb_class,
+                    sys_idx=sys_idx,
+                    **opts,
+                )
+            except Exception as exc:
+                error_ct.error(exc)
+                pbar_text_ct.empty()
+                pbar.empty()
+                got_exception = True
+                st.session_state["results"] = dict()
+                break
+            else:
+                error_ct.empty()
+                results[sys_idx][metric_evaluate_name] = {
+                    "corpus": result[meta.corpus_score_key],
+                    "sentences": result[meta.sentences_score_key] if meta.sentences_score_key else None,
+                }
 
-            results[sys_idx][metric_evaluate_name] = {
-                "corpus": result[meta.corpus_score_key],
-                "sentences": result[meta.sentences_score_key] if meta.sentences_score_key else None,
-            }
+                progress += increment
+                pbar.progress(progress)
 
-            progress += increment
-            pbar.progress(progress)
-
-    pbar_text_ct.empty()
-    pbar.empty()
-    st.session_state["results"] = results
+    if not got_exception:
+        pbar_text_ct.empty()
+        pbar.empty()
+        st.session_state["results"] = results
 
 
 def _build_corpus_df():
