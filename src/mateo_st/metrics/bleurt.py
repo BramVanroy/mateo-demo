@@ -20,7 +20,7 @@ bleurt_meta = MetricMeta(
     options=(
         MetricOption(
             name="config_name",
-            description="BLEURT trained checkpoint to use",
+            description="BLEURT trained model to use. See [this overview](https://github.com/google-research/bleurt/blob/master/checkpoints.md#distilled-models) for more information about the models.",
             default="BLEURT-20",
             choices=(
                 "bleurt-tiny-128",

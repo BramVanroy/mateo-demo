@@ -31,8 +31,7 @@ bertscore_meta = MetricMeta(
         ),
         MetricOption(
             name="model_type",
-            description="Model type to use. For this public interface, we have limited the options to a couple of"
-            " high-performing base and large models",
+            description="BERTScore model to use. Benchmarked scores on to-English WMT data can be found [here](https://docs.google.com/spreadsheets/d/1RKOVpselB98Nnh_EOC4A2BYn8_201tmPODpNWu4w7xI/edit#gid=0).",
             default="",
             # Not all models because we want to save compute
             # All options here: https://github.com/Tiiiger/bert_score/blob/dbcf6db37e8bd6ff68446f06b0ba5d0763b62d20/bert_score/utils.py#L40

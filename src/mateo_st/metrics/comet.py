@@ -20,7 +20,7 @@ comet_meta = MetricMeta(
     options=(
         MetricOption(
             name="config_name",
-            description="COMET trained checkpoint to use",
+            description="COMET model to use. For supported models, look [here](https://github.com/Unbabel/COMET/tree/v1.1.3#comet-models).",
             default="wmt20-comet-da",
             choices=(
                 "wmt20-comet-da",
