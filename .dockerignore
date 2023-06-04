@@ -3,6 +3,8 @@
 **/.mypy_cache
 **/.idea
 
+docker
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

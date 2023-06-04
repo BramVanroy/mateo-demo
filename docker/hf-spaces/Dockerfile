@@ -29,9 +29,9 @@ HEALTHCHECK CMD curl --fail http://$SERVER:$PORT$BASE/_stcore/health
 WORKDIR /mateo-demo/src/mateo_st
 
 CMD if [ -z "$BASE" ]; then \
-        cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER"; \
+        cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER --server.enableXsrfProtection false"; \
     else \
-        cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER --server.baseUrlPath $BASE"; \
+        cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER --server.baseUrlPath $BASE --server.enableXsrfProtection false"; \
     fi; \
     if [ "$NO_CUDA" = "true" ] || [ "$DEMO_MODE" = "true" ]; then \
         opts="--"; \
