@@ -21,17 +21,21 @@ ENV PORT=5004
 ENV SERVER="localhost"
 ENV BASE=""
 ENV NO_CUDA=""
+ENV DEMO_MODE=""
 EXPOSE $PORT
 HEALTHCHECK CMD curl --fail http://$SERVER:$PORT$BASE/_stcore/health
 
 WORKDIR /mateo-demo/src/mateo_st
 
 CMD if [ -z "$BASE" ]; then \
-        cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER"; \
+        cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER" --; \
     else \
-        cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER --server.baseUrlPath $BASE"; \
+        cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER --server.baseUrlPath $BASE" --; \
     fi; \
     if [ "$NO_CUDA" = "true" ]; then \
-        cmd="$cmd -- --no_cuda"; \
+        cmd="$cmd --no_cuda"; \
+    fi; \
+    if [ "$DEMO_MODE" = "true" ]; then \
+        cmd="$cmd --demo_mode"; \
     fi; \
     exec $cmd
