@@ -9,7 +9,8 @@ class MetricOption:
     name: str
     description: str
     default: Any
-    choices: Optional[Tuple] = field(default_factory=tuple)
+    choices: Optional[Tuple] = None
+    demo_choices: Optional[Tuple] = None
     types: Optional[Tuple[Type, ...]] = field(default_factory=tuple)
     empty_str_is_none: bool = False
 
@@ -21,6 +22,9 @@ class MetricOption:
             raise ValueError(
                 f"{self.name}: the default option ('{self.default}') must be in 'choices' ('{', '.join(self.choices)}')"
             )
+
+        if self.demo_choices is None:
+            self.demo_choices = self.choices
 
 
 @dataclass

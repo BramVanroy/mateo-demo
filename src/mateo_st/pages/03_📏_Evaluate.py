@@ -65,6 +65,11 @@ def _init():
 def _metric_selection():
     st.markdown("## ✨ Metric selection")
 
+    if cli_args().demo_mode:
+        st.info("Some advanced (non-default) options for the neural metrics are not available on this web"
+                    " page but can be activated easily when you run the demo on your own device or server.",
+                icon="ℹ️")
+
     metric_inp_col_left, metric_inp_col_right = st.columns(2)
 
     # Iterate over all the metrics in METRIC_META and add each one and all its options
@@ -89,7 +94,10 @@ def _metric_selection():
 
                 # If this option is one with choices or with free input
                 if has_choices:
-                    expander.selectbox(options=opt.choices, index=opt.choices.index(opt.default), **kwargs)
+                    if cli_args().demo_mode:
+                        expander.selectbox(options=opt.demo_choices, index=opt.demo_choices.index(opt.default), **kwargs)
+                    else:
+                        expander.selectbox(options=opt.choices, index=opt.choices.index(opt.default), **kwargs)
                 else:
                     # Type field is determined by the FIRST item in the list types
                     dtype = opt.types[0]

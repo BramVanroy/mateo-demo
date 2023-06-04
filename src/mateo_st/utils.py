@@ -89,6 +89,13 @@ def cli_args():
         default=4,
         help="max. number of systems to compare",
     )
+    cparser.add_argument(
+        "--demo_mode",
+        action="store_true",
+        default=False,
+        help="when demo mode is enabled, only a limited range of neural check-points are available. So all metrics are"
+        " available but not all of the checkpoints.",
+    )
 
     args = cparser.parse_args()
 
@@ -168,7 +175,7 @@ def build_signature(paired_bs_n: int, seed: int, library_version: str, metric_op
         # Convert bools to yes/no
         if isinstance(value, bool):
             value = "yes" if value is True else "no"
-            
+
         sig += f"|{abbr}:{value}"
 
     sig += f"|version:{library_version}"
