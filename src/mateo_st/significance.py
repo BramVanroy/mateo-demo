@@ -125,13 +125,15 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
                 opts.pop("config_name", None)
                 sb_metrics[metric_name] = meta.sb_class(**opts)
 
+    # "System" MUST be the first item in the dictionary because `print_results_table` skips the first item
+    all_results = {"System": [named_system[0] for named_system in named_systems]}
+
+    # Sentenve-level metrics bootstrap
     if metric_sentence_scores:
         metric_sentence_scores = dict(metric_sentence_scores)
-        non_sacrebleu_results = paired_bs(metric_sentence_scores, paired_bs_n=paired_bs_n)
-    else:
-        non_sacrebleu_results = {}
+        all_results = {**all_results, **paired_bs(metric_sentence_scores, paired_bs_n=paired_bs_n)}
 
-    """SacreBLEU"""
+    # SacreBLEU bootstraps
     args = Namespace(
         format="json",
         short=False,
@@ -140,16 +142,16 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
         paired_bs_n=paired_bs_n,
         width=1,
     )
-    sacrebleu_results, sb_signatures = paired_bs_sacrebleu(
-        named_systems, sb_metrics, st.session_state["ref_segments"], args
-    )
+    if sb_metrics:
+        sacrebleu_results, sb_signatures = paired_bs_sacrebleu(
+            named_systems, sb_metrics, st.session_state["ref_segments"], args
+        )
 
-    signatures = {**sb_signatures, **signatures}
-    all_results = {
-        **sacrebleu_results,
-        **non_sacrebleu_results,
-        "System": [named_system[0] for named_system in named_systems],
-    }
+        signatures = {**sb_signatures, **signatures}
+        all_results = {
+            **all_results,
+            **sacrebleu_results,
+        }
 
     # Hacky way to retrieve `print_results_table`'s stdout (print'ed) content in a variable
     # cf. https://stackoverflow.com/a/53197293/1150683
