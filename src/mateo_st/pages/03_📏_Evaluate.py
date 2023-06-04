@@ -332,8 +332,8 @@ def _compute_metric(
                 msg = f"Calculating {metric_name}{' for system #'+str(sys_idx) if sys_idx is not None else ''}"
                 pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
                 pbar.progress(0)
-                num_batches = len(references) // dummy_batch_size
-                increment = 100 // num_batches
+                num_batches = max(1, len(references) // dummy_batch_size)
+                increment = max(1, 100 // num_batches)
                 progress = 0
                 results = []
                 for batch in batchify(predictions, references, sources):
@@ -379,7 +379,7 @@ def _compute_metrics():
     results = {}
     pbar_text_ct = st.empty()
     pbar = st.progress(0)
-    increment = 100 // (len(st.session_state["sys_segments"]) * len(st.session_state["metrics"]))
+    increment = max(1, 100 // (len(st.session_state["sys_segments"]) * len(st.session_state["metrics"])))
     progress = 0
 
     error_ct = st.empty()
@@ -421,7 +421,7 @@ def _compute_metrics():
                     **opts,
                 )
             except Exception as exc:
-                error_ct.error(exc)
+                error_ct.exception(exc)
                 pbar_text_ct.empty()
                 pbar.empty()
                 got_exception = True
@@ -435,7 +435,7 @@ def _compute_metrics():
                 }
 
                 progress += increment
-                pbar.progress(progress)
+                pbar.progress(min(progress, 100))
 
     if not got_exception:
         pbar_text_ct.empty()
