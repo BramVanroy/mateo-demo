@@ -182,7 +182,7 @@ bertscore_meta = MetricMeta(
                 "bert-base-chinese",
                 "dbmdz/bert-base-turkish-cased",
                 "allenai/scibert_scivocab_uncased",
-                "bert-base-multilingual-cased"
+                "bert-base-multilingual-cased",
             ),
             empty_str_is_none=True,
         ),
