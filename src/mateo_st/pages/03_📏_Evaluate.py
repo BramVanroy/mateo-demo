@@ -470,12 +470,16 @@ def _build_sentence_df(include_sys_translations: bool = True):
     for metric_name in st.session_state["metrics"].keys():
         if not METRICS_META[metric_name].segment_level:
             continue
-        for item_idx in range(len(st.session_state["src_segments"])):
+
+        for item_idx in range(len(st.session_state["ref_segments"])):
             item = {
                 "metric": metric_name.replace("sacre", ""),
-                "src": st.session_state["src_segments"][item_idx],
                 "ref": st.session_state["ref_segments"][item_idx],
             }
+
+            if METRICS_META[metric_name].requires_source:
+                item["src"] = st.session_state["src_segments"][item_idx]
+
             for sys_idx, results in st.session_state["results"].items():
                 sys_name = st.session_state["sys_files"][sys_idx]
                 item[sys_name] = (
@@ -555,6 +559,7 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
             # https://github.com/altair-viz/altair/issues/990
             return colname.replace("_score", "").replace(".", "-")
 
+        has_src = "src" in metricdf.columns and metricdf["src"].any()
         # Rename columns so that score columns have no special ending, and columns with translations end in _text
         sys_score_cols = [c for c in metricdf.columns if c.endswith("_score")]
 
@@ -566,7 +571,7 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
         sys_score_cols = [normalize_score_col(c) for c in sys_score_cols]
         sys_text_names = [f"{c}_text" for c in sys_score_cols]
 
-        id_vars = ["sample", "src", "ref"] + sys_text_names
+        id_vars = (["sample", "src", "ref"] if has_src else ["sample", "ref"]) + sys_text_names
         df_melt = metricdf.melt(id_vars=id_vars, value_vars=sys_score_cols, var_name="system", value_name="score")
         nearest_sample = alt.selection(
             type="single", nearest=True, on="mouseover", fields=["sample"], empty="none", clear="mouseout"
