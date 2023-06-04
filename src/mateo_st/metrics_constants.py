@@ -28,7 +28,6 @@ def merge_batched_results(metric_name: str, results: List[Dict[str, Any]]):
         result = defaultdict(list)
         for batch_result in results:
             # score_key is something like "f1" or "scores"
-            print(batch_result.keys())
             for score_key, scores in batch_result.items():
                 if isinstance(scores, list):
                     result[score_key].extend(scores)
