@@ -1,4 +1,6 @@
 FROM ubuntu:latest
+LABEL authors="Bram Vanroy"
+
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update \
     && apt-get -y install build-essential curl git software-properties-common
@@ -10,10 +12,14 @@ RUN add-apt-repository ppa:deadsnakes/ppa \
 RUN ln -s /usr/bin/python3.9 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
-LABEL authors="Bram Vanroy"
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME /home/user
+ENV PATH $HOME/.local/bin:$PATH
 
+WORKDIR $HOME
 RUN git clone https://github.com/BramVanroy/mateo-demo.git
-WORKDIR /mateo-demo
+WORKDIR $HOME/mateo-demo
 
 RUN python -m pip install --no-cache-dir --upgrade pip && python -m pip install --no-cache-dir --upgrade .
 
@@ -26,7 +32,7 @@ ENV DEMO_MODE=""
 EXPOSE $PORT
 HEALTHCHECK CMD curl --fail http://$SERVER:$PORT$BASE/_stcore/health
 
-WORKDIR /mateo-demo/src/mateo_st
+WORKDIR $HOME/mateo-demo/src/mateo_st
 
 CMD if [ -z "$BASE" ]; then \
         cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER --server.enableXsrfProtection false"; \
