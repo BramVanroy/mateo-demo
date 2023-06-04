@@ -535,8 +535,11 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
     )
 
     if len(st.session_state["ref_segments"]) > 500:
-        st.warning(f"Your dataset is relatively large ({len(st.session_state['ref_segments']):,d}) so this figure"
-                   f" may not be as useful and it may be slow to navigate.", icon="ℹ️")
+        st.warning(
+            f"Your dataset is relatively large ({len(st.session_state['ref_segments']):,d}) so this figure"
+            f" may not be as useful and it may be slow to navigate.",
+            icon="ℹ️",
+        )
 
     metric_names = sentence_df["metric"].unique().tolist()
     grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}
@@ -702,11 +705,13 @@ def _evaluate():
                 if len(st.session_state["ref_segments"]) <= 1000:
                     _segment_level_comparison_viz(sentence_df)
                 else:
-                    st.warning(f"Your dataset is relatively large ({len(st.session_state['ref_segments']):,d}) so"
-                               f" the figure to visualize sentence-level performances is disabled (max.: 1000). It"
-                               f" would be slow and hard to navigate. Instead you can manually analyse the data in the"
-                               f" table below.",
-                               icon="ℹ️")
+                    st.warning(
+                        f"Your dataset is relatively large ({len(st.session_state['ref_segments']):,d}) so"
+                        f" the figure to visualize sentence-level performances is disabled (max.: 1000). It"
+                        f" would be slow and hard to navigate. Instead you can manually analyse the data in the"
+                        f" table below.",
+                        icon="ℹ️",
+                    )
 
                 # Table segment-level
                 st.markdown(
