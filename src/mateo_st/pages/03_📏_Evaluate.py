@@ -487,29 +487,30 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
 
         id_vars = ["sample", "src", "ref"] + sys_text_names
         df_melt = metricdf.melt(id_vars=id_vars, value_vars=sys_score_cols, var_name="system", value_name="score")
-
-        nearest_sample = alt.selection(type="single", nearest=True, on="mouseover", fields=["sample"], empty="none")
+        nearest_sample = alt.selection(type="single", nearest=True, on="mouseover", fields=["sample"], empty="none", clear="mouseout")
         chart = (
             alt.Chart(df_melt)
             .mark_circle()
             .encode(
-                x=alt.X("sample:O", title="Sample", axis=alt.Axis(labels=False)),
+                x=alt.X("sample:Q", title="Sample", axis=alt.Axis(labels=False)),
                 y=alt.Y("score:Q", title="Score"),
                 color="system:N",
                 tooltip=id_vars + ["system", "score"],
             )
             .add_selection(nearest_sample)
+            .interactive()
         )
 
         # Draw a vertical rule at the location of the selection
         vertical_line = (
-            alt.Chart(df_melt)
-            .mark_rule(color="gray")
-            .encode(
-                x="sample:O",
+                alt.Chart(df_melt)
+                .mark_rule(color="gray")
+                .encode(
+                    x="sample:Q",
+                    opacity=alt.condition(nearest_sample, alt.value(1.0), alt.value(0.0)),
+                )
+                .transform_filter(nearest_sample)
             )
-            .transform_filter(nearest_sample)
-        )
 
         # Combine the chart and vertical_line
         layer = alt.layer(chart, vertical_line)
