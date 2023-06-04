@@ -3,18 +3,19 @@ from io import StringIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Type, Union
 
+import altair as alt
 import evaluate
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from evaluate import EvaluationModule
-from mateo_st.metrics_constants import METRICS_META, MetricMeta, MetricOption, postprocess_result
+from mateo_st.metrics_constants import METRICS_META, postprocess_result
+from mateo_st.metrics.base import MetricMeta, MetricOption
 from mateo_st.significance import get_bootstrap_dataframe
 from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
 from sacrebleu.metrics.base import Metric as SbMetric
 
-import altair as alt
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -457,50 +458,56 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
 
     for metric_name, tab in zip(metric_names, st.tabs(pretty_names)):
         metricdf = grouped_df[metric_name]
-        metricdf["sample"] = range(1, len(metricdf.index)+1)
+        metricdf["sample"] = range(1, len(metricdf.index) + 1)
         metricdf = metricdf.drop(columns="metric").reset_index(drop=True)
 
         def normalize_score_col(colname: str) -> str:
             # Have to get rid of dots in filenames
             # https://github.com/altair-viz/altair/issues/990
-            return colname.replace("_score", "").replace('.', '-')
+            return colname.replace("_score", "").replace(".", "-")
 
         # Rename columns so that score columns have no special ending, and columns with translations end in _text
         sys_score_cols = [c for c in metricdf.columns if c.endswith("_score")]
 
-        metricdf = metricdf.rename(columns={c.replace("_score", ""): f"{normalize_score_col(c)}_text" for c in sys_score_cols})
+        metricdf = metricdf.rename(
+            columns={c.replace("_score", ""): f"{normalize_score_col(c)}_text" for c in sys_score_cols}
+        )
         metricdf = metricdf.rename(columns={c: normalize_score_col(c) for c in sys_score_cols})
 
         sys_score_cols = [normalize_score_col(c) for c in sys_score_cols]
         sys_text_names = [f"{c}_text" for c in sys_score_cols]
 
-        id_vars = ['sample', 'src', 'ref'] + sys_text_names
-        df_melt = metricdf.melt(id_vars=id_vars, value_vars=sys_score_cols,
-                                var_name='system', value_name='score')
+        id_vars = ["sample", "src", "ref"] + sys_text_names
+        df_melt = metricdf.melt(id_vars=id_vars, value_vars=sys_score_cols, var_name="system", value_name="score")
 
         nearest_sample = alt.selection(type="single", nearest=True, on="mouseover", fields=["sample"], empty="none")
-        chart = alt.Chart(df_melt).mark_circle().encode(
-            x=alt.X('sample:O', title='Sample', axis=alt.Axis(labels=False)),
-            y=alt.Y('score:Q', title='Score'),
-            color='system:N',
-            tooltip=id_vars+["system", "score"]
-        ).add_selection(
-            nearest_sample
+        chart = (
+            alt.Chart(df_melt)
+            .mark_circle()
+            .encode(
+                x=alt.X("sample:O", title="Sample", axis=alt.Axis(labels=False)),
+                y=alt.Y("score:Q", title="Score"),
+                color="system:N",
+                tooltip=id_vars + ["system", "score"],
+            )
+            .add_selection(nearest_sample)
         )
 
         # Draw a vertical rule at the location of the selection
-        vertical_line = alt.Chart(df_melt).mark_rule(color="gray").encode(
-            x="sample:O",
-        ).transform_filter(
-            nearest_sample
+        vertical_line = (
+            alt.Chart(df_melt)
+            .mark_rule(color="gray")
+            .encode(
+                x="sample:O",
+            )
+            .transform_filter(nearest_sample)
         )
 
         # Combine the chart and vertical_line
-        layer = alt.layer(
-            chart, vertical_line
-        )
+        layer = alt.layer(chart, vertical_line)
 
         tab.altair_chart(layer, use_container_width=True)
+
 
 def _evaluate():
     st.markdown("## 🎁 Evaluation results (corpus)")
