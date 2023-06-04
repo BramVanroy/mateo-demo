@@ -1,5 +1,10 @@
 # MAchine Translation Evaluation Online
 
+<p align="center">
+  <a href="https://huggingface.co/spaces/BramVanroy/mateo-demo" target="_blank"><img alt="HF Spaces shield" src="https://img.shields.io/badge/%F0%9F%A4%97-%20HF%20Spaces-orange?style=flat"></a>
+</p>
+
+
 **BETA VERSION**. This version is under active development and will change considerably in the coming months.
 
 We present MAchine Translation Evaluation Online (MATEO), a project that aims to facilitate machine translation (MT)
