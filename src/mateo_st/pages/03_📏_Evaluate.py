@@ -323,12 +323,12 @@ def _compute_metric(
     try:
         if sb_class is None:
             metric = _load_metric(metric_name, config_name)
-            if metric_name in ("bertscore", "bleurt", "comet"):
+            if METRICS_META[metric_name].use_pseudo_batching:
                 # While not necessary in terms of computation, we still want to give users more feedback
-                # when the neural metrics are being calculated. That's why we give the user feedback every 'dummy_batch_size'
-                # chunks by process metric.compute in batches.
+                # when the neural metrics are being calculated. That's why we give the user feedback every
+                # 'dummy_batch_size' chunks by process metric.compute in batches.
                 # !NOTE! This is not the same as the actual on-device batch size! It is likely that metric.compute
-                # is still doing other batching under the hood
+                # is still doing other batching under the hood. This is just for visualization/progressbar purposes
                 msg = f"Calculating {metric_name}{' for system #'+str(sys_idx) if sys_idx is not None else ''}"
                 pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
                 pbar.progress(0)
@@ -694,7 +694,7 @@ def _evaluate():
     with st.expander("About sentence-level scores"):
         st.write(
             "Some metrics have a corresponding sentence-level score, which you can then download here. For"
-            " instance,  the COMET corpus score is simply the average (arithmetic mean) of all the sentence"
+            " instance, the COMET corpus score is simply the average (arithmetic mean) of all the sentence"
             " scores. This is not the case for all metrics. Corpus BLEU for instance, is not simply the"
             " arithmetic mean of all sentence-level BLEU scores but is calculated by its geometric mean and"
             " modified by a brevity penalty. As such, sentence-level BLEU scores, or similar, are not given"

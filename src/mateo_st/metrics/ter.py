@@ -40,4 +40,5 @@ ter_meta = MetricMeta(
         ),
     ),
     segment_level=False,
+    use_pseudo_batching=False,
 )
