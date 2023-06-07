@@ -132,7 +132,10 @@ def _data_input():
             return []
 
     ref_inp_col, src_inp_col = st.columns(2)
+
     ref_file = ref_inp_col.file_uploader("Reference file")
+    st.session_state["ref_segments"] = read_file(ref_file)
+    st.session_state["ref_file"] = ref_file.name if ref_file else None
 
     # Check whether any of the selected metrics require source input
     # If so, use a two-col layout for the input buttons, if not just use full-width reference input
@@ -140,14 +143,10 @@ def _data_input():
         meta.requires_source and name in st.session_state and st.session_state[name]
         for name, meta in METRICS_META.items()
     )
-
     # Always give the option to upload a source file (can be useful for the segment-level viz/table)
     src_file = src_inp_col.file_uploader("Source file" if requires_source else "Source file (optional)")
     st.session_state["src_segments"] = read_file(src_file)
     st.session_state["src_file"] = src_file.name if src_file else None
-
-    st.session_state["ref_segments"] = read_file(ref_file)
-    st.session_state["ref_file"] = ref_file.name if ref_file else None
 
     max_sys_inp_col, _ = st.columns(2)
     max_sys = cli_args().eval_max_sys
@@ -159,7 +158,7 @@ def _data_input():
         key="num_sys",
     )
 
-    # Iterate over i..max_value. Reason is that we need to delete _sys_idx if it does not exist anymore
+    # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
     # This can happen when a user first has three systems and then changes it back to 1
     sys_inp_col_left, sys_inp_col_right = st.columns(2)
     for sys_idx in range(1, max_sys + 1):
