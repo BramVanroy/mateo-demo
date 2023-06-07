@@ -56,9 +56,9 @@ The p-statistic in bootstrap resampling does the following (baseline: bl; system
 replacement. That means that if our dataset contains 300 samples, we create 1000 mini test sets of 300 samples that
 are randomly chosen from our initial dataset of 300, but where a sample can occur multiple times. For motivation and
 empirical evidence, see the aforementioned publication by Koehn
-- calculate the absolute diff between the arrays of bl and system scores
+- calculate the absolute diff between the arrays of bl and system scores (result: array)
 - subtract the mean from this array of absolute diffs. Now it indicates for each partition how "extreme" it is (how
-different bl and sys are for this partition), compared to "the average partition"  
+different bl and sys are for this partition) compared to "the average partition"  
 - find the number of cases where the absolute difference is larger ("more extreme") than the "real difference"
 - divide this no. extreme cases by total no. cases (i.e. n partitions)
 
@@ -70,7 +70,7 @@ In turn that also means that we can be _less certain_ that bl and sys _really_ d
 
 However, if the p value is low, then that means it is unlikely that for a random set, bl and sys differ
 more extremely than for the full corpus (so partition scores are close to full-corpus scores).
-That means that we can more certain that bl and sys really differ significantly.
+That means that we can be more certain that bl and sys really differ significantly.
 
 The 95% confidence interval that we can retrieve can be explained as "with a probability of 95%, the real mean
 value of this metric for the full population that this dataset comes from, lies between [mean-CI; mean+CI]".
