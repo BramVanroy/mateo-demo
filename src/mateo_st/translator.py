@@ -100,10 +100,10 @@ def batchify(sentences: List[str], batch_size: int):
         yield sentences[idx : idx + batch_size]
 
 
-@st.cache_resource(show_spinner=False)
+@st.cache_resource(show_spinner=False, max_entries=1)
 def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
     # We defer loading of transformers and optimum because _sometimes_ there are
-    # import errors triggered if we put tehm at the top. Don't know why...
+    # import errors triggered if we put them at the top. Don't know why...
     from optimum.bettertransformer import BetterTransformer
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 

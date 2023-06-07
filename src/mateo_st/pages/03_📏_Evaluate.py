@@ -160,7 +160,7 @@ def _data_input():
         key="num_sys",
     )
 
-    # Iterate over i..max_value. Reason is that we need to delete sys_idx if it does not exist anymore
+    # Iterate over i..max_value. Reason is that we need to delete _sys_idx if it does not exist anymore
     # This can happen when a user first has three systems and then changes it back to 1
     sys_inp_col_left, sys_inp_col_right = st.columns(2)
     for sys_idx in range(1, max_sys + 1):
@@ -305,7 +305,7 @@ def batchify(predictions: List[str], references: List[str], sources: Optional[Li
         yield batch
 
 
-@st.cache_data(show_spinner=False, ttl=86400)
+@st.cache_data(show_spinner=False, ttl=21600, max_entries=1024)
 def _compute_metric(
     metric_name: str,
     *,
@@ -314,7 +314,7 @@ def _compute_metric(
     sources: Optional[List[str]] = None,
     config_name: Optional[str] = None,
     sb_class: Optional[Type[SbMetric]] = None,
-    sys_idx: Optional[int] = None,
+    _sys_idx: Optional[int] = None,
     dummy_batch_size: int = 16,
     **kwargs,
 ):
@@ -329,7 +329,7 @@ def _compute_metric(
                 # 'dummy_batch_size' chunks by process metric.compute in batches.
                 # !NOTE! This is not the same as the actual on-device batch size! It is likely that metric.compute
                 # is still doing other batching under the hood. This is just for visualization/progressbar purposes
-                msg = f"Calculating {metric_name}{' for system #'+str(sys_idx) if sys_idx is not None else ''}"
+                msg = f"Calculating {metric_name}{' for system #'+str(_sys_idx) if _sys_idx is not None else ''}"
                 pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
                 pbar.progress(0)
                 num_batches = max(1, len(references) // dummy_batch_size)
@@ -417,7 +417,7 @@ def _compute_metrics():
                     sources=st.session_state["src_segments"] if meta.requires_source else None,
                     config_name=opts.pop("config_name", None),
                     sb_class=meta.sb_class,
-                    sys_idx=sys_idx,
+                    _sys_idx=sys_idx,
                     **opts,
                 )
             except Exception as exc:
