@@ -136,16 +136,15 @@ def _data_input():
 
     # Check whether any of the selected metrics require source input
     # If so, use a two-col layout for the input buttons, if not just use full-width reference input
-    if any(
+    requires_source = any(
         meta.requires_source and name in st.session_state and st.session_state[name]
         for name, meta in METRICS_META.items()
-    ):
-        src_file = src_inp_col.file_uploader("Source file")
-        st.session_state["src_segments"] = read_file(src_file)
-        st.session_state["src_file"] = src_file.name if src_file else None
-    else:
-        st.session_state["src_segments"] = []
-        st.session_state["src_file"] = None
+    )
+
+    # Always give the option to upload a source file (can be useful for the segment-level viz/table)
+    src_file = src_inp_col.file_uploader("Source file" if requires_source else "Source file (optional)")
+    st.session_state["src_segments"] = read_file(src_file)
+    st.session_state["src_file"] = src_file.name if src_file else None
 
     st.session_state["ref_segments"] = read_file(ref_file)
     st.session_state["ref_file"] = ref_file.name if ref_file else None
@@ -467,6 +466,8 @@ def _build_corpus_df():
 
 def _build_sentence_df(include_sys_translations: bool = True):
     data = []
+    has_src = "src_segments" in st.session_state and st.session_state["src_segments"]
+
     for metric_name in st.session_state["metrics"].keys():
         if not METRICS_META[metric_name].segment_level:
             continue
@@ -477,7 +478,9 @@ def _build_sentence_df(include_sys_translations: bool = True):
                 "ref": st.session_state["ref_segments"][item_idx],
             }
 
-            if METRICS_META[metric_name].requires_source:
+            if has_src:
+                # If a user uploaded a source file, include the source column even if the metric
+                # is not a source-based metric
                 item["src"] = st.session_state["src_segments"][item_idx]
 
             for sys_idx, results in st.session_state["results"].items():
@@ -559,7 +562,13 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
             # https://github.com/altair-viz/altair/issues/990
             return colname.replace("_score", "").replace(".", "-")
 
-        has_src = "src" in metricdf.columns and metricdf["src"].any()
+        has_src = "src_segments" in st.session_state and st.session_state["src_segments"]
+
+        if has_src:
+            # If a user uploaded a source file, include the source column even if the metric
+            # is not a source-based metric
+            metricdf["src"] = st.session_state["src_segments"].copy()
+
         # Rename columns so that score columns have no special ending, and columns with translations end in _text
         sys_score_cols = [c for c in metricdf.columns if c.endswith("_score")]
 
