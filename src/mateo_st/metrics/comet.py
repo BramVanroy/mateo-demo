@@ -1,8 +1,25 @@
+from statistics import mean
+from typing import Any, Dict
+
 import comet
 from mateo_st.metrics.base import MetricMeta, MetricOption
 
 
-comet_meta = MetricMeta(
+class CometMeta(MetricMeta):
+    def postprocess_result(self, result: Dict[str, Any]):
+        """Post-processes the result that is retrieved from a computed metric.
+
+        :param result: score result (dictionary)
+        :return: modified score result
+        """
+        corpus_key = self.corpus_score_key
+        sentences_key = self.sentences_score_key
+        result[corpus_key] = 100 * mean(result["scores"])
+        result[sentences_key] = [score * 100 for score in result["scores"]]
+        return result
+
+
+comet_meta = CometMeta(
     name="COMET",
     metric_class="neural",
     full_name="Crosslingual Optimized Metric for Evaluation of Translation",

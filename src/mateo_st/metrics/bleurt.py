@@ -1,7 +1,24 @@
+from statistics import mean
+from typing import Any, Dict
+
 from mateo_st.metrics.base import MetricMeta, MetricOption
 
 
-bleurt_meta = MetricMeta(
+class BleurtMeta(MetricMeta):
+    def postprocess_result(self, result: Dict[str, Any]):
+        """Post-processes the result that is retrieved from a computed metric.
+
+        :param result: score result (dictionary)
+        :return: modified score result
+        """
+        corpus_key = self.corpus_score_key
+        sentences_key = self.sentences_score_key
+        result[corpus_key] = 100 * mean(result["scores"])
+        result[sentences_key] = [score * 100 for score in result["scores"]]
+        return result
+
+
+bleurt_meta = BleurtMeta(
     name="BLEURT",
     metric_class="neural",
     full_name="Bilingual Evaluation Understudy with Representations from Transformers",

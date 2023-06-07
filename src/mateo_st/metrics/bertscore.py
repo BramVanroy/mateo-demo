@@ -1,8 +1,25 @@
+from statistics import mean
+from typing import Any, Dict
+
 import bert_score
 from mateo_st.metrics.base import MetricMeta, MetricOption
 
 
-bertscore_meta = MetricMeta(
+class BertScoreMeta(MetricMeta):
+    def postprocess_result(self, result: Dict[str, Any]):
+        """Post-processes the result that is retrieved from a computed metric.
+
+        :param result: score result (dictionary)
+        :return: modified score result
+        """
+        corpus_key = self.corpus_score_key
+        sentences_key = self.sentences_score_key
+        result[corpus_key] = 100 * mean(result["f1"])
+        result[sentences_key] = [score * 100 for score in result["f1"]]
+        return result
+
+
+bertscore_meta = BertScoreMeta(
     name="BERTScore",
     metric_class="neural",
     full_name="",

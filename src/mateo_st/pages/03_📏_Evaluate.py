@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from evaluate import EvaluationModule
 from mateo_st.metrics.base import MetricMeta, MetricOption
-from mateo_st.metrics_constants import METRICS_META, merge_batched_results, postprocess_result
+from mateo_st.metrics_constants import METRICS_META, merge_batched_results
 from mateo_st.significance import get_bootstrap_dataframe
 from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
 from sacrebleu.metrics.base import Metric as SbMetric
@@ -371,7 +371,7 @@ def _compute_metric(
         pbar_text_ct.empty()
         raise exc
     else:
-        result = postprocess_result(metric_name, result)
+        result = METRICS_META[metric_name].postprocess_result(result)
         return result
 
 

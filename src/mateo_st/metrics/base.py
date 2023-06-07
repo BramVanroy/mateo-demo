@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional, Tuple, Type
+from typing import Any, Dict, Literal, Optional, Tuple, Type
 
 from sacrebleu.metrics.base import Metric as SbMetric
 
@@ -44,3 +44,12 @@ class MetricMeta:
     corpus_score_key: str = "score"
     sentences_score_key: Optional[str] = None
     segment_level: bool = True
+    use_pseudo_batching: bool = True
+
+    def postprocess_result(self, result: Dict[str, Any]):
+        """Post-processes the result that is retrieved from a computed metric.
+
+        :param result: score result (dictionary)
+        :return: modified score result
+        """
+        return result
