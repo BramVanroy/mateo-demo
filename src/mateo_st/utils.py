@@ -5,6 +5,7 @@ from os import PathLike
 from pathlib import Path
 from typing import Optional, Union
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 from mateo_st.translator import (
@@ -14,6 +15,7 @@ from mateo_st.translator import (
     DEFAULT_NUM_BEAMS,
     TRANS_SIZE2MODEL,
 )
+from matplotlib.image import imread
 
 
 def create_download_link(
@@ -21,7 +23,7 @@ def create_download_link(
 ) -> str:
     """Given a string or dataframe, turn it into an in-memory object that can be downloaded
     :param data: data to include
-    :param filename: name of the filename that we create in-memory
+    :param filename: stem of the filename that we create in-memory
     :param link_text: text of the hyperlink that will be created
     :param df_groupby: whether to create separate sheets for a given "df_groupby" column. Only used if 'data' is
      a DataFrame
@@ -106,20 +108,27 @@ def cli_args():
     return args
 
 
-def load_css(name: str):
+def load_css(stem: str):
     """Load a given CSS file in streamlit. The given "name".css will be looked for in the css directory.
-    :param name: filename without extension to load
+    :param stem: filename without extension to load
     """
-    pfcss = Path(__file__).parent.joinpath(f"css/{name}.css")
+    pfcss = Path(__file__).parent.joinpath(f"css/{stem}.css")
     st.markdown(f"<style>{read_local_file(pfcss)}</style>", unsafe_allow_html=True)
 
 
 @st.cache_data(max_entries=64)
-def read_local_file(fin: Union[str, PathLike]):
+def read_local_file(fin: Union[str, PathLike]) -> str:
     return Path(fin).read_text(encoding="utf-8")
 
 
-def isfloat(item: str):
+def get_local_img(name: str) -> np.ndarray:
+    """Get the full path to a local image
+    :param name: filename with extension
+    """
+    return imread(Path(__file__).parent.joinpath(f"img/{name}").resolve())
+
+
+def isfloat(item: str) -> bool:
     """Check whether the given item can in fact be a float
     :param item: the item to check
     :return: True if it could be a float, False if not
