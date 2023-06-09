@@ -128,6 +128,20 @@ As mentioned before, you can modify the Dockerfiles as you wish. Most notably yo
 launcher command itself. Therefore you could use the [streamlit options]([here](https://docs.streamlit.io/library/advanced-features/configuration))
 alongside custom options for MATEO specifically, which were mentioned in the [previous section](#install-locally-with-python).
 
+## Notes
+
+### Using CUDA
+
+If you are using CUDA, I have noticed that COMET may trigger errors because it uses deterministic behavior but depending
+on your CUDA version that may result in issues. If you are experiencing such issues, try setting the environment 
+variable `CUBLAS_WORKSPACE_CONFIG=:4096:8`.
+
+Using CUDA may also lead to caching issues from Streamlit, causing the neural models to be reloaded on every new call
+and every new system to evaluate. That can be very slow! Luckily Streamlit is bringing back more
+[control over caching](https://github.com/streamlit/streamlit/pull/6502)
+so that in a future version of MATEO it should be possible to remedy this and to really utilize the GPU. At the
+moment I am not convinced that it is beneficial unless perhaps for very large files so **I would recommend to not
+use CUDA at this time**.
 
 ## Acknowledgements
 
