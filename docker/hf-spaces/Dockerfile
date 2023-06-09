@@ -27,4 +27,4 @@ HEALTHCHECK CMD curl --fail http://localhost:7860/_stcore/health
 
 WORKDIR $HOME/mateo-demo/src/mateo_st
 
-CMD streamlit run 01_🎈_MATEO.py --server.port 7860 --server.enableXsrfProtection false
+CMD ["streamlit", "run", "01_🎈_MATEO.py", "--server.port", "7860", "--server.enableXsrfProtection", "false"]
