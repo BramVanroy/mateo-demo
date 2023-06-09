@@ -28,7 +28,7 @@ def main():
     st.markdown(
         "MATEO is funded by a starting grant from the [European Association for Machine Translation](https://eamt.org/),"
         " and a significant full grant from [CLARIN.eu](https://www.clarin.eu/)'s _Bridging Gaps_ initiative. The"
-        " project will officially run until July 2023 but will continue to be maintained afterwards in an"
+        " project will officially run until the end of June 2023 but will continue to be maintained afterwards in an"
         " [open-source manner](https://github.com/BramVanroy/mateo-demo/)."
     )
 
