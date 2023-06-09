@@ -19,9 +19,20 @@ Face [Spaces](https://huggingface.co/spaces/BramVanroy/mateo-demo).
 
 ## Self-hosting
 
+The MATEO [website](https://lt3.ugent.be/mateo/) is provided for free as a hosted application. That means that you, or
+anyone else, can use it. The implication is that it is possible that the service will be slow depending on the usage of
+the system. As such, specific attention was paid to making it easy for you to set up your own instance that you can use!
+
 ### Duplicating a Hugging Face Spaces
 
+MATEO is also [running](https://huggingface.co/spaces/BramVanroy/mateo-demo) on the free platform of 🤗 Hugging Face in a
+so-called 'Space'. If you have an account (free) on that platform, you can easily duplicate the running MATEO instance
+to your own profile. That means that you can create a private duplication of the MATEO interface **just for you** and
+free of charge!
 
+1. You can do this by going to the [Space](https://huggingface.co/spaces/BramVanroy/mateo-demo);
+2. in the top right (below your profile picture) you should click on the three vertical dots;
+3. choose 'Duplicate space', _et&nbsp;voilà!_, a new space should now be running on your own profile
 
 ### Install locally with Python
 
