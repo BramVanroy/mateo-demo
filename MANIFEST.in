@@ -1,5 +1,6 @@
 include src/mateo_st/css/*.css
-include LICENSE
+include src/mateo_st/img/*.png
 include src/mateo_st/components/**/*.html
 include src/mateo_st/components/**/*.css
 include src/mateo_st/components/**/*.js
+include LICENSE
