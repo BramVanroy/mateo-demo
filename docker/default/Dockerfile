@@ -7,9 +7,8 @@ RUN apt-get -y update \
 
 RUN add-apt-repository ppa:deadsnakes/ppa \
     && apt-get -y update \
-    && apt-get -y install python3.9 python3.9-dev python3-pip python3.9-distutils
-
-RUN ln -s /usr/bin/python3.9 /usr/bin/python \
+    && apt-get -y install python3.9 python3.9-dev python3-pip python3.9-distutils \
+    && ln -s /usr/bin/python3.9 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -u 1000 user
