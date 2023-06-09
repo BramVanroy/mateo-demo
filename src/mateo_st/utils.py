@@ -1,5 +1,7 @@
 import base64
+import json
 import os
+from argparse import Namespace
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
@@ -56,8 +58,7 @@ def cli_args():
 
     cparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     cparser.add_argument("--no_cuda", action="store_true", help="whether to disable CUDA for all tasks")
-    cparser.add_argument("--transl_no_cuda", action="store_true", help="whether to disable CUDA for translation")
-
+    cparser.add_argument("--transl_no_cuda", action="store_true", help="whether to disable CUDA for translation only")
     cparser.add_argument(
         "--transl_batch_size", type=int, default=DEFAULT_BATCH_SIZE, help="batch size for translating"
     )
@@ -98,8 +99,17 @@ def cli_args():
         help="when demo mode is enabled, only a limited range of neural check-points are available. So all metrics are"
         " available but not all of the checkpoints.",
     )
+    cparser.add_argument(
+        "--config",
+        help="an optional JSON config file that contains script arguments. NOTE: options specified in this file will"
+             " overwrite those given in the command-line.",
+    )
 
     args = cparser.parse_args()
+
+    config_file_args = json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {}
+    # Options specified in the JSON config overwrite CLI args
+    args = Namespace(**{**vars(args), **config_file_args})
 
     # Disable CUDA for everything
     if args.no_cuda:
