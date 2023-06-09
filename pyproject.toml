@@ -4,8 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mateo_st"
-# Do not forget to change in __init__.py too!
-version = "0.0.1"
+version = "1.0.0"
 authors = [
     {name = "Bram Vanroy", email = "bramvanroy@hotmail.com"},
 ]
@@ -17,7 +16,7 @@ readme = "README.md"
 keywords = ["machine translation", "machine translation evaluation", "bleu", "comet"]
 license = {file = "LICENSE"}
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
@@ -62,7 +61,6 @@ documentation = "https://github.com/BramVanroy/mateo-demo"
 repository = "https://github.com/BramVanroy/mateo-demo.git"
 
 [project.optional-dependencies]
-# https://stackoverflow.com/a/72524073/1150683
 dev = ["flake8", "black", "isort"]
 
 # TOOLS
