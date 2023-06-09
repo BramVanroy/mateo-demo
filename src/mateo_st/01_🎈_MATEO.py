@@ -50,7 +50,9 @@ def main():
         " [Space](https://huggingface.co/spaces/BramVanroy/mateo-demo) (if you are not already there);\n"
         "\t2. in the top right (below your profile picture) you should click on the three vertical dots;\n"
         "\t3. choose 'Duplicate space', _et&nbsp;voilà!_\n\n"
-        "If you have questions about setting this up [get in touch](#contact-issues-and-collaboration).\n"
+        "If you have questions about setting this up, [get in touch](#contact-issues-and-collaboration).\n"
+        "- **Intermediate**: you can also clone the repository and install MATEO locally with Python. This"
+        " process is described in more detail on [GitHub](https://github.com/BramVanroy/mateo-demo);\n"
         "- **Advanced**: using Docker to spin up an instance of this website on your own device (laptop, computer,"
         " server). This option allows you to modify the Docker image and the options to your needs. More information on"
         " [GitHub](https://github.com/BramVanroy/mateo-demo).",
