@@ -38,6 +38,10 @@ CMD if [ -z "$BASE" ]; then \
     else \
         cmd="streamlit run 01_🎈_MATEO.py --server.port $PORT --browser.serverAddress $SERVER --server.baseUrlPath $BASE"; \
     fi; \
+    if [ "$DEMO_MODE" = "true" ]; then \
+        cmd="$cmd --server.maxUploadSize 1"; \
+    fi; \
+
     if [ "$NO_CUDA" = "true" ] || [ "$DEMO_MODE" = "true" ]; then \
         opts="--"; \
         [ "$NO_CUDA" = "true" ] && opts="$opts --no_cuda"; \
