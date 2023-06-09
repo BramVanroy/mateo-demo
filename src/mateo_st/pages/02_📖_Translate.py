@@ -43,10 +43,15 @@ def _init():
         " access to Meta AI's open-source and open-access model "
         "[No Language Left Behind](https://ai.facebook.com/research/no-language-left-behind/)"
         " ([paper](https://arxiv.org/abs/2207.04672)). It enables machine translation to and from 200 languages."
-        " In this interface, we specifically use"
-        f" [{cli_args().transl_model_size}](https://huggingface.co/{TRANS_SIZE2MODEL[cli_args().transl_model_size]})"
-        f" (max. length={cli_args().transl_max_length}; num_beams={cli_args().transl_num_beams})."
     )
+
+    with st.expander("Technical details"):
+        st.markdown(
+            "In this interface, we specifically use"
+            f" [{cli_args().transl_model_size}](https://huggingface.co/{TRANS_SIZE2MODEL[cli_args().transl_model_size]})"
+            f" with a maximal length of {cli_args().transl_max_length}"
+            f" and {cli_args().transl_num_beams} beam(s)."
+        )
 
 
 def _model_selection():
