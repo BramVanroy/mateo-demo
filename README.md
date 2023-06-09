@@ -111,11 +111,11 @@ that are specific to the server, demo functionality, and CUDA. These Docker envi
   - DEMO_MODE: set to `true` to disable some options for neural metrics and to limit the max. upload size to 1MB 
   per file (default: '')
 
-As an example, to build and run the repository on port 5034 with CUDA disabled, you can run the following commands
-from the root of this directory.
+As an example, to build and run the repository on port 5034 with CUDA disabled, you can run the following commands which
+will automatically use the most recent default Dockerfile from Github.
 
 ```shell
-docker build -t mateo docker/default 
+docker build -t mateo https://raw.githubusercontent.com/BramVanroy/mateo-demo/main/docker/default/Dockerfile
 docker run --rm -d --name mateo-demo -p 5034:5034 --env PORT=5054 --env NO_CUDA=true mateo
 ```
 
