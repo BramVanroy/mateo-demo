@@ -111,13 +111,17 @@ that are specific to the server, demo functionality, and CUDA. These Docker envi
   - DEMO_MODE: set to `true` to disable some options for neural metrics and to limit the max. upload size to 1MB 
   per file (default: '')
 
-As an example, to build and run the repository on port 5034 with CUDA disabled, you can run the following commands which
-will automatically use the most recent default Dockerfile from Github.
+As an example, to build and run the repository on port 5034 with CUDA disabled and demo mode enabled, you can run the
+following commands which will automatically use the most recent default Dockerfile from Github.
 
 ```shell
 docker build -t mateo https://raw.githubusercontent.com/BramVanroy/mateo-demo/main/docker/default/Dockerfile
-docker run --rm -d --name mateo-demo -p 5034:5034 --env PORT=5054 --env NO_CUDA=true mateo
+docker run --rm -d --name mateo-demo -p 5034:5034 --env PORT=5034 --env NO_CUDA=true --env DEMO_MODE=true mateo
 ```
+
+Note how the opened ports in Docker's `-p` must correspond with the env variable `PORT`!
+
+MATEO is now running on port 5034 and  available on the local address [http://localhost:5034/](http://localhost:5034/).
 
 As mentioned before, you can modify the Dockerfiles as you wish. Most notably you may want to change the `streamlit`
 launcher command itself. Therefore you could use the [streamlit options]([here](https://docs.streamlit.io/library/advanced-features/configuration))
