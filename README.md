@@ -1,11 +1,11 @@
 # MAchine Translation Evaluation Online (MATEO)
 
-<div style="display: flex; gap: 0.5em; justify-content: center; align-items: flex-start;">
+<p align="center">
   <a href="https://huggingface.co/spaces/BramVanroy/mateo-demo" target="_blank"><img alt="HF Spaces shield" src="https://img.shields.io/badge/%F0%9F%A4%97-%20HF%20Spaces-orange?style=flat"></a>
   <a href="https://www.gnu.org/licenses/gpl-3.0" target="_blank"><img alt="License shield" src="https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat"></a>
   <img alt="Code style black" src="https://img.shields.io/badge/code%20style-black-000000.svg?style=flat">
   <img alt="Built with Streamlit" src="https://img.shields.io/static/v1?style=for-the-badge&message=Streamlit&color=FF4B4B&logo=Streamlit&logoColor=FFFFFF&label&style=flat">
-</div>
+</p>
 
 
 We present MAchine Translation Evaluation Online (MATEO), a project that aims to facilitate machine translation (MT)
@@ -130,7 +130,7 @@ This project was kickstarted by a Sponsorship project from the
 [European Association for Machine Translation](https://eamt.org/), and
 a substantial follow-up grant by the support of [CLARIN.eu](https://www.clarin.eu/).
 
-<div style="display: flex; gap:1em; justify-content: center; align-items: center;">
+<p align="center">
   <a href="https://eamt.org/" target="_blank"><img alt="EAMT logo" src="src/mateo_st/img/eamt.png"></a>
   <a href="https://www.clarin.eu/" target="_blank"><img alt="CLARIN logo" src="src/mateo_st/img/clarin.png"></a>
-</div>
+</p>
