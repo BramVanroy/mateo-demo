@@ -41,12 +41,10 @@ CMD if [ -z "$BASE" ]; then \
     if [ "$DEMO_MODE" = "true" ]; then \
         cmd="$cmd --server.maxUploadSize 1"; \
     fi; \
-
     if [ "$NO_CUDA" = "true" ] || [ "$DEMO_MODE" = "true" ]; then \
         opts="--"; \
         [ "$NO_CUDA" = "true" ] && opts="$opts --no_cuda"; \
         [ "$DEMO_MODE" = "true" ] && opts="$opts --demo_mode"; \
         cmd="$cmd $opts"; \
     fi; \
-
     exec $cmd
