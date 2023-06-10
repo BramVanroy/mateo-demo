@@ -7,7 +7,6 @@
   <img alt="Built with Streamlit" src="https://img.shields.io/static/v1?style=for-the-badge&message=Streamlit&color=FF4B4B&logo=Streamlit&logoColor=FFFFFF&label&style=flat">
 </p>
 
-
 We present MAchine Translation Evaluation Online (MATEO), a project that aims to facilitate machine translation (MT)
 evaluation by means of an easy-to-use interface that can evaluate given machine translations with a battery of
 automatic metrics. It caters to both experienced and novice users who are working with MT, such as MT system builders,
@@ -16,6 +15,26 @@ and also researchers from Social Sciences and Humanities, and teachers and stude
 MATEO can be accessed on [this website](https://lt3.ugent.be/mateo/), currently hosted by LT3 but soon
 moving to the [CLARIN](https://www.clarin.eu/) B center at [Instituut voor de Nederlandse Taal](https://ivdnt.org/).
 It is also available on Hugging Face [Spaces](https://huggingface.co/spaces/BramVanroy/mateo-demo).
+
+If you use the MATEO interface for your work, please cite our project paper!
+
+Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
+
+```bibtex
+@inproceedings{vanroy2023mateo,
+  author       = {{Vanroy, Bram and Tezcan, Arda and Macken, Lieve}},
+  booktitle    = {{Proceedings of the 24th Annual Conference of the European Association for Machine Translation}},
+  editor       = {{Nurminen, Mary and Brenner, Judith and Koponen, Maarit and Latomaa, Sirkku and Mikhailov, Mikhail and Schierl, Frederike and Ranasinghe, Tharindu and Vanmassenhove, Eva and Alvarez Vidal, Sergi and Aranberri, Nora and Nunziatini, Mara and Parra Escartín, Carla and Forcada, Mikel and Popovic, Maja and Scarton, Carolina and Moniz, Helena}},
+  isbn         = {{978-952-03-2947-1}},
+  language     = {{eng}},
+  location     = {{Tampere, Finland}},
+  pages        = {{499--500}},
+  publisher    = {{European Association for Machine Translation (EAMT)}},
+  title        = {{MATEO: MAchine Translation Evaluation Online}},
+  url          = {{https://lt3.ugent.be/mateo/}},
+  year         = {{2023}},
+}
+```
 
 ## Self-hosting
 
