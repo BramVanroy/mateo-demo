@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+title: 'MATEO: MAchine Translation Evaluation Online'
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Bram
+    family-names: Vanroy
+    email: bram.vanroy@ugent.be
+    affiliation: Ghent University
+    orcid: 'https://orcid.org/0000-0002-4622-8364'
+  - given-names: Arda
+    family-names: Tezcan
+    email: arda.tezcan@ugent.be
+    affiliation: Ghent University
+  - given-names: Lieve
+    family-names: Macken
+    email: lieve.macken@ugent.be
+    affiliation: Ghent University
+repository-code: 'https://github.com/BramVanroy/mateo-demo'
+url: 'https://lt3.ugent.be/mateo/'
+repository: 'https://huggingface.co/spaces/BramVanroy/mateo-demo'
+abstract: >-
+  We present MAchine Translation Evaluation Online (MATEO),
+  a project that aims to facilitate machine translation (MT)
+  evaluation by means of an easy-to-use web interface that
+  can evaluate given machine
+
+  translations with a battery of automatic metrics. It
+  caters to both experienced and novice users who are
+  working with MT, such as MT system builders, teachers and
+  students of (machine) translation, and researchers.
+keywords:
+  - machine translation
+  - evaluation
+  - machine translation evaluation
+  - metrics
+license: GPL-3.0
