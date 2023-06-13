@@ -1,7 +1,7 @@
 from io import StringIO
 
 import streamlit as st
-from Levenshtein import opcodes
+from Levenshtein import distance, opcodes
 from mateo_st.components.ed_visualizer import ed_visualizer
 from mateo_st.utils import cli_args, load_css
 
@@ -29,6 +29,8 @@ def _calculate_edit_distances(s1: str, s2: str):
                 data[unit].append(("insert", None, mt_chunk))
             elif op == "equal":
                 data[unit].append(("equal", ref_chunk, mt_chunk))
+
+        data[f"{unit}_score"] = distance(s1, s2)
 
     return data
 
