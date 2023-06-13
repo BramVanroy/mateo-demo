@@ -57,7 +57,7 @@ def main():
         "- **With Docker**: using Docker to spin up an instance of this website on your own device (laptop, computer,"
         " server). This option allows you to modify the Docker image and the options to your needs. More information on"
         " [GitHub](https://github.com/BramVanroy/mateo-demo).",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     st.markdown("## ✒️Contact, issues, and collaboration")

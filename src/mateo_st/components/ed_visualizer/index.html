@@ -71,6 +71,7 @@
             font-size: 0.8em;
             display: none;
         }
+
         #ed-char-level h2 {
             margin-top: 0;
             padding-top: 0;
@@ -96,6 +97,7 @@
     </aside>
     <div id="ed-char-level">
         <h2>Characters</h2>
+        <p class="score">Levenshtein distance: <span></span></p>
         <div class="ed-content">
             <div class="ed-ref">
                 <p>Reference</p>
@@ -109,6 +111,7 @@
     </div>
     <div id="ed-tok-level">
         <h2>Tokens</h2>
+        <p class="score">Levenshtein distance: <span></span></p>
         <div class="ed-content">
             <div class="ed-ref">
                 <p>Reference</p>
@@ -177,9 +180,11 @@
         return container
     }
 
-    function buildSection(items, container, isTokenLevel) {
+    function buildSection(items, score, container, isTokenLevel) {
         const refItemsCont = document.querySelector(container).querySelector(".ed-ref .items")
         const mtItemsCont = document.querySelector(container).querySelector(".ed-mt .items")
+
+        document.querySelector(container).querySelector(".score span").textContent = score
 
         /* This will be retriggered on resize, so empty before each iteration */
         refItemsCont.innerHTML = ""
@@ -243,12 +248,12 @@
         mtItemsCont.append(mtFrag);
     }
 
-    function buildHtml(ref, mt, char, token) {
+    function buildHtml(token_score, char_score, ref, mt, char, token) {
         document.querySelector("#ed-sentences p.ed-ref-sent > span").textContent = ref;
         document.querySelector("#ed-sentences p.ed-mt-sent > span").textContent = mt;
 
-        buildSection(char, "#ed-char-level", false);
-        buildSection(token, "#ed-tok-level", true);
+        buildSection(char, char_score, "#ed-char-level", false);
+        buildSection(token, token_score, "#ed-tok-level", true);
         resize();
     }
 
@@ -257,7 +262,7 @@
     function onDataFromPython(event) {
         if (event.data.type !== "streamlit:render") return;
         const args = event.data.args
-        buildHtml(args.ref, args.mt, args.char, args.token)
+        buildHtml(args.token_score, args.char_score, args.ref, args.mt, args.char, args.token)
     }
 
     // Hook things up!

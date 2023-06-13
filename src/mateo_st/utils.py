@@ -102,7 +102,7 @@ def cli_args():
     cparser.add_argument(
         "--config",
         help="an optional JSON config file that contains script arguments. NOTE: options specified in this file will"
-             " overwrite those given in the command-line.",
+        " overwrite those given in the command-line.",
     )
 
     args = cparser.parse_args()
