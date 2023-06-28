@@ -22,3 +22,18 @@ a:hover {text-decoration: none;}
     font-size: 0.8em;
 }
 
+.version {
+    background: #edf9ed;
+    border: 1px solid #38aa3b;
+    display: inline-block;
+    margin-bottom: 1em;
+    padding: 0.125em 0.4em;
+    border-radius: 4px;
+}
+
+.version p {
+    font-size: 80%;
+    margin: 0;
+    color: #38aa3b;
+    padding: 0;
+}

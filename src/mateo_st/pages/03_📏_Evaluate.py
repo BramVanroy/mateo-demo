@@ -10,6 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from evaluate import EvaluationModule
+from mateo_st import __version__ as mateo_version
 from mateo_st.metrics.base import MetricMeta, MetricOption
 from mateo_st.metrics_constants import METRICS_META, merge_batched_results
 from mateo_st.significance import get_bootstrap_dataframe
@@ -59,7 +60,11 @@ def _init():
         st.session_state["num_sys"] = 1
 
     st.title("📏 Evaluate")
-    st.markdown("First specify the metrics and metric options to use, and then upload your data.")
+    st.markdown(
+        "Here you can evaluate machine translation systems on your own test set of reference translations."
+        " First specify the metrics and metric options to use, and then upload your data."
+    )
+    st.markdown("✒️ If you use MATEO for your work, please [**cite it**](/#citing-mateo) accordingly.")
 
 
 def _metric_selection():
@@ -677,7 +682,10 @@ def _evaluate():
                     "💡 **Signatures**: it's a good idea to report these in your paper so others know exactly"
                     " which configuration you used!"
                 )
-                signatures = [f"{metric}: {sig}" for metric, sig in st.session_state["bootstrap_signatures"].items()]
+                signatures = [
+                    f"{metric}: {sig}|mateo:{mateo_version}"
+                    for metric, sig in st.session_state["bootstrap_signatures"].items()
+                ]
                 st.text("\n".join(signatures))
 
             # Latex
