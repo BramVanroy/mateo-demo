@@ -42,16 +42,30 @@ def _init():
         "To provide quick access to multilingual translation, including for low-resource languages, we here provide"
         " access to Meta AI's open-source and open-access model "
         "[No Language Left Behind](https://ai.facebook.com/research/no-language-left-behind/)"
-        " ([paper](https://arxiv.org/abs/2207.04672)). It enables machine translation to and from 200 languages."
+        " ([paper](https://arxiv.org/abs/2207.04672)). It enables machine translation to and from 200 languages. In"
+        f" this interface, we specifically use"
+        f" [{cli_args().transl_model_size}](https://huggingface.co/{TRANS_SIZE2MODEL[cli_args().transl_model_size]})"
+        f" with a maximal length of {cli_args().transl_max_length} and {cli_args().transl_num_beams} beam(s)."
     )
 
-    with st.expander("Technical details"):
-        st.markdown(
-            "In this interface, we specifically use"
-            f" [{cli_args().transl_model_size}](https://huggingface.co/{TRANS_SIZE2MODEL[cli_args().transl_model_size]})"
-            f" with a maximal length of {cli_args().transl_max_length}"
-            f" and {cli_args().transl_num_beams} beam(s)."
-        )
+    with st.expander("✒️ If you use MATEO for your work, please **cite it** accordingly."):
+        st.markdown("""> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
+
+```bibtex
+@inproceedings{vanroy2023mateo,
+    author       = {{Vanroy, Bram and Tezcan, Arda and Macken, Lieve}},
+    booktitle    = {{Proceedings of the 24th Annual Conference of the European Association for Machine Translation}},
+    editor       = {{Nurminen, Mary and Brenner, Judith and Koponen, Maarit and Latomaa, Sirkku and Mikhailov, Mikhail and Schierl, Frederike and Ranasinghe, Tharindu and Vanmassenhove, Eva and Alvarez Vidal, Sergi and Aranberri, Nora and Nunziatini, Mara and Parra Escartín, Carla and Forcada, Mikel and Popovic, Maja and Scarton, Carolina and Moniz, Helena}},
+    isbn         = {{978-952-03-2947-1}},
+    language     = {{eng}},
+    location     = {{Tampere, Finland}},
+    pages        = {{499--500}},
+    publisher    = {{European Association for Machine Translation (EAMT)}},
+    title        = {{MATEO: MAchine Translation Evaluation Online}},
+    url          = {{https://lt3.ugent.be/mateo/}},
+    year         = {{2023}},
+}
+```""")
 
 
 def _model_selection():

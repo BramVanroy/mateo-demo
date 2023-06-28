@@ -52,10 +52,30 @@ def _init():
     st.title("💫 Visualizing Machine Translations")
     st.markdown(
         "Here you can visualize edit operations on the word and character-level for given inputs, like a"
-        " reference  and a machine translation. A distinction is made between substitutions on the one hand"
-        " and insertions/deletions on the other, as indicated by the legend on the left."
+        " reference  and a machine translation."
     )
-    st.markdown("Move your mouse over matches or substitutions to highlight the aligned items in the other sentence.")
+    with st.expander("✒️ If you use MATEO for your work, please **cite it** accordingly."):
+        st.markdown("""> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
+
+```bibtex
+@inproceedings{vanroy2023mateo,
+    author       = {{Vanroy, Bram and Tezcan, Arda and Macken, Lieve}},
+    booktitle    = {{Proceedings of the 24th Annual Conference of the European Association for Machine Translation}},
+    editor       = {{Nurminen, Mary and Brenner, Judith and Koponen, Maarit and Latomaa, Sirkku and Mikhailov, Mikhail and Schierl, Frederike and Ranasinghe, Tharindu and Vanmassenhove, Eva and Alvarez Vidal, Sergi and Aranberri, Nora and Nunziatini, Mara and Parra Escartín, Carla and Forcada, Mikel and Popovic, Maja and Scarton, Carolina and Moniz, Helena}},
+    isbn         = {{978-952-03-2947-1}},
+    language     = {{eng}},
+    location     = {{Tampere, Finland}},
+    pages        = {{499--500}},
+    publisher    = {{European Association for Machine Translation (EAMT)}},
+    title        = {{MATEO: MAchine Translation Evaluation Online}},
+    url          = {{https://lt3.ugent.be/mateo/}},
+    year         = {{2023}},
+}
+```""")
+
+    st.markdown("A distinction is made between substitutions on the one hand"
+                " and insertions/deletions on the other, as indicated by the legend on the left. "
+                " Move your mouse over matches or substitutions to highlight the aligned items in the other sentence.")
 
 
 def _data_input():
