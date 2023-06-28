@@ -45,7 +45,7 @@ comet_meta = CometMeta(
                 "wmt21-cometinho-da",
                 "eamt22-cometinho-da",
                 "eamt22-prune-comet-da",
-                "Unbabel/wmt22-comet-da"
+                "Unbabel/wmt22-comet-da",
             ),
             demo_choices=(
                 "Unbabel/wmt22-comet-da",
