@@ -37,7 +37,7 @@ comet_meta = CometMeta(
     options=(
         MetricOption(
             name="config_name",
-            description="COMET model to use. For supported models, look [here](https://github.com/Unbabel/COMET/tree/v1.1.3#comet-models).",
+            description="COMET model to use. For supported models, look [here](https://github.com/Unbabel/COMET/blob/v2.0.1/MODELS.md).",
             default="eamt22-cometinho-da",
             choices=(
                 "wmt20-comet-da",
@@ -45,9 +45,10 @@ comet_meta = CometMeta(
                 "wmt21-cometinho-da",
                 "eamt22-cometinho-da",
                 "eamt22-prune-comet-da",
+                "Unbabel/wmt22-comet-da"
             ),
             demo_choices=(
-                "wmt20-comet-da",
+                "Unbabel/wmt22-comet-da",
                 "eamt22-cometinho-da",
             ),
         ),
