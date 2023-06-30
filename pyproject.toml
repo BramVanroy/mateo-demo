@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mateo_st"
 # Also update version in init!
-version = "1.1.1"
+version = "1.1.2"
 authors = [
     {name = "Bram Vanroy", email = "bramvanroy@hotmail.com"},
 ]
@@ -49,8 +49,7 @@ dependencies = [
     "tensorflow==2.11.0",
     "torch==1.13.1",
     "transformers==4.28.1",
-    # TODO: update to COMET commit after PR merge
-    "unbabel-comet @ git+https://github.com/BramVanroy/COMET.git@62807b5c3c46820634cdbd6ef754508c669a9ff4",
+    "unbabel-comet @ git+https://github.com/Unbabel/COMET.git@04f30d0ab85a4daca4e672286f6cf985de6d02a8",
     "XlsxWriter==3.0.8",
     "BLEURT @ git+https://github.com/google-research/bleurt.git@cebe7e6f996b40910cfaa520a63db47807e3bf5c"
 ]
