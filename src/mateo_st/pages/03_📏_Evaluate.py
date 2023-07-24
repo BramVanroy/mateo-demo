@@ -296,7 +296,7 @@ def _add_metrics_selection_to_state():
 
 @st.cache_resource(show_spinner=False, max_entries=6)
 def _load_metric(metric_name: str, config_name: Optional[str] = None) -> EvaluationModule:
-    """Load an individual metric
+    """Load an individual metric with `evaluate`
     :param metric_name: metric name
     :param config_name: optional config
     :return: loaded metric
@@ -306,7 +306,7 @@ def _load_metric(metric_name: str, config_name: Optional[str] = None) -> Evaluat
 
 @st.cache_resource(show_spinner=False, max_entries=24)
 def _load_sacrebleu_metric(sb_class: Type[SbMetric], **options) -> SbMetric:
-    """Load an individual metric
+    """Load an individual metric with SacreBLEU
     :param sb_class: a sacrebleu Class to instantiate this metric with
     :return: loaded sacrebleu metric
     """

@@ -166,7 +166,9 @@ def isint(item: str) -> bool:
 
 
 def build_signature(paired_bs_n: int, seed: int, library_version: str, metric_options: dict) -> str:
-    """Builds a signature for a metric that does not support it out of the box (SacreBLEU does)
+    """Builds a signature for a metric that does not support it out of the box (SacreBLEU does). Note that the MATEO
+    version is added later on, in `03_📏_Evaluate._evaluate`
+
     :param paired_bs_n: number of resamples in bootstrap resampling
     :param seed: random seed used in bootstrap resampling
     :param library_version: version of the library that this metric belongs to
