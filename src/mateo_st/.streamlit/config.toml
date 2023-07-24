@@ -4,3 +4,6 @@ primaryColor="#94bf89"
 
 [browser]
 gatherUsageStats = false
+
+[client]
+showErrorDetails  = false
