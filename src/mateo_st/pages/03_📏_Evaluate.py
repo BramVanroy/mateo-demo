@@ -65,7 +65,8 @@ def _init():
         " First specify the metrics and metric options to use, and then upload your data."
     )
     with st.expander("✒️ If you use MATEO for your work, please **cite it** accordingly."):
-        st.markdown("""> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
+        st.markdown(
+            """> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
 
 ```bibtex
 @inproceedings{vanroy2023mateo,
@@ -81,7 +82,8 @@ def _init():
     url          = {{https://lt3.ugent.be/mateo/}},
     year         = {{2023}},
 }
-```""")
+```"""
+        )
 
 
 def _metric_selection():
@@ -90,7 +92,8 @@ def _metric_selection():
     if cli_args().demo_mode:
         st.info(
             "Some advanced (non-default) options for the neural metrics are not available on this web"
-            " page but can be activated easily when you run the demo on your own device or server.",
+            " page but can be activated easily when you run the demo"
+            " [on your own device or server](https://github.com/BramVanroy/mateo-demo/#self-hosting).",
             icon="ℹ️",
         )
 

@@ -55,7 +55,8 @@ def _init():
         " reference  and a machine translation."
     )
     with st.expander("✒️ If you use MATEO for your work, please **cite it** accordingly."):
-        st.markdown("""> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
+        st.markdown(
+            """> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
 
 ```bibtex
 @inproceedings{vanroy2023mateo,
@@ -71,11 +72,14 @@ def _init():
     url          = {{https://lt3.ugent.be/mateo/}},
     year         = {{2023}},
 }
-```""")
+```"""
+        )
 
-    st.markdown("A distinction is made between substitutions on the one hand"
-                " and insertions/deletions on the other, as indicated by the legend on the left. "
-                " Move your mouse over matches or substitutions to highlight the aligned items in the other sentence.")
+    st.markdown(
+        "A distinction is made between substitutions on the one hand"
+        " and insertions/deletions on the other, as indicated by the legend on the left. "
+        " Move your mouse over matches or substitutions to highlight the aligned items in the other sentence."
+    )
 
 
 def _data_input():

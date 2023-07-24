@@ -49,7 +49,8 @@ def _init():
     )
 
     with st.expander("✒️ If you use MATEO for your work, please **cite it** accordingly."):
-        st.markdown("""> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
+        st.markdown(
+            """> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
 
 ```bibtex
 @inproceedings{vanroy2023mateo,
@@ -65,7 +66,8 @@ def _init():
     url          = {{https://lt3.ugent.be/mateo/}},
     year         = {{2023}},
 }
-```""")
+```"""
+        )
 
 
 def _model_selection():
