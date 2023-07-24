@@ -29,7 +29,7 @@ classifiers = [
 ]
 
 requires-python = ">=3.10"
-# When adding items from git, make sure to add the right commit in metrics_constants.py for the metric's 'version'
+# When adding metrics from git, make sure to add the right commit in metrics_constants.py for the metric's 'version'
 dependencies = [
     "accelerate==0.16.0",
     "altair==4.2.2",
