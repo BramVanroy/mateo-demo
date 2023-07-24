@@ -341,7 +341,6 @@ def _compute_metric(
     dummy_batch_size: int = 16,
     **kwargs,
 ):
-    pbar_text_ct = st.empty()
     pbar = st.empty()
     try:
         if sb_class is None:
@@ -352,8 +351,7 @@ def _compute_metric(
                 # 'dummy_batch_size' chunks by process metric.compute in batches.
                 # !NOTE! This is not the same as the actual on-device batch size! It is likely that metric.compute
                 # is still doing other batching under the hood. This is just for visualization/progressbar purposes
-                msg = f"Calculating {metric_name}{' for system #'+str(_sys_idx) if _sys_idx is not None else ''}"
-                pbar_text_ct.markdown(f'<p style="font-size: 0.8em">{msg}</code></p>', unsafe_allow_html=True)
+                msg = f"Calculating `{METRICS_META[metric_name].name}`{' for system #'+str(_sys_idx) if _sys_idx is not None else ''}"
                 pbar.progress(0)
                 num_batches = max(1, len(references) // dummy_batch_size)
                 increment = max(1, 100 // num_batches)
@@ -374,10 +372,9 @@ def _compute_metric(
                             metric.compute(predictions=batch["predictions"], references=batch["references"], **kwargs)
                         )
                     progress += increment
-                    pbar.progress(min(progress, 100))
+                    pbar.progress(min(progress, 100), text=f"{msg}: {min(progress, 100):.2f}%")
 
                 pbar.empty()
-                pbar_text_ct.empty()
                 result = merge_batched_results(metric_name, results)
             else:
                 if sources:
@@ -391,7 +388,6 @@ def _compute_metric(
             result = vars(result)
     except Exception as exc:
         pbar.empty()
-        pbar_text_ct.empty()
         raise exc
     else:
         result = METRICS_META[metric_name].postprocess_result(result)

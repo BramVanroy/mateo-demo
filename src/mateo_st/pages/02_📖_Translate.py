@@ -188,7 +188,7 @@ def _translate():
         df.index = np.arange(1, len(df) + 1)  # Index starting at number 1
         transl_ct.dataframe(df)
         percent_done += increment
-        pbar.progress(min(percent_done, 100))
+        pbar.progress(min(percent_done, 100), text=f"Translating: {min(percent_done, 100):.2f}%")
 
     pbar.empty()
     transl_info.success("Done translating!")
