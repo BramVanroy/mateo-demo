@@ -37,8 +37,11 @@ bleurt_meta = BleurtMeta(
     options=(
         MetricOption(
             name="config_name",
-            description="BLEURT trained model to use. See [this overview](https://github.com/google-research/bleurt/blob/master/checkpoints.md#distilled-models) for more information about the models.",
-            default="BLEURT-20-D12",
+            description="BLEURT trained model to use. See"
+                        " [this overview](https://github.com/google-research/bleurt/blob/master/checkpoints.md#distilled-models)"
+                        " for more information about the models. Note that the default model is very slow and you may"
+                        " wish to prefer one of the others!",
+            default="BLEURT-20",
             choices=(
                 "bleurt-tiny-128",
                 "bleurt-tiny-512",
@@ -55,6 +58,7 @@ bleurt_meta = BleurtMeta(
                 "BLEURT-20-D3",
                 "BLEURT-20-D6",
                 "BLEURT-20-D12",
+                "BLEURT-20",
             ),
         ),
     ),

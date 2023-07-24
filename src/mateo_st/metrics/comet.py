@@ -38,7 +38,7 @@ comet_meta = CometMeta(
         MetricOption(
             name="config_name",
             description="COMET model to use. For supported models, look [here](https://github.com/Unbabel/COMET/blob/v2.0.1/MODELS.md).",
-            default="eamt22-cometinho-da",
+            default="Unbabel/wmt22-comet-da",
             choices=(
                 "wmt20-comet-da",
                 "wmt21-comet-da",

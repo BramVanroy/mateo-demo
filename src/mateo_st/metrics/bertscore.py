@@ -41,8 +41,9 @@ bertscore_meta = BertScoreMeta(
             " model for your language"
             " (en: roberta-large, zh: bert-base-chinese, tr: dbmdz/bert-base-turkish-cased, en-sci:"
             " allenai/scibert_scivocab_uncased, and bert-base-multilingual-cased for all 'other').\n"
-            " Alternatively, choose a model from the 'model_type' option.\n⚠️ 'model_type' has"
-            " precedence over 'lang' so make sure to set 'model_type' to '' when selecting a 'lang'!",
+            " Alternatively, choose a model from the 'model_type' option. By default 'other' is selected, with works"
+            " with many different languages.\n⚠️ 'model_type' has precedence over 'lang' so make sure to set"
+            " 'model_type' to '' when selecting a 'lang'!",
             default="other",
             choices=("other", "en", "zh", "tr", "en-sci"),
         ),
