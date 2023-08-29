@@ -14,7 +14,7 @@ from mateo_st import __version__ as mateo_version
 from mateo_st.metrics.base import MetricMeta, MetricOption
 from mateo_st.metrics_constants import METRICS_META, merge_batched_results
 from mateo_st.significance import get_bootstrap_dataframe
-from mateo_st.utils import cli_args, create_download_link, isfloat, isint, load_css
+from mateo_st.utils import cli_args, create_download_link, get_uploaded_file_as_strio, isfloat, isint, load_css
 from sacrebleu.metrics.base import Metric as SbMetric
 
 
@@ -149,12 +149,12 @@ def _data_input():
         " Cannot contain empty lines and must be in UTF8!"
     )
 
-    def read_file(uploaded_file):
+    def read_file(uploaded_file) -> List[str]:
         if uploaded_file is not None:
-            stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-            return stringio.read().splitlines()
-        else:
-            return []
+            if (stringio := get_uploaded_file_as_strio(uploaded_file)) is not None:
+                return stringio.read().splitlines()
+
+        return []
 
     ref_inp_col, src_inp_col = st.columns(2)
 

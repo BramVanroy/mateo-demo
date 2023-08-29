@@ -1,12 +1,11 @@
 from copy import copy
-from io import StringIO
 from math import ceil
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 from mateo_st.translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator, update_translator_lang
-from mateo_st.utils import cli_args, create_download_link, load_css
+from mateo_st.utils import cli_args, create_download_link, get_uploaded_file_as_strio, load_css
 
 
 def _init():
@@ -136,8 +135,8 @@ def _data_input():
     if fupload_check:
         uploaded_file = st.file_uploader("Text file", label_visibility="collapsed")
         if uploaded_file is not None:
-            stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-            st.session_state["text_to_translate"] = stringio.read()
+            if (stringio := get_uploaded_file_as_strio(uploaded_file)) is not None:
+                st.session_state["text_to_translate"] = stringio.read()
         else:
             st.session_state["text_to_translate"] = None
     else:

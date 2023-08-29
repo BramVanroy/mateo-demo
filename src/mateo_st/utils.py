@@ -2,7 +2,7 @@ import base64
 import json
 import os
 from argparse import Namespace
-from io import BytesIO
+from io import BytesIO, StringIO
 from os import PathLike
 from pathlib import Path
 from typing import Optional, Union
@@ -202,3 +202,27 @@ def build_signature(paired_bs_n: int, seed: int, library_version: str, metric_op
     sig += f"|version:{library_version}"
 
     return sig
+
+
+def get_uploaded_file_as_strio(uploaded_file: BytesIO) -> StringIO | None:
+    """Decode a given file (in-memory, BytesIO object) and throw a ST error message when an error occurs. Likely
+    in case of encoding issues.
+
+    :param uploaded_file: the in-memory bytes of the uploaded file
+    :return: the utf-8 encoded file contents or None
+    """
+    try:
+        stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+    except UnicodeDecodeError:
+        st.error(
+            "Could not decode parts of your file because it is in an unexpected encoding. MATEO expects"
+            " your file to be encoded as UTF-8!"
+        )
+    except Exception as exc:
+        st.error(
+            f"""Something went wrong when uploading your data. Try again later and if the error persists, submit an issue on [Github](https://github.com/BramVanroy/mateo-demo/issues)! Include this error:
+
+    {exc}"""
+        )
+    else:
+        return stringio
