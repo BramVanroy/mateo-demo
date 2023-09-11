@@ -12,8 +12,8 @@ evaluation by means of an easy-to-use interface that can evaluate given machine 
 automatic metrics. It caters to both experienced and novice users who are working with MT, such as MT system builders,
 and also researchers from Social Sciences and Humanities, and teachers and students of (machine) translation.
 
-MATEO can be accessed on [this website](https://lt3.ugent.be/mateo/), currently hosted by LT3 but soon
-moving to the [CLARIN](https://www.clarin.eu/) B center at [Instituut voor de Nederlandse Taal](https://ivdnt.org/).
+MATEO can be accessed on [this website](https://mateo.ivdnt.org/), 
+hosted by the [CLARIN](https://www.clarin.eu/) B center at [Instituut voor de Nederlandse Taal](https://ivdnt.org/).
 It is also available on Hugging Face [Spaces](https://huggingface.co/spaces/BramVanroy/mateo-demo).
 
 If you use the MATEO interface for your work, please cite our project paper!
