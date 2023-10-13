@@ -18,7 +18,7 @@ It is also available on Hugging Face [Spaces](https://huggingface.co/spaces/Bram
 
 If you use the MATEO interface for your work, please cite our project paper!
 
-Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
+Vanroy, B., Tezcan, A., & Macken, L. (2023). [MATEO: MAchine Translation Evaluation Online](https://aclanthology.org/2023.eamt-1.52/). In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
 
 ```bibtex
 @inproceedings{vanroy2023mateo,
