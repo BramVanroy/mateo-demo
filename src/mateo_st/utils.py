@@ -226,3 +226,35 @@ def get_uploaded_file_as_strio(uploaded_file: BytesIO) -> StringIO | None:
         )
     else:
         return stringio
+
+
+def print_citation_info(
+    expander_text: Optional[str] = "✒️ If you use MATEO for your work, please **cite it** accordingly.",
+):
+    """Print in streamlit the MATEO citation information, optionally inside an expander element
+    :param expander_text: text for expander. If None or empty string, will not use the expander
+    """
+    apa_bibtex = """> Vanroy, B., Tezcan, A., & Macken, L. (2023). [MATEO: MAchine Translation Evaluation Online](https://aclanthology.org/2023.eamt-1.52/). In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
+
+```bibtex
+@inproceedings{vanroy-etal-2023-mateo,
+    title = "{MATEO}: {MA}chine {T}ranslation {E}valuation {O}nline",
+    author = "Vanroy, Bram  and
+      Tezcan, Arda  and
+      Macken, Lieve",
+    booktitle = "Proceedings of the 24th Annual Conference of the European Association for Machine Translation",
+    month = jun,
+    year = "2023",
+    address = "Tampere, Finland",
+    publisher = "European Association for Machine Translation",
+    url = "https://aclanthology.org/2023.eamt-1.52",
+    pages = "499--500",
+}
+```
+"""
+
+    if expander_text:
+        with st.expander(expander_text):
+            st.markdown(apa_bibtex)
+    else:
+        st.markdown(apa_bibtex)

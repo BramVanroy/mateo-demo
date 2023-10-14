@@ -3,7 +3,7 @@ from io import StringIO
 import streamlit as st
 from Levenshtein import distance, opcodes
 from mateo_st.components.ed_visualizer import ed_visualizer
-from mateo_st.utils import cli_args, load_css
+from mateo_st.utils import cli_args, load_css, print_citation_info
 
 
 def _calculate_edit_distances(s1: str, s2: str):
@@ -54,26 +54,8 @@ def _init():
         "Here you can visualize edit operations on the word and character-level for given inputs, like a"
         " reference  and a machine translation."
     )
-    with st.expander("✒️ If you use MATEO for your work, please **cite it** accordingly."):
-        st.markdown(
-            """> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
 
-```bibtex
-@inproceedings{vanroy2023mateo,
-    author       = {{Vanroy, Bram and Tezcan, Arda and Macken, Lieve}},
-    booktitle    = {{Proceedings of the 24th Annual Conference of the European Association for Machine Translation}},
-    editor       = {{Nurminen, Mary and Brenner, Judith and Koponen, Maarit and Latomaa, Sirkku and Mikhailov, Mikhail and Schierl, Frederike and Ranasinghe, Tharindu and Vanmassenhove, Eva and Alvarez Vidal, Sergi and Aranberri, Nora and Nunziatini, Mara and Parra Escartín, Carla and Forcada, Mikel and Popovic, Maja and Scarton, Carolina and Moniz, Helena}},
-    isbn         = {{978-952-03-2947-1}},
-    language     = {{eng}},
-    location     = {{Tampere, Finland}},
-    pages        = {{499--500}},
-    publisher    = {{European Association for Machine Translation (EAMT)}},
-    title        = {{MATEO: MAchine Translation Evaluation Online}},
-    url          = {{https://lt3.ugent.be/mateo/}},
-    year         = {{2023}},
-}
-```"""
-        )
+    print_citation_info()
 
     st.markdown(
         "A distinction is made between substitutions on the one hand"

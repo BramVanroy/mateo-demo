@@ -1,6 +1,6 @@
 import streamlit as st
 from mateo_st import __version__ as mateo_version
-from mateo_st.utils import cli_args, get_local_img, load_css
+from mateo_st.utils import cli_args, get_local_img, load_css, print_citation_info
 
 
 def main():
@@ -14,40 +14,22 @@ def main():
         "MAchine Translation Evaluation Online "
         "([MATEO](https://research.flw.ugent.be/projects/mateo-machine-translation-evaluation-online))"
         " brings automatic machine translation evaluation to the masses with"
-        " an accessible user-interface. It is being developed at Ghent University, in the"
-        " [Language and Translation Technology Team (LT3)](https://lt3.ugent.be/)."
+        " an accessible user-interface. It was developed at Ghent University, in the"
+        " [Language and Translation Technology Team (LT3)](https://lt3.ugent.be/) in 2022-2023."
     )
 
     st.markdown(
         "MATEO was built to cater to both experts and non-experts. Users can be system builders, MT users and"
         " researchers, and also people from Social Sciences and Humanities (SSH), as well as teachers and students."
-        " As such, MATEO can play a crucial role in research _and_ education by streamling and"
+        " As such, MATEO can play a crucial role in research _and_ education by streamlining and"
         " simplifying the evaluation aspect of MT research on the one hand and enhancing digital literacy on the other."
     )
 
     st.markdown("## ✒️ Citing MATEO")
 
-    st.markdown(
-        """If you use MATEO for your work, please cite the following reference.
+    st.markdown("If you use MATEO for your work, please cite the following reference.")
 
-> Vanroy, B., Tezcan, A., & Macken, L. (2023). MATEO: MAchine Translation Evaluation Online. In M. Nurminen, J. Brenner, M. Koponen, S. Latomaa, M. Mikhailov, F. Schierl, … H. Moniz (Eds.), _Proceedings of the 24th Annual Conference of the European Association for Machine Translation_ (pp. 499–500). Tampere, Finland: European Association for Machine Translation (EAMT).
-
-```bibtex
-@inproceedings{vanroy2023mateo,
-    author       = {{Vanroy, Bram and Tezcan, Arda and Macken, Lieve}},
-    booktitle    = {{Proceedings of the 24th Annual Conference of the European Association for Machine Translation}},
-    editor       = {{Nurminen, Mary and Brenner, Judith and Koponen, Maarit and Latomaa, Sirkku and Mikhailov, Mikhail and Schierl, Frederike and Ranasinghe, Tharindu and Vanmassenhove, Eva and Alvarez Vidal, Sergi and Aranberri, Nora and Nunziatini, Mara and Parra Escartín, Carla and Forcada, Mikel and Popovic, Maja and Scarton, Carolina and Moniz, Helena}},
-    isbn         = {{978-952-03-2947-1}},
-    language     = {{eng}},
-    location     = {{Tampere, Finland}},
-    pages        = {{499--500}},
-    publisher    = {{European Association for Machine Translation (EAMT)}},
-    title        = {{MATEO: MAchine Translation Evaluation Online}},
-    url          = {{https://lt3.ugent.be/mateo/}},
-    year         = {{2023}},
-}
-```"""
-    )
+    print_citation_info(expander_text=None)
 
     st.markdown("## 🏆 Funding")
 
