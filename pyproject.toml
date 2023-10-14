@@ -60,7 +60,7 @@ documentation = "https://github.com/BramVanroy/mateo-demo"
 repository = "https://github.com/BramVanroy/mateo-demo.git"
 
 [project.optional-dependencies]
-dev = ["flake8", "black", "isort"]
+dev = ["flake8", "black", "isort", "pytest-playwright"]
 
 # TOOLS
 [tool.setuptools]
