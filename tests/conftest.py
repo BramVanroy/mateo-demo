@@ -1,5 +1,4 @@
 import subprocess
-import time
 from pathlib import Path
 
 import pytest
@@ -7,7 +6,7 @@ import pytest
 
 @pytest.fixture(scope="session", autouse=True)
 def streamlit_server(request):
-    # Start Streamlit in a separate process
+    """Starts a streamlit server and sets `pytest.mateo_st_local_url` that contains local URL"""
     root = Path(__file__).parents[1].resolve()
     entrypoint = root / "src" / "mateo_st" / "01_🎈_MATEO.py"
     process = subprocess.Popen(
@@ -23,11 +22,17 @@ def streamlit_server(request):
             "false",
             "--",
             "--no_cuda",
-        ]
+        ],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
     )
 
-    # Give the server a bit of time to ensure it's up and running
-    time.sleep(5)
+    # Read process output to wait for startup and to get the correct local IP address/URL
+    for line in iter(process.stdout.readline, ""):
+        line = line.strip()
+        if line and line.startswith("Network URL:"):
+            pytest.mateo_st_local_url = line.split()[-1]
+            break
 
     def stop_server():
         # Terminate the Streamlit process when tests are done

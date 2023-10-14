@@ -1,8 +1,9 @@
+import pytest
 from playwright.sync_api import Page, expect
 
 
 def test_pages_exist(page: Page):
-    base_url = "http://localhost:8505"
+    base_url = pytest.mateo_st_local_url
 
     page.goto(base_url)
     page.locator('[data-testid="stSidebar"] a:has-text("Translate")').click()
