@@ -327,7 +327,7 @@ def _compute_metric(
     config_name: Optional[str] = None,
     sb_class: Optional[Type[SbMetric]] = None,
     _sys_idx: Optional[int] = None,
-    dummy_batch_size: int = 16,
+    dummy_batch_size: int = 4,
     **kwargs,
 ):
     pbar = st.empty()
@@ -346,7 +346,7 @@ def _compute_metric(
                 increment = max(1, 100 // num_batches)
                 progress = 0
                 results = []
-                for batch in batchify(predictions, references, sources):
+                for batch in batchify(predictions, references, sources, batch_size=dummy_batch_size):
                     if sources and "sources" in batch:
                         results.append(
                             metric.compute(
