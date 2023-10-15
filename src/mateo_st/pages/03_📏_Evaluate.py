@@ -1,5 +1,4 @@
 import warnings
-from io import StringIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Type, Union
 
@@ -12,8 +11,8 @@ import streamlit as st
 from evaluate import EvaluationModule
 from mateo_st import __version__ as mateo_version
 from mateo_st.metrics.base import MetricMeta, MetricOption
-from mateo_st.metrics_constants import METRICS_META, merge_batched_results
-from mateo_st.significance import get_bootstrap_dataframe
+from mateo_st.metrics.metrics_constants import METRICS_META, merge_batched_results
+from mateo_st.metrics.significance import get_bootstrap_dataframe
 from mateo_st.utils import (
     cli_args,
     create_download_link,

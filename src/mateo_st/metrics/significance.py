@@ -10,8 +10,8 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 import streamlit as st
-from mateo_st.metrics_constants import METRICS_META
-from mateo_st.utils import build_signature
+from mateo_st.metrics.metrics_constants import METRICS_META
+from mateo_st.metrics.utils import build_signature
 from pandas.io.formats.style import Styler
 from sacrebleu.metrics.base import Metric as SbMetric
 from sacrebleu.significance import PairedTest, Result, _compute_p_value, estimate_ci
