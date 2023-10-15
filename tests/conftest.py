@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import streamlit as st
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -39,6 +40,14 @@ def streamlit_server(request):
         process.terminate()
 
     request.addfinalizer(stop_server)
+
+
+@pytest.fixture(autouse=True)
+def reset_st_session_state():
+    """Clean up the session state to its default after each test"""
+    for key in st.session_state.keys():
+        del st.session_state[key]
+    yield
 
 
 @pytest.fixture
