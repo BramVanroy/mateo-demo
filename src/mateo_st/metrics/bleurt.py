@@ -1,9 +1,11 @@
+from dataclasses import dataclass
 from statistics import mean
 from typing import Any, Dict
 
 from mateo_st.metrics.base import MetricMeta, MetricOption
 
 
+@dataclass
 class BleurtMeta(MetricMeta):
     def postprocess_result(self, result: Dict[str, Any]):
         """Post-processes the result that is retrieved from a computed metric.
