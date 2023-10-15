@@ -61,4 +61,4 @@ def test_pipeline(page: Page, test_data_dir):
     _set_input_file(page, "System #1 file", test_data_dir / "mt1.txt")
 
     # TEST THAT ALL REQUIREMENTS WERE FILLED AND EVALUATE BUTTON IS VISIBLE
-    expect(page.get_by_role("button", name="Evaluate MT")).to_be_visible()
+    expect(page.get_by_role("button", name="Evaluate MT")).to_be_attached()

@@ -37,3 +37,7 @@ a:hover {text-decoration: none;}
     color: #38aa3b;
     padding: 0;
 }
+/* Fix tooltip not showing up in sentence-level chart in full-screen */
+#vg-tooltip-element {
+    z-index: 9999999;
+}
