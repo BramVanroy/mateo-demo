@@ -7,6 +7,10 @@
     flex-wrap: wrap;
     align-items: flex-start;
     gap: 1.5em;
+    color: #31333f;
+}
+.metrics-wrapper h3 {
+    color: #31333f;
 }
 /*Disable automatic anchors for titles on the metrics page. */
 .metric a[href^="#"] {opacity: 0; pointer-events: none;}
