@@ -44,7 +44,7 @@ def streamlit_server(request):
 
 @pytest.fixture(autouse=True)
 def reset_st_session_state():
-    """Clean up the session state to its default after each test"""
+    """Clean up the session state to its default before each test"""
     for key in st.session_state.keys():
         del st.session_state[key]
     yield
