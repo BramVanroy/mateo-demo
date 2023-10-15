@@ -14,7 +14,7 @@ maintainers = [
 ]
 description = "An interface for machine translation evaluation"
 readme = "README.md"
-keywords = ["machine translation", "machine translation evaluation", "bleu", "comet"]
+keywords = ["machine translation", "machine translation evaluation", "mt", "bleu", "comet", "bertscore", "bleurt", "chrf", "ter"]
 license = {file = "LICENSE"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -31,26 +31,23 @@ classifiers = [
 requires-python = ">=3.10"
 # When adding metrics from git, make sure to add the right commit in metrics_constants.py for the metric's 'version'
 dependencies = [
-    "accelerate==0.16.0",
-    "altair==4.2.2",
-    "beautifulsoup4==4.11.2",
+    "altair==5.1.2",
     "bert-score==0.3.13",
-    "datasets==2.10.0",
-    "evaluate @ git+https://github.com/huggingface/evaluate.git@af3c30561d840b83e54fc5f7150ea58046d6af69",
+    "datasets==2.14.5",
+    "evaluate==0.4.1",
     "Levenshtein",
-    "optimum==1.7.1",
-    "pandas==2.0.1",
-    "plotly==5.13.0",
+    "optimum==1.13.2",
+    "pandas==2.1.1",
+    "plotly==5.17.0",
     # Include ja/ko tokenization options
     "sacrebleu[ja,ko]==2.3.1",
-    "scikit-learn==1.2.1",
     "sentencepiece==0.1.97",
-    "streamlit==1.22.0",
-    "tensorflow==2.11.0",
-    "torch==1.13.1",
-    "transformers==4.28.1",
-    "unbabel-comet @ git+https://github.com/Unbabel/COMET.git@04f30d0ab85a4daca4e672286f6cf985de6d02a8",
-    "XlsxWriter==3.0.8",
+    "streamlit==1.27.2",
+    "tensorflow==2.14.0",
+    "torch==2.1.0",
+    "transformers==4.33.3",
+    "unbabel-comet==2.1.0",
+    "XlsxWriter==3.1.7",
     "BLEURT @ git+https://github.com/google-research/bleurt.git@cebe7e6f996b40910cfaa520a63db47807e3bf5c"
 ]
 
