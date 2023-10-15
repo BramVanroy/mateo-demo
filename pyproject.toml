@@ -31,7 +31,7 @@ classifiers = [
 requires-python = ">=3.10"
 # When adding metrics from git, make sure to add the right commit in metrics_constants.py for the metric's 'version'
 dependencies = [
-    "altair==5.1.2",
+    "altair<5",
     "bert-score==0.3.13",
     "datasets==2.14.5",
     "evaluate==0.4.1",
@@ -45,8 +45,8 @@ dependencies = [
     "streamlit==1.27.2",
     "tensorflow==2.14.0",
     "torch==2.1.0",
-    "transformers==4.33.3",
-    "unbabel-comet==2.1.0",
+    "transformers==4.34.0",
+    "unbabel-comet==2.1.1",
     "XlsxWriter==3.1.7",
     "BLEURT @ git+https://github.com/google-research/bleurt.git@cebe7e6f996b40910cfaa520a63db47807e3bf5c"
 ]
