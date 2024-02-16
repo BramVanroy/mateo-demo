@@ -3,11 +3,20 @@ from pathlib import Path
 
 import pytest
 import streamlit as st
+from mateo_st.translator import DEFAULT_MODEL_SIZE, TRANS_SIZE2MODEL
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+
+def predownload_models():
+    _ = AutoModelForSeq2SeqLM.from_pretrained(TRANS_SIZE2MODEL[DEFAULT_MODEL_SIZE])
+    _ = AutoTokenizer.from_pretrained(TRANS_SIZE2MODEL[DEFAULT_MODEL_SIZE])
 
 
 @pytest.fixture(scope="session", autouse=True)
 def streamlit_server(request):
     """Starts a streamlit server and sets `pytest.mateo_st_local_url` that contains local URL"""
+    # Make sure that the default models are already downloaded (to prevent timeouts)
+    predownload_models()
     root = Path(__file__).parents[1].resolve()
     entrypoint = root / "src" / "mateo_st" / "01_🎈_MATEO.py"
     process = subprocess.Popen(
