@@ -56,14 +56,14 @@ class Translator:
             raise KeyError(f"Target language '{self.tgt_lang}' not recognized or supported")
         self.tokenizer.tgt_lang = self.tgt_lang_key
 
+    @torch.inference_mode()
     def translate(self, encoded, max_length: int = DEFAULT_MAX_LENGTH, num_beams: int = DEFAULT_NUM_BEAMS):
-        with torch.no_grad():
-            return self.model.generate(
-                **encoded,
-                forced_bos_token_id=self.tokenizer.lang_code_to_id[self.tgt_lang_key],
-                max_length=max_length,
-                num_beams=num_beams,
-            )
+        return self.model.generate(
+            **encoded,
+            forced_bos_token_id=self.tokenizer.lang_code_to_id[self.tgt_lang_key],
+            max_length=max_length,
+            num_beams=num_beams,
+        )
 
     def batch_translate(
         self,
@@ -109,6 +109,7 @@ def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
 
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     model = BetterTransformer.transform(model, keep_original_model=False)
+    model.eval()
     if torch.cuda.is_available() and not no_cuda:
         try:
             model = model.to("cuda")
