@@ -200,6 +200,7 @@ def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame, pd.DataFram
         return data
 
     # For display
+    print(bs_data)
     display_data = postprocess_data(bs_data, for_display=True)
     display_df = pd.DataFrame(display_data)
     styled_display_df = display_df.style
@@ -217,12 +218,27 @@ def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame, pd.DataFram
     ).set_properties(**{"text-align": "right !important"}, subset=column_names[0])
 
     styled_display_df = styled_display_df.highlight_null(props="color: transparent;")
+
+    def highlight_best(col: pd.Series, higher_better: bool):
+        # We cannot just use highlight_max because that would be done on the postprocessed strings
+        # "*" is used to indicate significance in the latex table (not p-value between brackets)
+        floats = [float(item.strip().split(" ")[0].rstrip("*")) for item in col]
+        if higher_better:
+            best = max(floats)
+        else:
+            best = min(floats)
+
+        return ["font-weight: bold;" if f == best else "" for f in floats]
+
     if st.session_state["num_sys"] > 1:
-        higher_better = [c for c in column_names if c not in ("TER (μ ± 95% CI)", "system")]
-        lower_better = ["TER (μ ± 95% CI)"] if "TER (μ ± 95% CI)" in column_names else []
-        styled_display_df = styled_display_df.highlight_max(
-            subset=higher_better, props="font-weight: bold;"
-        ).highlight_min(subset=lower_better, props="font-weight: bold;")
+        higher_better_cols = [c for c in column_names if c not in ("TER (μ ± 95% CI)", "system")]
+        lower_better_cols = ["TER (μ ± 95% CI)"] if "TER (μ ± 95% CI)" in column_names else []
+        styled_display_df = styled_display_df.apply(
+            highlight_best, subset=higher_better_cols, axis=0, higher_better=True
+        )
+        styled_display_df = styled_display_df.apply(
+            highlight_best, subset=lower_better_cols, axis=0, higher_better=False
+        )
 
     # For LaTeX
     latex_data = postprocess_data(bs_data, for_display=False)
@@ -235,11 +251,10 @@ def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame, pd.DataFram
 
     styled_latex_df = styled_latex_df.highlight_null(props="color: transparent;")
     if st.session_state["num_sys"] > 1:
-        higher_better = [c for c in column_names if c not in ("TER", "system")]
-        lower_better = ["TER"] if "TER" in column_names else []
-        styled_latex_df = styled_latex_df.highlight_max(
-            subset=higher_better, props="font-weight: bold;"
-        ).highlight_min(subset=lower_better, props="font-weight: bold;")
+        higher_better_cols = [c for c in column_names if c not in ("TER", "system")]
+        lower_better_cols = ["TER"] if "TER" in column_names else []
+        styled_latex_df = styled_latex_df.apply(highlight_best, subset=higher_better_cols, axis=0, higher_better=True)
+        styled_latex_df = styled_latex_df.apply(highlight_best, subset=lower_better_cols, axis=0, higher_better=False)
 
     styled_latex_df = styled_latex_df.hide()
 
