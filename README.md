@@ -147,6 +147,26 @@ As mentioned before, you can modify the Dockerfiles as you wish. Most notably yo
 launcher command itself. Therefore you could use the [streamlit options]([here](https://docs.streamlit.io/library/advanced-features/configuration))
 alongside custom options for MATEO specifically, which were mentioned in the [previous section](#install-locally-with-python).
 
+## Tests
+
+The tests are run using `pytest` and `playwright`. To ensure that the right dependencies are installed, you can run
+
+```shell
+python -m pip install -e .[dev]
+```
+
+Then, install the appropriate chromium version for playwright. You can do this by running the following command.
+
+```shell
+playwright install --with-deps chromium
+```
+
+Now you can run the tests by running the following command in the root directory of the project.
+
+```shell
+python -m pytest
+```
+
 ## Notes
 
 ### Using CUDA
