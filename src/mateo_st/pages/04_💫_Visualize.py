@@ -36,7 +36,7 @@ def _calculate_edit_distances(s1: str, s2: str):
 
 
 def _init():
-    st.set_page_config(page_title="Visualizing Machine Translations | MATEO", page_icon="💫")
+    st.set_page_config(page_title="Visualizing Machine Translations | MATEO", page_icon="💫", layout="wide")
     load_css("base")
     load_css("visualize")
 

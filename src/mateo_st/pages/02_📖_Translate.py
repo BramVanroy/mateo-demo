@@ -9,7 +9,7 @@ from mateo_st.utils import cli_args, create_download_link, get_uploaded_file_as_
 
 
 def _init():
-    st.set_page_config(page_title="Automatically Translate | MATEO", page_icon="📖")
+    st.set_page_config(page_title="Automatically Translate | MATEO", page_icon="📖", layout="wide")
     load_css("base")
     load_css("translate")
 
@@ -166,7 +166,7 @@ def _translate():
             ],
         )
         df.index = np.arange(1, len(df) + 1)  # Index starting at number 1
-        transl_ct.dataframe(df)
+        transl_ct.dataframe(df, use_container_width=True)
         percent_done += increment
         pbar.progress(min(percent_done, 100), text=f"Translating: {min(percent_done, 100):.2f}%")
 

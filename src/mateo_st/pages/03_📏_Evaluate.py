@@ -29,7 +29,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 def _init():
-    st.set_page_config(page_title="Evaluate Machine Translations | MATEO", page_icon="📏")
+    st.set_page_config(page_title="Evaluate Machine Translations | MATEO", page_icon="📏", layout="wide")
     load_css("base")
     load_css("evaluate")
 
