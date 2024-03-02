@@ -15,6 +15,7 @@ RUN useradd -m -u 1000 user
 USER user
 ENV HOME /home/user
 ENV PATH $HOME/.local/bin:$PATH
+ENV HF_HUB_ENABLE_HF_TRANSFER=1
 
 WORKDIR $HOME
 RUN git clone https://github.com/BramVanroy/mateo-demo.git
