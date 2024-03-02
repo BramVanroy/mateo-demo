@@ -15,6 +15,7 @@ RUN useradd -m -u 1000 user
 USER user
 ENV HOME /home/user
 ENV PATH $HOME/.local/bin:$PATH
+ENV HF_HUB_ENABLE_HF_TRANSFER=1
 
 WORKDIR $HOME
 RUN git clone https://github.com/BramVanroy/mateo-demo.git
@@ -22,12 +23,17 @@ WORKDIR $HOME/mateo-demo
 
 RUN python -m pip install --no-cache-dir --upgrade pip && python -m pip install --no-cache-dir --upgrade .
 
+# Pre-download default models
+RUN python -c "import comet; from comet import download_model; download_model('Unbabel/wmt22-comet-da')"
+RUN python -c "import evaluate; evaluate.load('bleurt', 'BLEURT-20')"
+RUN huggingface-cli download bert-base-multilingual-cased model.safetensors tokenizer.json vocab.txt
+RUN huggingface-cli download facebook/nllb-200-distilled-600M pytorch_model.bin sentencepiece.bpe.model tokenizer.json
+
 ENV PORT=7860
 ENV SERVER="localhost"
 ENV BASE=""
 ENV NO_CUDA=""
 ENV DEMO_MODE=""
-ENV HF_HUB_ENABLE_HF_TRANSFER=1
 
 EXPOSE $PORT
 HEALTHCHECK CMD curl --fail http://$SERVER:$PORT$BASE/_stcore/health

@@ -23,6 +23,12 @@ WORKDIR $HOME/mateo-demo
 
 RUN python -m pip install --no-cache-dir --upgrade pip && python -m pip install --no-cache-dir --upgrade .
 
+# Pre-download default models
+RUN python -c "import comet; from comet import download_model; download_model('Unbabel/wmt22-comet-da')"
+RUN python -c "import evaluate; evaluate.load('bleurt', 'BLEURT-20')"
+RUN huggingface-cli download bert-base-multilingual-cased model.safetensors tokenizer.json vocab.txt
+RUN huggingface-cli download facebook/nllb-200-distilled-600M pytorch_model.bin sentencepiece.bpe.model tokenizer.json
+
 EXPOSE 7860
 HEALTHCHECK CMD curl --fail http://localhost:7860/_stcore/health
 
