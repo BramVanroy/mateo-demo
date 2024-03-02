@@ -213,7 +213,7 @@ bertscore_meta = BertScoreMeta(
             default="",
             types=(int,),
             empty_str_is_none=True,
-        )
+        ),
         # Not adding other options such as rescale_with_baseline or idf, because those require extra corpus input
         # to calculate baseline/idf scores on
     ),
