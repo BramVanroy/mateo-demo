@@ -591,8 +591,8 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
 
         id_vars = (["sample", "src", "ref"] if has_src else ["sample", "ref"]) + sys_text_names
         df_melt = metricdf.melt(id_vars=id_vars, value_vars=sys_score_cols, var_name="system", value_name="score")
-        nearest_sample = alt.selection(
-            type="single", nearest=True, on="mouseover", fields=["sample"], empty="none", clear="mouseout"
+        nearest_sample = alt.selection_point(
+            nearest=True, on="mouseover", fields=["sample"], empty=False, clear="mouseout"
         )
         chart = (
             alt.Chart(df_melt)
@@ -603,7 +603,7 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
                 color="system:N",
                 tooltip=id_vars + ["system", "score"],
             )
-            .add_selection(nearest_sample)
+            .add_params(nearest_sample)
             .interactive()
         )
 
