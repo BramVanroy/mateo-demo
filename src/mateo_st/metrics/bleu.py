@@ -12,7 +12,8 @@ bleu_meta = MetricMeta(
     " translation's n-grams correspond to those of a reference translation. Despite its popularity,"
     " it has also been criticized for its shortcomings such as a lack of sufficiently incorporating"
     " recall (e.g., <a href='https://aclanthology.org/E06-1032'"
-    " title='Callison-Burch, Osborne, Koehn criticism on BLEU'>[1]</a>).</p>",
+    " title='Callison-Burch, Osborne, Koehn criticism on BLEU'>[1]</a>, <a href='https://aclanthology.org/2022.wmt-1.2/'"
+    " title='Results of WMT22 Metrics Shared Task'>[2]</a>).</p>",
     paper_url="https://aclanthology.org/P02-1040/",
     implementation_html="<p><a href='https://github.com/mjpost/sacrebleu' title='SacreBLEU GitHub'>SacreBLEU</a></p>",
     is_default_selected=True,

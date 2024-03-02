@@ -25,6 +25,12 @@ def main():
         " simplifying the evaluation aspect of MT research on the one hand and enhancing digital literacy on the other."
     )
 
+    st.markdown(
+        "Because data security and privacy should not be something for you to worry about, **MATEO does not store"
+        " your data**. All processing happens in-memory which means that as soon as processing is done your data"
+        " is off our systems."
+    )
+
     st.markdown("## ✒️ Citing MATEO")
 
     st.markdown("If you use MATEO for your work, please cite the following reference.")

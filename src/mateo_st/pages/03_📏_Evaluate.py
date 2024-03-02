@@ -691,7 +691,7 @@ def _evaluate():
                     f"{metric}: {sig}|mateo:{mateo_version}"
                     for metric, sig in st.session_state["bootstrap_signatures"].items()
                 ]
-                st.text("\n".join(signatures))
+                st.code("\n".join(signatures))
 
             # Latex
             st.markdown(

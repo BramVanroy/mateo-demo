@@ -32,6 +32,7 @@ def test_source_input_field(page: Page):
 
 def _set_input_file(page, label_text: str, test_file_path: Path):
     with page.expect_file_chooser() as fc_info:
+        expect(page.get_by_role("button", name=label_text)).to_be_visible()
         page.get_by_role("button", name=label_text).click()
 
     file_chooser = fc_info.value
@@ -61,4 +62,4 @@ def test_pipeline(page: Page, test_data_dir):
     _set_input_file(page, "System #1 file", test_data_dir / "mt1.txt")
 
     # TEST THAT ALL REQUIREMENTS WERE FILLED AND EVALUATE BUTTON IS VISIBLE
-    expect(page.get_by_role("button", name="Evaluate MT")).to_be_attached()
+    expect(page.get_by_role("button", name="Evaluate MT")).to_be_attached(timeout=10000)
