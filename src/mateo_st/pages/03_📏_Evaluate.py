@@ -484,7 +484,6 @@ def _build_sentence_df(include_sys_translations: bool = True):
         for item_idx in range(len(st.session_state["ref_segments"])):
             item = {
                 "metric": metric_name.replace("sacre", ""),
-                "ref": st.session_state["ref_segments"][item_idx],
             }
 
             if has_src:
@@ -492,6 +491,7 @@ def _build_sentence_df(include_sys_translations: bool = True):
                 # is not a source-based metric
                 item["src"] = st.session_state["src_segments"][item_idx]
 
+            item["ref"] = st.session_state["ref_segments"][item_idx]
             for sys_idx, results in st.session_state["results"].items():
                 sys_name = st.session_state["sys_files"][sys_idx]
                 item[sys_name] = (
