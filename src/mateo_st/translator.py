@@ -100,7 +100,22 @@ def batchify(sentences: List[str], batch_size: int):
         yield sentences[idx : idx + batch_size]
 
 
-@st.cache_resource(show_spinner=False, max_entries=1)
+def _validate_cached_resources(cached_resource: tuple):
+    """Validate the cached resources. Sometimes a model/tokenizer can be None, e.g. when the HF hub is down and the
+    model cannot be downloaded. That will lead to a cached None value. We do not want new users to also
+    have to use the cached None value, so we validate it here. If it was None, we return False so that the cache
+    will be discarded.
+
+    :param cached_resource: a tuple of (model, tokenizer, no_cuda)
+    :return: False if the model or tokenizer is None (not valid) otherwise True
+    """
+    if any(item is None for item in cached_resource[:-1]):
+        return False
+    else:
+        return True
+
+
+@st.cache_resource(show_spinner=False, max_entries=1, validate=_validate_cached_resources)
 def init_model(model_name: str, no_cuda: bool = True, quantize: bool = True):
     # We defer loading of transformers and optimum because _sometimes_ there are
     # import errors triggered if we put them at the top. Don't know why...

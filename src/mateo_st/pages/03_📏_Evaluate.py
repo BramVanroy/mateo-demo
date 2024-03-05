@@ -286,7 +286,22 @@ def _add_metrics_selection_to_state():
                 st.session_state["metrics"][metric_name][opt_name] = opt_val
 
 
-@st.cache_resource(show_spinner=False, max_entries=6)
+def _validate_cached_metric(cached_metric):
+    """Validate the cached metric. Sometimes a metric can be None, e.g. when the HF hub is down and the BERTScore
+    model cannot be downloaded. That will lead to a cached None value. We do not want new users to also
+    have to use the cached None value, so we validate it here. If it was None, we return False so that the cache
+    will be discarded.
+
+    :param cached_metric: the cached metric
+    :return: False if the metric is None (not valid) otherwise True
+    """
+    if cached_metric is None:
+        return False
+    else:
+        return True
+
+
+@st.cache_resource(show_spinner=False, max_entries=6, validate=_validate_cached_metric)
 def _load_metric(metric_name: str, config_name: Optional[str] = None) -> EvaluationModule:
     """Load an individual metric with `evaluate`
     :param metric_name: metric name
@@ -296,7 +311,7 @@ def _load_metric(metric_name: str, config_name: Optional[str] = None) -> Evaluat
     return evaluate.load(metric_name, config_name=config_name)
 
 
-@st.cache_resource(show_spinner=False, max_entries=24)
+@st.cache_resource(show_spinner=False, max_entries=24, validate=_validate_cached_metric)
 def _load_sacrebleu_metric(sb_class: Type[SbMetric], **options) -> SbMetric:
     """Load an individual metric with SacreBLEU
     :param sb_class: a sacrebleu Class to instantiate this metric with
