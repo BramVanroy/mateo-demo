@@ -23,6 +23,8 @@ ENV HOME="/home/mateo_user"
 # Environment variables
 ENV PORT=7860 \
     SERVER="localhost" \
+    BASE="" \
+    DEMO_MODE="" \
     HF_HUB_ENABLE_HF_TRANSFER=1 \
     PATH="${HOME}/.local/bin:${PATH}" \
     USE_CUDA=false
@@ -48,10 +50,16 @@ RUN huggingface-cli download bert-base-multilingual-cased model.safetensors toke
 EXPOSE $PORT
 
 # Healthcheck to ensure the service is running
-HEALTHCHECK CMD curl --fail http://$SERVER:$PORT/_stcore/health || exit 1
+HEALTHCHECK CMD curl --fail http://$SERVER:$PORT$BASE/_stcore/health || exit 1
 
 # Set the working directory to the Streamlit app
 WORKDIR src/mateo_st
 
-# Launch app
-CMD streamlit run 01_🎈_MATEO.py --server.port $PORT --server.enableXsrfProtection false -- --no_cuda
+# Simplify the CMD script with conditional --use_cuda flag
+CMD streamlit run 01_🎈_MATEO.py \
+    --server.port $PORT \
+    --server.address $(if [ "$SERVER" = "localhost" ]; then echo "0.0.0.0"; else echo $SERVER; fi) \
+    $(if [ -n "$BASE" ]; then echo "--server.baseUrlPath $BASE"; fi) \
+    $(if [ "$DEMO_MODE" = "true" ]; then echo "--server.maxUploadSize 1"; fi) \
+    -- \
+    $(if [ "$DEMO_MODE" = "true" ]; then echo "--demo_mode"; fi)
