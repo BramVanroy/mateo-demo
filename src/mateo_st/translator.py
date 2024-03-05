@@ -19,7 +19,7 @@ class Translator:
     src_lang: str
     tgt_lang: str
     model_size: str = DEFAULT_MODEL_SIZE
-    no_cuda: bool = False
+    no_cuda: bool = True
     quantize: bool = True
     model: Any = field(default=None, init=False)
     tokenizer: Any = field(default=None, init=False)
@@ -101,7 +101,7 @@ def batchify(sentences: List[str], batch_size: int):
 
 
 @st.cache_resource(show_spinner=False, max_entries=1)
-def init_model(model_name: str, no_cuda: bool = False, quantize: bool = True):
+def init_model(model_name: str, no_cuda: bool = True, quantize: bool = True):
     # We defer loading of transformers and optimum because _sometimes_ there are
     # import errors triggered if we put them at the top. Don't know why...
     from optimum.bettertransformer import BetterTransformer

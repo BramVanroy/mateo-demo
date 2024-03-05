@@ -91,7 +91,7 @@ def _model_selection():
                 tgt_lang=st.session_state["tgt_lang"],
                 model_size=cli_args().transl_model_size,
                 quantize=not cli_args().transl_no_quantize,
-                no_cuda=cli_args().transl_no_cuda or cli_args().no_cuda,
+                no_cuda=not cli_args().use_cuda,
             )
         except KeyError as exc:
             load_info.exception(exc)

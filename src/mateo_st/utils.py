@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 import os
 from argparse import Namespace
 from io import BytesIO, StringIO
@@ -10,6 +11,8 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 import streamlit as st
+import torch
+
 from mateo_st.translator import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_MAX_LENGTH,
@@ -56,42 +59,19 @@ def create_download_link(
 def cli_args():
     import argparse
 
+    defaults = {
+        "use_cuda": False,
+        "transl_batch_size": DEFAULT_BATCH_SIZE,
+        "transl_no_quantize": False,
+        "transl_model_size": DEFAULT_MODEL_SIZE,
+        "transl_num_beams": DEFAULT_NUM_BEAMS,
+        "transl_max_length": DEFAULT_MAX_LENGTH,
+        "eval_max_sys": 4,
+        "demo_mode": False,
+
+    }
     cparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    cparser.add_argument("--no_cuda", action="store_true", help="whether to disable CUDA for all tasks")
-    cparser.add_argument("--transl_no_cuda", action="store_true", help="whether to disable CUDA for translation only")
-    cparser.add_argument(
-        "--transl_batch_size", type=int, default=DEFAULT_BATCH_SIZE, help="batch size for translating"
-    )
-    cparser.add_argument(
-        "--transl_no_quantize",
-        action="store_true",
-        help="whether to disable CUDA torch quantization of the translation model. Quantization makes the model smaller"
-        " and faster but may result in lower quality. This option will disable quantization.",
-    )
-    cparser.add_argument(
-        "--transl_model_size",
-        choices=list(TRANS_SIZE2MODEL.keys()),
-        default=DEFAULT_MODEL_SIZE,
-        help="translation model size to use",
-    )
-    cparser.add_argument(
-        "--transl_num_beams",
-        type=int,
-        default=DEFAULT_NUM_BEAMS,
-        help="number of beams to  allow to generate translations with",
-    )
-    cparser.add_argument(
-        "--transl_max_length",
-        type=int,
-        default=DEFAULT_MAX_LENGTH,
-        help="maximal length to generate per sentence",
-    )
-    cparser.add_argument(
-        "--eval_max_sys",
-        type=int,
-        default=4,
-        help="max. number of systems to compare",
-    )
+    cparser.add_argument("--use_cuda", default=False, action="store_true", help="whether to use CUDA. Only affects the translation model")
     cparser.add_argument(
         "--demo_mode",
         action="store_true",
@@ -99,20 +79,17 @@ def cli_args():
         help="when demo mode is enabled, only a limited range of neural check-points are available. So all metrics are"
         " available but not all of the checkpoints.",
     )
-    cparser.add_argument(
-        "--config",
-        help="an optional JSON config file that contains script arguments. NOTE: options specified in this file will"
-        " overwrite those given in the command-line.",
-    )
 
     args = cparser.parse_args()
 
-    config_file_args = json.loads(Path(args.config).read_text(encoding="utf-8")) if args.config else {}
     # Options specified in the JSON config overwrite CLI args
-    args = Namespace(**{**vars(args), **config_file_args})
+    args = Namespace(**{**defaults, **vars(args)})
+    if not torch.cuda.is_available():
+        args.use_cuda = False
+        logging.warning("CUDA is not available on this system. Disabling it.")
 
     # Disable CUDA for everything
-    if args.no_cuda:
+    if not args.use_cuda:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
     return args
