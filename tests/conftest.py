@@ -30,8 +30,6 @@ def streamlit_server(request):
             "true",
             "--browser.gatherUsageStats",
             "false",
-            "--",
-            "--no_cuda",
         ],
         stdout=subprocess.PIPE,
         universal_newlines=True,
