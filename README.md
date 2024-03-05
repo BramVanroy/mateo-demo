@@ -57,7 +57,7 @@ or, if that does not work, follow these steps:
 ### Install locally with Python
 
 You can clone and install the library on your own device (laptop, computer, server). I recommend to run this in a new 
-virtual environment. It requires `python >= 3.8`.
+virtual environment. It requires `python >= 3.10`.
 
 Run the following commands:
 
@@ -80,33 +80,18 @@ using Docker, e.g. setting the `--server.port` that streamlit is running on (see
 A number of command-line arguments are available to change the interface to your needs.
 
 ```shell
---no_cuda             whether to disable CUDA for all tasks (default: False)                                                                                                                                      
---transl_no_cuda      whether to disable CUDA for translation only (default: False)                                                                                                                               
---transl_batch_size TRANSL_BATCH_SIZE                                                                                                                                                                             
-                    batch size for translating (default: 8)                                                                                                                                                     
---transl_no_quantize  whether to disable CUDA torch quantization of the translation model. Quantization makes the model smaller and faster but may result in lower quality. This option will disable quantization.
-                    (default: False)                                                                                                                                                                            
---transl_model_size {distilled-600M,1.3B,distilled-1.3B,3.3B}                                                                                                                                                     
-                    translation model size to use (default: distilled-600M)                                                                                                                                     
---transl_num_beams TRANSL_NUM_BEAMS                                                                                                                                                                               
-                    number of beams to allow to generate translations with (default: 1)
---transl_max_length TRANSL_MAX_LENGTH
-                    maximal length to generate per sentence (default: 128)
---eval_max_sys EVAL_MAX_SYS
-                    max. number of systems to compare (default: 4)
+--use_cuda             whether to use CUDA for translation task (CUDA for metrics not supported) (default: False)                                                                                                                                      
 --demo_mode           when demo mode is enabled, only a limited range of neural check-points are available. So all metrics are available but not all of the checkpoints. (default: False)
---config CONFIG       an optional JSON config file that contains script arguments. NOTE: options specified in this file will overwrite those given in the command-line. (default: None)
 ```
 
 These can be passed to the Streamlit launcher by adding a `--` after the streamlit command and streamlit-specific
 options, followed by any of the options above.
 
-For instance, if you want to run streamlit specifically on port 1234 and you want to use the 3.3B version of the
-NLLB translation model and to set the max. number of systems that can be evaluated simultaneously, you can modify
+For instance, if you want to run streamlit specifically on port 1234 and you want to use the demo mode, you can modify
 your command to look like this:
 
 ```shell
-streamlit run 01_🎈_MATEO.py --server.port 1234 -- --transl_model_size 3.3B --eval_max_sys 42 
+streamlit run 01_🎈_MATEO.py --server.port 1234 -- --demo_mode
 ```
 
 Note the separating `--` in the middle so that streamlit can distinguish between streamlit's own options and the MATEO
@@ -127,21 +112,20 @@ that are specific to the server, demo functionality, and CUDA. These Docker envi
   - PORT: server port to expose and to run the streamlit server on (default: 7860)
   - SERVER: server address to run on (default: 'localhost')
   - BASE: base path (default: '')
-  - NO_CUDA: set to `true` to disable CUDA for all operations (default: '')
   - DEMO_MODE: set to `true` to disable some options for neural metrics and to limit the max. upload size to 1MB 
   per file (default: '')
 
 As an example, to build and run the repository on port 5034 with CUDA disabled and demo mode enabled, you can run the
-following commands which will automatically use the most recent default Dockerfile from Github.
+following commands which will automatically use the most recent `cpu` Dockerfile from Github.
 
 ```shell
-docker build -t mateo https://raw.githubusercontent.com/BramVanroy/mateo-demo/main/docker/default/Dockerfile
-docker run --rm -d --name mateo-demo -p 5034:5034 --env PORT=5034 --env NO_CUDA=true --env DEMO_MODE=true mateo
+docker build -t mateo https://raw.githubusercontent.com/BramVanroy/mateo-demo/main/docker/cpu/Dockerfile
+docker run --rm -d --name mateo-demo -p 5034:5034 --env PORT=5034 --env DEMO_MODE=true mateo
 ```
 
 Note how the opened ports in Docker's `-p` must correspond with the env variable `PORT`!
 
-MATEO is now running on port 5034 and  available on the local address [http://localhost:5034/](http://localhost:5034/).
+MATEO is now running on port 5034 and available on the local address [http://localhost:5034/](http://localhost:5034/).
 
 As mentioned before, you can modify the Dockerfiles as you wish. Most notably you may want to change the `streamlit`
 launcher command itself. Therefore you could use the [streamlit options]([here](https://docs.streamlit.io/library/advanced-features/configuration))
@@ -171,16 +155,15 @@ python -m pytest
 
 ### Using CUDA
 
-If you are using CUDA, I have noticed that COMET may trigger errors because it uses deterministic behavior but depending
-on your CUDA version that may result in issues. If you are experiencing such issues, try setting the environment 
-variable `CUBLAS_WORKSPACE_CONFIG=:4096:8`.
+Using CUDA for the metrics is currently not supported. However, it is possible to use CUDA for the translation task.
+This can be done by setting the `--use_cuda` flag when running the Streamlit server. This will enable the use of CUDA
+for the translation task, but not for the metrics. The reason for this is the memory consumption since streamlit 
+creates a separate instance for each user, the GPU may run OOM quickly and moving on/off devices is not feasible. 
 
-Using CUDA may also lead to caching issues from Streamlit, causing the neural models to be reloaded on every new call
-and every new system to evaluate. That can be very slow! Luckily Streamlit is bringing back more
-[control over caching](https://github.com/streamlit/streamlit/pull/6502)
-so that in a future version of MATEO it should be possible to remedy this and to really utilize the GPU. At the
-moment I am not convinced that it is beneficial unless perhaps for very large files so **I would recommend to not
-use CUDA at this time**.
+I have not found a solution for this yet. A queueing system would solve the issue with a separate backend and dedicated 
+workers, but that defeats the purpose of having a simple, easy-to-use interface. It would also lead to the requirement
+of strong data for longer, which many users may not want to, considering that I've received many questions whether I 
+save their data on disk (I don't - the current approach processes everything in memory).
 
 ## Acknowledgements
 
