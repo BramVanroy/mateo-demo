@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import torch
-
 from mateo_st.translator import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_MAX_LENGTH,
@@ -68,10 +67,14 @@ def cli_args():
         "transl_max_length": DEFAULT_MAX_LENGTH,
         "eval_max_sys": 4,
         "demo_mode": False,
-
     }
     cparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    cparser.add_argument("--use_cuda", default=False, action="store_true", help="whether to use CUDA. Only affects the translation model")
+    cparser.add_argument(
+        "--use_cuda",
+        default=False,
+        action="store_true",
+        help="whether to use CUDA. Only affects the translation model",
+    )
     cparser.add_argument(
         "--demo_mode",
         action="store_true",
