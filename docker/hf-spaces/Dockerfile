@@ -54,6 +54,5 @@ HEALTHCHECK CMD curl --fail http://$SERVER:$PORT/_stcore/health || exit 1
 WORKDIR src/mateo_st
 
 # Launch app
-CMD streamlit run 01_🎈_MATEO.py --server.port $PORT --server.enableXsrfProtection false -- --no_cuda
 CMD streamlit run 01_🎈_MATEO.py --server.port $PORT --server.enableXsrfProtection false
 
