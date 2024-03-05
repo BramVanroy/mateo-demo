@@ -55,3 +55,5 @@ WORKDIR src/mateo_st
 
 # Launch app
 CMD streamlit run 01_🎈_MATEO.py --server.port $PORT --server.enableXsrfProtection false -- --no_cuda
+CMD streamlit run 01_🎈_MATEO.py --server.port $PORT --server.enableXsrfProtection false
+
