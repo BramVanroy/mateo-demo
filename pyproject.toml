@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mateo_st"
-# Also update version in init!
+# Also update version in init and dockerfiles!
 version = "1.4.0"
 authors = [
     {name = "Bram Vanroy", email = "bramvanroy@hotmail.com"},

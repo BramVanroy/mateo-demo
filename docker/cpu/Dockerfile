@@ -32,7 +32,7 @@ ENV PORT=7860 \
 WORKDIR ${HOME}/mateo
 
 # Clone the repository
-RUN git clone https://github.com/BramVanroy/mateo-demo.git
+RUN git clone --depth 1 --branch v1.4.0 https://github.com/BramVanroy/mateo-demo.git
 WORKDIR mateo-demo
 
 # Install Python dependencies with conditional torch installation
