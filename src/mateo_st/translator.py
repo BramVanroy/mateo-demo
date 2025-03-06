@@ -9,7 +9,7 @@ from torch.quantization import quantize_dynamic
 
 
 DEFAULT_MODEL_SIZE = os.getenv("mateo_transl_model_size", "distilled-600M")
-DEFAULT_BATCH_SIZE = os.getenv("mateo_batch_size", 8)
+DEFAULT_BATCH_SIZE = os.getenv("mateo_batch_size", 1)
 DEFAULT_MAX_LENGTH = os.getenv("mateo_max_length", 128)
 DEFAULT_NUM_BEAMS = os.getenv("mateo_max_num_beams", 1)
 
@@ -60,7 +60,7 @@ class Translator:
     def translate(self, encoded, max_length: int = DEFAULT_MAX_LENGTH, num_beams: int = DEFAULT_NUM_BEAMS):
         return self.model.generate(
             **encoded,
-            forced_bos_token_id=self.tokenizer.lang_code_to_id[self.tgt_lang_key],
+            forced_bos_token_id=self.tokenizer.convert_tokens_to_ids(self.tgt_lang_key),
             max_length=max_length,
             num_beams=num_beams,
         )
@@ -119,11 +119,9 @@ def _validate_cached_resources(cached_resource: tuple):
 def init_model(model_name: str, no_cuda: bool = True, quantize: bool = True):
     # We defer loading of transformers and optimum because _sometimes_ there are
     # import errors triggered if we put them at the top. Don't know why...
-    from optimum.bettertransformer import BetterTransformer
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    model = BetterTransformer.transform(model, keep_original_model=False)
     model.eval()
     if torch.cuda.is_available() and not no_cuda:
         try:
