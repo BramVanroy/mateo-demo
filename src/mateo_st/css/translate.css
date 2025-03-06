@@ -1,7 +1,7 @@
-[data-testid="column"] + [data-testid="column"] {
+[data-testid="stColumn"] + [data-testid="stColumn"] {
     align-self: flex-end;
     text-align: center;
 }
-[data-testid="column"] + [data-testid="column"] button {
+[data-testid="stColumn"] + [data-testid="stColumn"] button {
     padding: 7px 14px;
 }
