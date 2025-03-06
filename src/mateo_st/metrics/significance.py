@@ -200,7 +200,6 @@ def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame, pd.DataFram
         return data
 
     # For display
-    print(bs_data)
     display_data = postprocess_data(bs_data, for_display=True)
     display_df = pd.DataFrame(display_data)
     styled_display_df = display_df.style
