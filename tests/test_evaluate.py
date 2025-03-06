@@ -32,8 +32,8 @@ def test_source_input_field(page: Page):
 
 def _set_input_file(page, label_text: str, test_file_path: Path):
     with page.expect_file_chooser() as fc_info:
-        expect(page.get_by_role("button", name=label_text)).to_be_visible()
-        page.get_by_role("button", name=label_text).click()
+        expect(page.get_by_label(label_text)).to_be_visible()
+        page.get_by_label(label_text).click()
 
     file_chooser = fc_info.value
     file_chooser.set_files(test_file_path)
