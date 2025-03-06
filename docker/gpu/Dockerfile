@@ -40,7 +40,7 @@ WORKDIR mateo-demo
 
 # Install Python dependencies with conditional torch installation
 RUN python -m pip install --no-cache-dir --upgrade pip wheel setuptools \
-    && python -m pip install --no-cache-dir torch==2.2.1 --index-url https://download.pytorch.org/whl/cu121 \
+    && python -m pip install --no-cache-dir torch==2.6.0 --index-url https://download.pytorch.org/whl/cu121 \
     && python -m pip install --no-cache-dir --upgrade .
 
 # Pre-download default models

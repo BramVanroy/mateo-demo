@@ -80,8 +80,8 @@ using Docker, e.g. setting the `--server.port` that streamlit is running on (see
 A number of command-line arguments are available to change the interface to your needs.
 
 ```shell
---use_cuda             whether to use CUDA for translation task (CUDA for metrics not supported) (default: False)                                                                                                                                      
---demo_mode           when demo mode is enabled, only a limited range of neural check-points are available. So all metrics are available but not all of the checkpoints. (default: False)
+--use_cuda     whether to use CUDA for translation task (CUDA for metrics not supported) (default: False)                                                                                                                                      
+--demo_mode    when demo mode is enabled, only a limited range of neural check-points are available. So all metrics are available but not all of the checkpoints. (default: False)
 ```
 
 These can be passed to the Streamlit launcher by adding a `--` after the streamlit command and streamlit-specific
