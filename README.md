@@ -65,6 +65,29 @@ Run the following commands:
 git clone https://github.com/BramVanroy/mateo-demo.git
 cd mateo-demo
 python -m pip install .
+```
+
+**Added in v1.6**: an optional, advanced option has been added in version 1.6 that allows you to insert arbitrary HTML in the `<head>` of your web app.
+This can be useful in case you want to add analytics tracking, for instance. Due to the nature of Streamlit, adding `st.markdown` may not
+work as you might expect since every user interaction will trigger a re-render of the page. In the case of counting page views, it may incorrectly
+inflate those numbers. Therefore, we directly patch Streamlit's `index.html` file. Note that this is a grave security risk - never add anything
+to the HTML file that you do not understand!!
+
+To add your HTML contents to the head, e.g. a `<script src="...>`, create an HTML file with your content, e.g. `my_content.html`. Then run this script:
+
+```shell
+python scripts/patch_index.py --input_file my_content.html
+```
+
+This will back up the original script, too. If you ever want to restore that back up, just run:
+
+```shell
+python scripts/patch_index.py --restore
+```
+
+Now we can run MATEO!
+
+```shell
 cd src/mateo_st
 streamlit run 01_🎈_MATEO.py
 ```
