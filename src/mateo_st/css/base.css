@@ -42,6 +42,6 @@ a:hover {text-decoration: none;}
     z-index: 9999999;
 }
 
-.stDeployButton {
+.stAppDeployButton {
     visibility: hidden;
 }
