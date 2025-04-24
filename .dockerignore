@@ -1,7 +1,6 @@
 **/.git
 **/.venv
 **/.mypy_cache
-**/.idea
 
 docker
 
