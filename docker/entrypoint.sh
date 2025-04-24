@@ -37,9 +37,9 @@ if [ "$PRELOAD_METRICS" = "true" ]; then
     echo "PRELOAD_METRICS is true. Starting model preloading..."
 
     echo "Downloading/verifying bert-base-multilingual-cased for BERTScore..."
-    huggingface-cli download bert-base-multilingual-cased model.safetensors tokenizer.json vocab.txt && \
+    python -c "from transformers import AutoTokenizer, AutoModel; m = 'bert-base-multilingual-cased'; AutoModel.from_pretrained(m); AutoTokenizer.from_pretrained(m)" && \
     echo "Downloading/verifying NLLB distilled 600M..."
-    huggingface-cli download facebook/nllb-200-distilled-600M pytorch_model.bin sentencepiece.bpe.model tokenizer.json && \
+    python -c "from transformers import AutoTokenizer, AutoModelForSeq2SeqLM; m = 'facebook/nllb-200-distilled-600M'; AutoModelForSeq2SeqLM.from_pretrained(m); AutoTokenizer.from_pretrained(m)" && \
     echo "Downloading/verifying Unbabel/wmt22-comet-da..."
     python -c "import comet; from comet import download_model; download_model('Unbabel/wmt22-comet-da')" && \
     echo "Downloading/verifying bleurt/BLEURT-20..."
