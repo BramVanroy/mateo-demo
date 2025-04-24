@@ -20,7 +20,7 @@ ENV HOME="/home/mateo_user"
 WORKDIR $HOME
 
 # --- Application Code & Dependencies ---
-ARG REPO_BRANCH=v1.6.0
+ARG REPO_BRANCH=v1.6.1
 RUN git clone --depth 1 --branch ${REPO_BRANCH} https://github.com/BramVanroy/mateo-demo.git $HOME/mateo-demo
 
 WORKDIR $HOME/mateo-demo
@@ -56,9 +56,6 @@ RUN mkdir -p "$HOME/.cache" \
     && chown -R mateo_user:mateo_user "$HOME/.cache"
 
 # --- Entrypoint & CMD ---
-COPY --chown=mateo_user:mateo_user entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
 # Expose the port the app runs on
 EXPOSE $PORT
 
@@ -70,7 +67,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
 # Set the working directory for the application
 WORKDIR $HOME/mateo-demo/src/mateo_st
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+RUN chmod +x $HOME/mateo-demo/docker/entrypoint.sh
+ENTRYPOINT $HOME/mateo-demo/docker/entrypoint.sh
 
 # CMD is now empty as the entrypoint handles the final command execution
 CMD []
