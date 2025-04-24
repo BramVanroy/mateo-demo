@@ -29,13 +29,13 @@ ARG USE_CUDA=false
 RUN uv venv .venv --python 3.11 \
     && . .venv/bin/activate \
     && uv pip install --no-cache-dir --upgrade pip wheel setuptools \
-        # Conditionally install PyTorch 2.6.0 (CPU or CUDA 12.1)
+        # Conditionally install PyTorch (CPU or CUDA 12.1)
     && if [ "$USE_CUDA" = "true" ]; then \
         echo "Installing PyTorch with CUDA 12.1 support"; \
-        uv pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cu121; \
+        uv pip install --no-cache-dir torch==2.2.1 --index-url https://download.pytorch.org/whl/cu121; \
     else \
         echo "Installing PyTorch with CPU support"; \
-        uv pip install --no-cache-dir torch==2.5.1+cpu --index-url https://download.pytorch.org/whl/cpu; \
+        uv pip install --no-cache-dir torch==2.2.1+cpu --index-url https://download.pytorch.org/whl/cpu; \
     fi \
     && uv pip install --no-cache-dir --upgrade $HOME/mateo-demo[patch] \
     && uv cache clean
@@ -47,7 +47,6 @@ ENV PORT=7860 \
     BASE="" \
     DEMO_MODE=false \
     HF_HUB_ENABLE_HF_TRANSFER=1 \
-    USE_CUDA=false \
     PRELOAD_METRICS=true \
     PATH="$HOME/.local/bin:$HOME/mateo-demo/.venv/bin:${PATH}" \
     ENABLE_XSRF_PROTECTION=true

@@ -43,8 +43,8 @@ dependencies = [
     # Include ja/ko tokenization options
     "sacrebleu[ja,ko]==2.5.1",
     "streamlit==1.43.2",
-    "tensorflow==2.18.0",
-    "torch==2.5.1",
+    "tensorflow==2.15.1",
+    "torch==2.2.1",
     "transformers[sentencepiece]==4.49.0",
     "unbabel-comet==2.2.4",
     "XlsxWriter==3.2.2"
