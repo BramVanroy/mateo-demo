@@ -41,3 +41,7 @@ a:hover {text-decoration: none;}
 #vg-tooltip-element {
     z-index: 9999999;
 }
+
+.stDeployButton {
+    visibility: hidden;
+}
