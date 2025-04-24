@@ -37,7 +37,7 @@ if [ "$PRELOAD_METRICS" = "true" ]; then
     echo "PRELOAD_METRICS is true. Starting model preloading..."
 
     echo "Downloading/verifying bert-base-multilingual-cased for BERTScore..."
-    python -c "from transformers import AutoTokenizer, AutoModel; m = 'bert-base-multilingual-cased'; AutoModel.from_pretrained(m); AutoTokenizer.from_pretrained(m)" && \
+    python -c "from transformers import AutoTokenizer, AutoModel; m = 'google-bert/bert-base-multilingual-cased'; AutoModel.from_pretrained(m); AutoTokenizer.from_pretrained(m)" && \
     echo "Downloading/verifying NLLB distilled 600M..."
     python -c "from transformers import AutoTokenizer, AutoModelForSeq2SeqLM; m = 'facebook/nllb-200-distilled-600M'; AutoModelForSeq2SeqLM.from_pretrained(m); AutoTokenizer.from_pretrained(m)" && \
     echo "Downloading/verifying Unbabel/wmt22-comet-da..."
