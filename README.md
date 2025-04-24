@@ -38,7 +38,7 @@ Vanroy, B., Tezcan, A., & Macken, L. (2023). [MATEO: MAchine Translation Evaluat
 
 ## Self-hosting
 
-The MATEO [website](https://lt3.ugent.be/mateo/) is provided for free as a hosted application. That means that you, or
+The MATEO [website](https://mateo.ivdnt.org/) is provided for free as a hosted application. That means that you, or
 anyone else, can use it. The implication is that it is possible that the service will be slow depending on the usage of
 the system. As such, specific attention was paid to making it easy for you to set up your own instance that you can use!
 
