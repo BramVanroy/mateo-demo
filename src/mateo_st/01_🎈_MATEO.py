@@ -80,9 +80,8 @@ def main():
 
     st.markdown(
         "Would you like additional functionality in this project? Do you want to collaborate? Or just want to get in"
-        " touch? Give me a shout on Twitter/X [@BramVanroy](https://twitter.com/BramVanroy),"
-        " [LinkedIn](https://www.linkedin.com/in/bramvanroy/), or"
-        " [send an email](https://www.kuleuven.be/wieiswie/nl/person/00099027). I'd ❤️ to hear from you!"
+        " touch? Give me a shout on [LinkedIn](https://www.linkedin.com/in/bramvanroy/), or"
+        " [send an email](https://ivdnt.org/profile/?smid=23048). I'd ❤️ to hear from you!"
     )
     st.markdown(
         "Do you have technical questions, suggestions or ideas? Want to collaborate or add something to MATEO?"
