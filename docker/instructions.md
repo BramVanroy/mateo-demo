@@ -11,7 +11,7 @@ The Docker images can be configured using build arguments (during `docker build`
 *   **`REPO_BRANCH`**
     *   **Purpose:** specifies the branch, tag, or commit SHA of the `BramVanroy/mateo-demo` repository to clone during the image build.
     *   **Default:** `v1.6.0` (as defined in the Dockerfiles)
-    *   **Example:** `docker build --build-arg REPO_BRANCH=main -t mateo-demo:cpu -f Dockerfile.cpu .`
+    *   **Example:** `docker build --build-arg REPO_BRANCH=main -t mateo-demo:cpu -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .`
 
 *   **`USE_CUDA`**
     *   **Purpose:** determines if the image should be built with GPU (CUDA 12.1) support. If `true`, the CUDA-enabled version of PyTorch 2.6.0 is installed. If `false`, the CPU-only version is installed.
@@ -53,7 +53,7 @@ The Docker images can be configured using build arguments (during `docker build`
 
 *   **`USE_CUDA`**
     *   **Purpose:** informs the application whether a GPU should be used for translation (GPU-accelerated metrics not supported). This is useful if you have built your container with CUDA-support and want to enable it during runtime, or keep it disabled to avoid using the GPU. The entrypoint passes the `--use_cuda` flag to the application if this is `true`.
-    *   **Default:** `false` (in `Dockerfile.cpu`), `true` (in `Dockerfile.gpu`)
+    *   **Default:** `false`
     *   **Example:** usually not overridden manually, rely on the correct image tag.
 
 *   **`PRELOAD_METRICS`**
@@ -68,7 +68,7 @@ The Docker images can be configured using build arguments (during `docker build`
     *   **Example:** `-v mateo-cache:/home/mateo_user/.cache` (using a named volume) or `-v /path/on/host/cache:/home/mateo_user/.cache` (using a host directory).
 
 *   **Injection file (`/injection/injection_file_content`)**
-    *   **Purpose:** mount a custom JS file here to be injected into the application's `<head>` at startup.
+    *   **Purpose:** mount a custom JS file here to be injected into the application's `<head>` at startup. Do not change `/injection/injection_file_content:ro`!
     *   **Example:** `-v /path/on/host/to/your_injection.html:/injection/injection_file_content:ro` (mount read-only).
 
 ## Building the image
@@ -76,16 +76,16 @@ The Docker images can be configured using build arguments (during `docker build`
 *   **CPU Image:**
     ```bash
     # Using default, most recent REPO_BRANCH
-    docker build -t mateo-demo:cpu -f Dockerfile .
+    docker build -t mateo-demo:cpu -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
 
     # Specifying a different branch/tag
-    docker build --build-arg REPO_BRANCH=v1.6 -t mateo-demo:cpu-main -f Dockerfile .
+    docker build --build-arg REPO_BRANCH=v1.6 -t mateo-demo:cpu-main -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
     ```
 
 *   **GPU Image:**
     *(Ensure your system has the necessary NVIDIA drivers and nvidia-docker installed)*
     ```bash
-    docker build --build-arg USE_CUDA=true -t mateo-demo:gpu -f Dockerfile .
+    docker build --build-arg USE_CUDA=true -t mateo-demo:gpu -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
     ```
 
 ## Running the container
@@ -109,7 +109,7 @@ Combine `docker run` flags as needed based on the configuration options above.
 
     docker run -p 7860:7860 --rm --name mateo \
       -e PRELOAD_METRICS=true \
-       -e PORT=7860 \
+      -e PORT=7860 \
       -v mateo-cache:/home/mateo_user/.cache \
       -v /path/on/host/to/your_injection.html:/injection/injection_file_content:ro \
       mateo-demo:cpu
