@@ -17,7 +17,6 @@ from mateo_st.translator import (
     DEFAULT_MAX_LENGTH,
     DEFAULT_MODEL_SIZE,
     DEFAULT_NUM_BEAMS,
-    TRANS_SIZE2MODEL,
 )
 from matplotlib.image import imread
 
