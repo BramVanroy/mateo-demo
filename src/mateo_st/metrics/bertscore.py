@@ -1,9 +1,10 @@
-from dataclasses import dataclass
+import functools
+from dataclasses import dataclass, field
 from statistics import mean
 from typing import Any, Dict
 
 import bert_score
-from mateo_st.metrics.base import MetricMeta, MetricOption
+from mateo_st.metrics.base import MetricMeta, MetricOption, NeuralMetric
 
 
 @dataclass
@@ -218,3 +219,92 @@ bertscore_meta = BertScoreMeta(
         # to calculate baseline/idf scores on
     ),
 )
+
+
+@dataclass
+class BertScoreMetric(NeuralMetric):
+    name = "bertscore"
+    meta = bertscore_meta
+
+    model: bert_score.BERTScorer = field(default=None, init=False)
+
+    def __post_init__(self):
+        self.model = None
+
+    def compute(
+        self,
+        references: list[str],
+        predictions: list[str],
+        lang: str | None = None,
+        model_type: str | None = None,
+        num_layers: int | None = None,
+        batch_size: int = 32,
+        device: str | int | None = None,
+    ) -> Any:
+        """Predicts the score for a batch of references and hypotheses. BertScore is a bit different from the others in that initialization happens inside
+        this compute function but the scorer is cached for the next call.
+
+        :param references: list of reference sentences
+        :param hypotheses: list of hypothesis sentences
+        :param lang: language of the translations. This is an optional shortcut, used to select a good default model for your language
+        :param model_type: BERTScore model to use. Benchmarked scores on to-English WMT data can be found [here](https://docs.google.com/spreadsheets/d/1RKOVpselB98Nnh_EOC4A2BYn8_201tmPODpNWu4w7xI/edit#gid=0).
+        :param num_layers: This layer's representation will be used. If empty, defaults to the best layer as tuned on WMT16
+        :param batch_size: batch size for scoring
+        :param device: device to use for scoring (e.g. "cuda", "cpu", 0, 1, etc.). If None, will use the default device.
+        :return: score result (dictionary)
+        """
+        if len(references) != len(predictions):
+            raise ValueError("The lengths of references and hypotheses must be the same.")
+
+        get_hash = bert_score.utils.get_hash
+        scorer = bert_score.BERTScorer
+
+        get_hash = functools.partial(get_hash, use_fast_tokenizer=False)
+        scorer = functools.partial(scorer, use_fast_tokenizer=False)
+
+        if model_type is None:
+            if lang is None:
+                raise ValueError(
+                    "Either 'lang' (e.g. 'en') or 'model_type' (e.g. 'microsoft/deberta-xlarge-mnli')"
+                    " must be specified"
+                )
+            model_type = bert_score.utils.lang2model[lang.lower()]
+
+        if num_layers is None:
+            num_layers = bert_score.utils.model2layers[model_type]
+
+        hashcode = get_hash(
+            model=model_type, num_layers=num_layers, idf=False, rescale_with_baseline=False, use_custom_baseline=False
+        )
+
+        if self.model is None or self.model.hash != hashcode:
+            print(f"Cache not found, creating new scorer for {model_type} BertScore model")
+            self.model = scorer(
+                model_type=model_type,
+                num_layers=num_layers,
+                batch_size=batch_size,
+                nthreads=4,
+                all_layers=False,
+                idf=False,
+                idf_sents=None,
+                device=device,
+                lang=lang,
+                rescale_with_baseline=False,
+                baseline_path=None,
+            )
+
+        print(f"Using {self.model.hash} model for BERTScore scoring.")
+        P, R, F = self.model.score(
+            cands=predictions,
+            refs=references,
+            verbose=False,
+            batch_size=batch_size,
+        )
+
+        output_dict = {
+            "precision": P.tolist(),
+            "recall": R.tolist(),
+            "f1": F.tolist(),
+            "hashcode": hashcode,
+        }
+        return output_dict

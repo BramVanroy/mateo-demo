@@ -1,3 +1,4 @@
+import logging
 import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Type, Union
@@ -11,7 +12,7 @@ import streamlit as st
 from evaluate import EvaluationModule
 from mateo_st import __version__ as mateo_version
 from mateo_st.metrics.base import MetricMeta, MetricOption
-from mateo_st.metrics.metrics_constants import METRICS_META, merge_batched_results
+from mateo_st.metrics.metrics_constants import METRICS_META, NEURAL_METRICS, merge_batched_results
 from mateo_st.metrics.significance import get_bootstrap_dataframe
 from mateo_st.utils import (
     cli_args,
@@ -24,6 +25,8 @@ from mateo_st.utils import (
 )
 from sacrebleu.metrics.base import Metric as SbMetric
 
+
+logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -308,7 +311,13 @@ def _load_metric(metric_name: str, config_name: Optional[str] = None) -> Evaluat
     :param config_name: optional config
     :return: loaded metric
     """
-    return evaluate.load(metric_name, config_name=config_name)
+    try:
+        return NEURAL_METRICS[metric_name](model_name=config_name)
+    except TypeError:
+        # BERTScore's initialization is a bit different to make everything relatively DRY
+        # in terms of options and initialization. (We have more arguments to consider than just the config name
+        # like lang, model_type and the layer. So we do that in the prediction phase rather than the init phase.
+        return NEURAL_METRICS[metric_name]()
 
 
 @st.cache_resource(show_spinner=False, max_entries=24, validate=_validate_cached_metric)

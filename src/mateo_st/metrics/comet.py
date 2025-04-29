@@ -1,9 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from statistics import mean
 from typing import Any, Dict
 
 import comet
-from mateo_st.metrics.base import MetricMeta, MetricOption
+from mateo_st.metrics.base import MetricMeta, MetricOption, NeuralMetric
 
 
 @dataclass
@@ -57,3 +57,42 @@ comet_meta = CometMeta(
     ),
     requires_source=True,
 )
+
+
+@dataclass
+class CometMetric(NeuralMetric):
+    name = "comet"
+    meta = comet_meta
+
+    model_name: str = comet_meta.options[0].default
+    model: comet.models.CometModel = field(default=None, init=False)
+
+    def __post_init__(self):
+        model_path = comet.download_model(self.model_name)
+        self.model = comet.load_from_checkpoint(model_path, local_files_only=True)
+
+    def compute(self, references: list[str], predictions: list[str], sources: list[str], **kwargs) -> Any:
+        """Predicts the score for a batch of references and hypotheses and sources.
+
+        :param references: list of reference sentences
+        :param hypotheses: list of hypothesis sentences
+        :param sources: list of source sentences
+        :param kwargs: additional arguments for the model prediction
+        :return: score result (dictionary)
+        """
+        print(f"Using {self.model_name} model for COMET scoring.")
+        if len(references) != len(predictions) != len(sources):
+            raise ValueError("The lengths of references, hypotheses, and sources must be the same.")
+
+        data = [{"mt": pred, "ref": ref, "src": src} for pred, ref, src in zip(predictions, references, sources)]
+
+        return self.model.predict(data, progress_bar=False, **kwargs)
+
+
+def init_comet(model_name: str):
+    """Initializes the COMET metric with the specified model name.
+
+    :param model_name: name of the COMET model to use
+    :return: initialized COMET metric
+    """
+    return CometMetric(model_name=model_name)

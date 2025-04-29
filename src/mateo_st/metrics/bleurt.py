@@ -1,8 +1,12 @@
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
 from statistics import mean
 from typing import Any, Dict
 
-from mateo_st.metrics.base import MetricMeta, MetricOption
+from bleurt import score as bleurt_score
+from huggingface_hub import snapshot_download
+from mateo_st.metrics.base import MetricMeta, MetricOption, NeuralMetric
 
 
 @dataclass
@@ -65,3 +69,41 @@ bleurt_meta = BleurtMeta(
         ),
     ),
 )
+
+
+@dataclass
+class BleurtMetric(NeuralMetric):
+    name = "bleurt"
+    meta = bleurt_meta
+
+    model_name: str = bleurt_meta.options[0].default
+    model: bleurt_score.BleurtScorer = field(default=None, init=False)
+
+    def __post_init__(self):
+        # Even disabling symlinks does not work (at least on Windows), so we need to set the local dir
+        # to avoid symlink issues. The .sym files cannot be read by BLEURT.
+        local_dir = Path(os.getenv("HF_HOME", Path.home() / ".cache" / "huggingface")) / "hub" / self.model_name
+        if not local_dir.exists():
+            local_dir.mkdir(parents=True, exist_ok=True)
+        model_path = snapshot_download(repo_id=f"BramVanroy/{self.model_name}", local_dir=local_dir)
+        self.model = bleurt_score.BleurtScorer(model_path)
+
+    def compute(self, references: list[str], predictions: list[str], batch_size: int = 8) -> Any:
+        """Predicts the score for a batch of references and hypotheses.
+
+        :param references: list of reference sentences
+        :param hypotheses: list of hypothesis sentences
+        :param batch_size: batch size for processing
+        :return: score result (dictionary)
+        """
+        print(f"Using {self.model_name} model for BLEURT scoring.")
+        if len(references) != len(predictions):
+            raise ValueError("The lengths of references and hypotheses must be the same.")
+
+        return {
+            "scores": self.model.score(
+                references=references,
+                candidates=predictions,
+                batch_size=batch_size,
+            )
+        }

@@ -16,7 +16,7 @@ def main():
         " brings automatic machine translation evaluation to the masses with"
         " an accessible user-interface. It was developed at Ghent University, in the"
         " [Language and Translation Technology Team (LT3)](https://lt3.ugent.be/) in 2022-2023."
-        " It is currently canonically hosted at the [Dutch Language Institute](https://ivdnt.org/) (INT)" 
+        " It is currently canonically hosted at the [Dutch Language Institute](https://ivdnt.org/) (INT)"
         " at [https://mateo.ivdnt.org/](https://mateo.ivdnt.org/)."
     )
 

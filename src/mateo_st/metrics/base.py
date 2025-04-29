@@ -1,5 +1,6 @@
+from abc import ABC
 from dataclasses import dataclass, field
-from typing import Any, Dict, Literal, Optional, Tuple, Type
+from typing import Any, ClassVar, Dict, Literal, Optional, Tuple, Type
 
 from sacrebleu.metrics.base import Metric as SbMetric
 
@@ -53,3 +54,19 @@ class MetricMeta:
         :return: modified score result
         """
         return result
+
+
+@dataclass
+class NeuralMetric(ABC):
+    name: ClassVar[str]
+    meta: ClassVar[MetricMeta]
+
+    def compute(self, references: list[str], predictions: list[str], sources: list[str] | None) -> Any:
+        """Predicts the score for a batch of references and hypotheses.
+
+        :param references: list of reference sentences
+        :param predictions: list of predictions
+        :param sources: list of source sentences (optional)
+        :return: the output of the underlying metric (e.g., a score, a dictionary, etc.)
+        """
+        raise NotImplementedError("compute must be implemented in subclasses")

@@ -1,11 +1,11 @@
 from collections import defaultdict
 from typing import Any, Dict, List
 
-from mateo_st.metrics.bertscore import bertscore_meta
+from mateo_st.metrics.bertscore import BertScoreMetric, bertscore_meta
 from mateo_st.metrics.bleu import bleu_meta
-from mateo_st.metrics.bleurt import bleurt_meta
+from mateo_st.metrics.bleurt import BleurtMetric, bleurt_meta
 from mateo_st.metrics.chrf import chrf_meta
-from mateo_st.metrics.comet import comet_meta
+from mateo_st.metrics.comet import CometMetric, comet_meta
 from mateo_st.metrics.ter import ter_meta
 
 
@@ -18,8 +18,10 @@ METRICS_META = {
     "ter": ter_meta,
 }
 
-DEFAULT_METRICS = {name for name, meta in METRICS_META.items() if meta.is_default_selected}
-BASELINE_METRICS = {name for name, meta in METRICS_META.items() if meta.metric_class == "baseline"}
+NEURAL_METRICS = {"comet": CometMetric, "bleurt": BleurtMetric, "bertscore": BertScoreMetric}
+
+DEFAULT_METRIC_NAMES = {name for name, meta in METRICS_META.items() if meta.is_default_selected}
+BASELINE_METRIC_NAMES = {name for name, meta in METRICS_META.items() if meta.metric_class == "baseline"}
 
 
 def merge_batched_results(metric_name: str, results: List[Dict[str, Any]]):
