@@ -7,3 +7,6 @@ gatherUsageStats = false
 
 [client]
 showErrorDetails  = false
+
+[server]
+fileWatcherType = "none"
