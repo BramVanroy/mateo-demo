@@ -1,6 +1,7 @@
 cmd.sh
 .venv
 notebook.md
+scratches/
 
 # testing
 /coverage

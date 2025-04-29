@@ -34,20 +34,18 @@ dependencies = [
     "altair==5.5.0",
     "bert-score==0.3.13",
     "BLEURT@git+https://github.com/google-research/bleurt.git@cebe7e6f996b40910cfaa520a63db47807e3bf5c",
-    "datasets==3.3.2",
-    "evaluate==0.4.3",
-    "huggingface_hub[hf_transfer]==0.29.2",
+    "huggingface_hub[hf_transfer,hf_xet]==0.30.2",
     "Levenshtein==0.27.1",
     "pandas==2.2.3",
     "plotly==5.24.1",
     # Include ja/ko tokenization options
     "sacrebleu[ja,ko]==2.5.1",
-    "streamlit==1.43.2",
-    "tensorflow==2.15.1",
-    "torch==2.2.1",
-    "transformers[sentencepiece]==4.49.0",
-    "unbabel-comet==2.2.4",
-    "XlsxWriter==3.2.2"
+    "streamlit==1.44.1",
+    "tensorflow==2.19.0",
+    "torch==2.7.0",
+    "transformers[sentencepiece]==4.51.3",
+    "unbabel-comet==2.2.6",
+    "XlsxWriter==3.2.3"
 ]
 
 [project.urls]
@@ -57,7 +55,7 @@ repository = "https://github.com/BramVanroy/mateo-demo.git"
 
 [project.optional-dependencies]
 patch = ["beautifulsoup4"]
-dev = ["mateo_st[patch]", "flake8", "black", "isort", "pytest-playwright"]
+dev = ["mateo_st[patch]", "ruff", "pytest-playwright"]
 
 # TOOLS
 [tool.setuptools]
@@ -67,17 +65,30 @@ license-files = ['LICEN[CS]E*']
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.black]
+[tool.ruff]
 line-length = 119
-target-version = ["py310", "py311"]
 
-[tool.isort]
-profile = "black"
-ensure_newline_before_comments = true
-line_length = 119
-default_section = "FIRSTPARTY"
-known_first_party = "mateo_st"
-lines_after_imports = 2
+[tool.ruff.lint]
+ignore = ["C901", "E501", "E741", "F402", "F823", "E402"]
+select = ["C", "E", "F", "W", "I"]
 
-# flake8 is in setup.cfg as it does not support toml:
-# https://github.com/PyCQA/flake8/issues/234
+# Ignore import violations in all `__init__.py` files.
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401", "F403", "F811"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+known-first-party = ["commoncrawl_cc_annotation"]
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
