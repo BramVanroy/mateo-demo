@@ -464,6 +464,10 @@ def _compute_metrics():
     if not got_exception:
         pbar_text_ct.empty()
         pbar.empty()
+        # Sort the results by metric name to have consistent ordering (they were shuffled before)
+        for sys_idx, sys_results in results.items():
+            sorted_results = dict(sorted(sys_results.items(), key=lambda item: item[0]))
+            results[sys_idx] = sorted_results
         st.session_state["results"] = results
 
 
