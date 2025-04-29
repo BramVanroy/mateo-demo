@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass, field
-from typing import Any, List, Union
+from typing import Any, Union
 
 import streamlit as st
 import torch
@@ -67,7 +67,7 @@ class Translator:
 
     def batch_translate(
         self,
-        sentences: Union[str, List[str]],
+        sentences: Union[str, list[str]],
         *,
         batch_size: int = DEFAULT_BATCH_SIZE,
         max_length: int = DEFAULT_MAX_LENGTH,
@@ -93,7 +93,7 @@ class Translator:
             yield self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 
 
-def batchify(sentences: List[str], batch_size: int):
+def batchify(sentences: list[str], batch_size: int):
     """Yields batches of size 'batch_size' from the given list of sentences"""
     num_sents = len(sentences)
     for idx in range(0, num_sents, batch_size):

@@ -1,17 +1,24 @@
 import logging
 import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Type, Union
 from random import shuffle
+from typing import Any, Optional, Type
+
 import altair as alt
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from sacrebleu.metrics.base import Metric as SbMetric
+
 from mateo_st import __version__ as mateo_version
-from mateo_st.metrics.base import MetricMeta, MetricOption, NeuralMetric
-from mateo_st.metrics.metrics_constants import METRICS_META, NEURAL_METRICS, merge_batched_results
+from mateo_st.metrics.base import NeuralMetric
+from mateo_st.metrics.metrics_constants import (
+    METRICS_META,
+    NEURAL_METRIC_GETTERS,
+)
 from mateo_st.metrics.significance import get_bootstrap_dataframe
+from mateo_st.metrics.utils import merge_batched_results
 from mateo_st.utils import (
     cli_args,
     create_download_link,
@@ -21,7 +28,6 @@ from mateo_st.utils import (
     load_css,
     print_citation_info,
 )
-from sacrebleu.metrics.base import Metric as SbMetric
 
 
 logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
@@ -47,22 +53,22 @@ def _init():
         st.session_state["src_file"] = None
 
     if "sys_segments" not in st.session_state:
-        st.session_state["sys_segments"] = dict()
+        st.session_state["sys_segments"] = {}
 
     if "sys_files" not in st.session_state:
-        st.session_state["sys_files"] = dict()
+        st.session_state["sys_files"] = {}
 
     if "metrics" not in st.session_state:
-        st.session_state["metrics"] = dict()
+        st.session_state["metrics"] = {}
 
     if "results" not in st.session_state:
-        st.session_state["results"] = dict()
+        st.session_state["results"] = {}
 
     if "bootstrap_results" not in st.session_state:
-        st.session_state["bootstrap_results"] = dict()
+        st.session_state["bootstrap_results"] = {}
 
     if "bootstrap_signatures" not in st.session_state:
-        st.session_state["bootstrap_signatures"] = dict()
+        st.session_state["bootstrap_signatures"] = {}
 
     if "num_sys" not in st.session_state:
         st.session_state["num_sys"] = 1
@@ -98,15 +104,21 @@ def _metric_selection():
         # Add options as an "expander"
         if meta.options:
             expander = metric_container.expander(f"{meta.name} options")
-            for opt_idx, opt in enumerate(meta.options):
+            for opt in meta.options:
                 opt_name = opt.name
                 has_choices = bool(opt.choices)
 
                 opt_label = f"{ugly_metric_name}--{opt_name}"
+
+                # In demo mode, automatically disable some option fields
+                if opt.disabled == "auto":
+                    opt.disabled = cli_args().demo_mode
+
                 kwargs = {
                     "label": f"{opt_name} (default: '{opt.default}')",
                     "help": opt.description,
                     "key": opt_label,
+                    "disabled": opt.disabled,
                 }
 
                 # If this option is one with choices or with free input
@@ -139,7 +151,7 @@ def _data_input():
         " Cannot contain empty lines and must be in UTF8!"
     )
 
-    def read_file(uploaded_file) -> List[str]:
+    def read_file(uploaded_file) -> list[str]:
         if uploaded_file is not None:
             if (stringio := get_uploaded_file_as_strio(uploaded_file)) is not None:
                 return stringio.read().splitlines()
@@ -193,7 +205,7 @@ def _data_input():
                 del st.session_state["sys_files"][sys_idx]
 
 
-def _validate_state() -> Tuple[bool, str]:
+def _validate_state() -> tuple[bool, str]:
     source_required = any(
         meta.requires_source and name in st.session_state and st.session_state[name]
         for name, meta in METRICS_META.items()
@@ -268,10 +280,10 @@ def _add_metrics_selection_to_state():
     """Solidify the selected metrics and their options in one easy-to-use dictionary
     that we can use later on to initialize the metrics.
     """
-    st.session_state["metrics"] = dict()
+    st.session_state["metrics"] = {}
     for metric_name, meta in METRICS_META.items():
         if metric_name in st.session_state and st.session_state[metric_name]:
-            st.session_state["metrics"][metric_name] = {}
+            st.session_state["metrics"][metric_name] = {"init": {}, "call": {}}
             for opt in meta.options:
                 opt_name = opt.name
                 opt_val = st.session_state[f"{metric_name}--{opt_name}"]
@@ -284,50 +296,36 @@ def _add_metrics_selection_to_state():
                         elif int in opt.types and isint(opt_val):
                             opt_val = int(opt_val)
 
-                st.session_state["metrics"][metric_name][opt_name] = opt_val
+                if opt.is_init_arg:
+                    st.session_state["metrics"][metric_name]["init"][opt_name] = opt_val
+                else:
+                    st.session_state["metrics"][metric_name]["call"][opt_name] = opt_val
 
 
-def _validate_cached_metric(cached_metric):
-    """Validate the cached metric. Sometimes a metric can be None, e.g. when the HF hub is down and the BERTScore
-    model cannot be downloaded. That will lead to a cached None value. We do not want new users to also
-    have to use the cached None value, so we validate it here. If it was None, we return False so that the cache
-    will be discarded.
+def _load_metric(metric_name: str, **options) -> NeuralMetric:
+    """Load an individual neural metric. This is a short utility function so that
+    each metric can have its own initialization function which can also be cached.
+    Caching is done at the individual level for more control if needed.
 
-    :param cached_metric: the cached metric
-    :return: False if the metric is None (not valid) otherwise True
-    """
-    if cached_metric is None:
-        return False
-    else:
-        return True
-
-
-def _load_metric(metric_name: str, config_name: Optional[str] = None) -> NeuralMetric:
-    """Load an individual neural metric
-    
     :param metric_name: metric name
-    :param config_name: optional config
+    :param options: extra options, in fact the init arguments
     :return: loaded metric
     """
-    try:
-        return NEURAL_METRICS[metric_name](model_name=config_name)
-    except TypeError:
-        # BERTScore's initialization is a bit different to make everything relatively DRY
-        # in terms of options and initialization. (We have more arguments to consider than just the config name
-        # like lang, model_type and the layer. So we do that in the prediction phase rather than the init phase.
-        return NEURAL_METRICS[metric_name]()
+    return NEURAL_METRIC_GETTERS[metric_name](**options)
 
 
-@st.cache_resource(show_spinner=False, max_entries=24, validate=_validate_cached_metric)
+@st.cache_resource(show_spinner=False, max_entries=24)
 def _load_sacrebleu_metric(sb_class: Type[SbMetric], **options) -> SbMetric:
     """Load an individual metric with SacreBLEU
+
     :param sb_class: a sacrebleu Class to instantiate this metric with
+    :param options: initialization options
     :return: loaded sacrebleu metric
     """
     return sb_class(**options)
 
 
-def batchify(predictions: List[str], references: List[str], sources: Optional[List[str]] = None, batch_size: int = 16):
+def batchify(predictions: list[str], references: list[str], sources: Optional[list[str]] = None, batch_size: int = 16):
     samples = list(zip(predictions, references, sources if sources else ([""] * len(references))))
 
     for i in range(0, len(samples), batch_size):
@@ -341,66 +339,53 @@ def batchify(predictions: List[str], references: List[str], sources: Optional[Li
 
 def _compute_metric(
     metric_name: str,
+    init_kwargs: dict[str, Any] = {},
+    call_kwargs: dict[str, Any] = {},
     *,
-    predictions: List[str],
-    references: List[str],
-    sources: Optional[List[str]] = None,
-    config_name: Optional[str] = None,
+    predictions: list[str],
+    references: list[str],
+    sources: Optional[list[str]] = None,
     sb_class: Optional[Type[SbMetric]] = None,
     _sys_idx: Optional[int] = None,
-    dummy_batch_size: int = 1,
-    **kwargs,
 ):
     pbar = st.empty()
     try:
         if sb_class is None:
-            metric = _load_metric(metric_name, config_name)
-            if METRICS_META[metric_name].use_pseudo_batching:
-                # While not necessary in terms of computation, we still want to give users more feedback
-                # when the neural metrics are being calculated. That's why we give the user feedback every
-                # 'dummy_batch_size' chunks by process metric.compute in batches.
-                # !NOTE! This is not the same as the actual on-device batch size! It is likely that metric.compute
-                # is still doing other batching under the hood. This is just for visualization/progressbar purposes
-                msg = f"Calculating `{METRICS_META[metric_name].name}`{' for system #'+str(_sys_idx) if _sys_idx is not None else ''}"
-                pbar.progress(0)
-                num_batches = max(1, len(references) // dummy_batch_size)
-                increment = max(1, 100 // num_batches)
-                progress = 0
-                results = []
-                for batch in batchify(predictions, references, sources, batch_size=dummy_batch_size):
-                    if sources and "sources" in batch:
-                        results.append(
-                            metric.compute(
-                                predictions=batch["predictions"],
-                                references=batch["references"],
-                                sources=batch["sources"],
-                                **kwargs,
-                            )
+            metric = _load_metric(metric_name, **init_kwargs)
+            progress_batch_size = call_kwargs.get("batch_size", init_kwargs.get("batch_size", 16))
+            msg = f"Calculating `{METRICS_META[metric_name].name}`{' for system #' + str(_sys_idx) if _sys_idx is not None else ''}"
+            pbar.progress(0)
+            num_batches = max(1, len(references) // progress_batch_size)
+            increment = max(1, 100 // num_batches)
+            progress = 0
+            results = []
+            for batch in batchify(predictions, references, sources, batch_size=progress_batch_size):
+                if sources and "sources" in batch:
+                    results.append(
+                        metric.compute(
+                            predictions=batch["predictions"],
+                            references=batch["references"],
+                            sources=batch["sources"],
+                            **call_kwargs,
                         )
-                    else:
-                        results.append(
-                            metric.compute(predictions=batch["predictions"], references=batch["references"], **kwargs)
-                        )
-                    progress += increment
-                    pbar.progress(min(progress, 100), text=f"{msg}: {min(progress, 100):.2f}%")
-
-                pbar.empty()
-                result = merge_batched_results(metric_name, results)
-            else:
-                if sources:
-                    result = metric.compute(predictions=predictions, references=references, sources=sources, **kwargs)
+                    )
                 else:
-                    result = metric.compute(predictions=predictions, references=references, **kwargs)
+                    results.append(metric.compute(predictions=batch["predictions"], references=batch["references"]))
+                progress += increment
+                pbar.progress(min(progress, 100), text=f"{msg}: {min(progress, 100):.2f}%")
+
+            pbar.empty()
+            result = merge_batched_results(results)
+            result = metric.postprocess_result(result)
         else:
-            metric = _load_sacrebleu_metric(sb_class, **kwargs)
-            result = metric.corpus_score(hypotheses=predictions, references=[references])
+            metric = _load_sacrebleu_metric(sb_class, **init_kwargs)
+            result = metric.corpus_score(hypotheses=predictions, references=[references], **call_kwargs)
             # Sacrebleu returns special Score classes -- convert to dict
             result = vars(result)
     except Exception as exc:
         pbar.empty()
         raise exc
     else:
-        result = METRICS_META[metric_name].postprocess_result(result)
         return result
 
 
@@ -413,6 +398,7 @@ def _compute_metrics():
 
     error_ct = st.empty()
     got_exception = False
+
     for sys_idx, sys_segs in st.session_state["sys_segments"].items():
         if got_exception:
             break
@@ -424,8 +410,10 @@ def _compute_metrics():
         shuffled_metrics = list(st.session_state["metrics"].items())
         shuffle(shuffled_metrics)
 
-        for metric_name, opts in shuffled_metrics:
-            opts: Dict[str, Union[MetricOption, MetricMeta]] = opts.copy()  # Copy to not pop globally
+        for metric_name, init_and_call_opts in shuffled_metrics:
+            init_kwargs = init_and_call_opts.get("init", {})
+            call_kwargs = init_and_call_opts.get("call", {})
+
             meta = METRICS_META[metric_name]
 
             if sys_idx == 1:
@@ -448,20 +436,20 @@ def _compute_metrics():
             try:
                 result = _compute_metric(
                     metric_name,
+                    init_kwargs=init_kwargs,
+                    call_kwargs=call_kwargs,
                     predictions=sys_segs,
                     references=st.session_state["ref_segments"],
                     sources=st.session_state["src_segments"] if meta.requires_source else None,
-                    config_name=opts.pop("config_name", None),
                     sb_class=meta.sb_class,
                     _sys_idx=sys_idx,
-                    **opts,
                 )
             except Exception as exc:
                 error_ct.exception(exc)
                 pbar_text_ct.empty()
                 pbar.empty()
                 got_exception = True
-                st.session_state["results"] = dict()
+                st.session_state["results"] = {}
                 break
             else:
                 error_ct.empty()
@@ -586,7 +574,8 @@ def _segment_level_comparison_viz(sentence_df: pd.DataFrame):
         )
 
     metric_names = sentence_df["metric"].unique().tolist()
-    grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}
+    # dict() constructor, as suggested by ruff, incompatible with DataFrameGroupBy
+    grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}  # noqa: C416
     pretty_names = [METRICS_META[metric_name].name for metric_name in metric_names]
 
     for metric_name, tab in zip(metric_names, st.tabs(pretty_names)):
@@ -772,7 +761,7 @@ def _evaluate():
                     "🗄️ **Table**: In this large table you have access to all sentence-level scores for appropriate"
                     " metrics. You can use this data for a fine-grained or qualitative analysis on a per-sample basis."
                 )
-                grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}
+                grouped_df = {metric_name: df for metric_name, df in sentence_df.groupby("metric")}  # noqa: C416
                 pretty_names = [METRICS_META[metric_name].name for metric_name in metric_names]
 
                 for metric_name, tab in zip(metric_names, st.tabs(pretty_names)):
@@ -780,18 +769,17 @@ def _evaluate():
                     metricdf = metricdf.drop(columns="metric").reset_index(drop=True)
                     tab.dataframe(metricdf)
 
-                excel_sentences = create_download_link(
+                excel_sentences_dl = create_download_link(
                     sentence_df, "mateo-sentences.xlsx", "Excel file", df_groupby="metric"
                 )
                 st.markdown(
-                    f"You can download the table as an {excel_sentences}. Metrics are separated in sheets.",
+                    f"You can download the table as an {excel_sentences_dl}. Metrics are separated in sheets.",
                     unsafe_allow_html=True,
                 )
         else:
             segment_level_metrics = [meta.name for m, meta in METRICS_META.items() if meta.segment_level]
             st.info(
-                f"No segment-level metrics calculated. Segment level metrics are:"
-                f" {', '.join(segment_level_metrics)}."
+                f"No segment-level metrics calculated. Segment level metrics are: {', '.join(segment_level_metrics)}."
             )
 
 
@@ -804,7 +792,7 @@ def main():
     msg_container = st.empty()
     if not can_continue:
         msg_container.warning(msg)
-        st.session_state["metrics"] = dict()
+        st.session_state["metrics"] = {}
     else:
         msg_container.empty()
 

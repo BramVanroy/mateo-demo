@@ -1,7 +1,8 @@
-from mateo_st.metrics.base import MetricMeta, MetricOption
 from sacrebleu import BLEU
 from sacrebleu import __version__ as sb_version
 from sacrebleu.metrics.bleu import _TOKENIZERS as SBTOKENIZERS
+
+from mateo_st.metrics.base import MetricMeta, MetricOption
 
 
 bleu_meta = MetricMeta(
@@ -53,5 +54,4 @@ bleu_meta = MetricMeta(
         ),
     ),
     segment_level=False,
-    use_pseudo_batching=False,
 )

@@ -1,6 +1,7 @@
-from mateo_st.metrics.base import MetricMeta, MetricOption
 from sacrebleu import CHRF
 from sacrebleu import __version__ as sb_version
+
+from mateo_st.metrics.base import MetricMeta, MetricOption
 
 
 chrf_meta = MetricMeta(
@@ -44,5 +45,4 @@ chrf_meta = MetricMeta(
         ),
     ),
     segment_level=False,
-    use_pseudo_batching=False,
 )

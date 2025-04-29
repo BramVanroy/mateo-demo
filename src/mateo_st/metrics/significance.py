@@ -5,21 +5,21 @@ from argparse import Namespace
 from collections import defaultdict
 from copy import deepcopy
 from io import StringIO
-from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
 import streamlit as st
-from mateo_st.metrics.metrics_constants import METRICS_META
-from mateo_st.metrics.utils import build_signature
 from pandas.io.formats.style import Styler
 from sacrebleu.metrics.base import Metric as SbMetric
 from sacrebleu.significance import PairedTest, Result, _compute_p_value, estimate_ci
 from sacrebleu.utils import print_results_table
 
+from mateo_st.metrics.metrics_constants import METRICS_META
+from mateo_st.metrics.utils import build_signature
+
 
 def paired_bs(
-    metric_sentence_scores: Dict[str, List[List[float]]],
+    metric_sentence_scores: dict[str, list[list[float]]],
     paired_bs_n: int = 1000,
 ):
     """
@@ -70,7 +70,7 @@ def paired_bs(
 
 
 def paired_bs_sacrebleu(
-    named_systems: List[Tuple[str, List[str]]], metrics: Dict[str, SbMetric], references: List[str], args: Namespace
+    named_systems: list[tuple[str, list[str]]], metrics: dict[str, SbMetric], references: list[str], args: Namespace
 ):
     """
     :param named_systems: A lisf of (system_name, system_hypotheses) tuples on
@@ -112,18 +112,16 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
             named_systems.append((sys_name, st.session_state["sys_segments"][sys_idx]))
 
         for metric_name, metric_res in results.items():
-            opts = st.session_state["metrics"][metric_name].copy()  # Copy to not pop globally
             meta = METRICS_META[metric_name]
+            metric_opts = st.session_state["metrics"][metric_name].get("init", {})
 
             # If we already pre-calculated sentence-level scores, we can just use those directly for bootstrapping
             # If not, we are probably using sacrebleu, in which case we calculate them again later for all partitions
             if metric_res["sentences"] is not None:
-                metric_opts = st.session_state["metrics"][metric_name]
                 signatures[metric_name] = build_signature(paired_bs_n, seed, meta.version, metric_opts)
                 metric_sentence_scores[metric_name].append(metric_res["sentences"])
             else:
-                opts.pop("config_name", None)
-                sb_metrics[metric_name] = meta.sb_class(**opts)
+                sb_metrics[metric_name] = meta.sb_class(**metric_opts)
 
     # "System" MUST be the first item in the dictionary because `print_results_table` skips the first item
     all_results = {"System": [named_system[0] for named_system in named_systems]}
@@ -168,7 +166,7 @@ def do_bootstrap_resampling(paired_bs_n: int = 1000):
     return bs_data
 
 
-def get_bootstrap_dataframe() -> Tuple[Styler, Styler, pd.DataFrame, pd.DataFrame]:
+def get_bootstrap_dataframe() -> tuple[Styler, Styler, pd.DataFrame, pd.DataFrame]:
     bs_data = do_bootstrap_resampling()
 
     def postprocess_data(data, *, for_display: bool = True):

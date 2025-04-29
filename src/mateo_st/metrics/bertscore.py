@@ -1,28 +1,14 @@
-import functools
 from dataclasses import dataclass, field
 from statistics import mean
-from typing import Any, Dict
+from typing import Any, ClassVar
 
 import bert_score
+import streamlit as st
+
 from mateo_st.metrics.base import MetricMeta, MetricOption, NeuralMetric
 
 
-@dataclass
-class BertScoreMeta(MetricMeta):
-    def postprocess_result(self, result: Dict[str, Any]):
-        """Post-processes the result that is retrieved from a computed metric.
-
-        :param result: score result (dictionary)
-        :return: modified score result
-        """
-        corpus_key = self.corpus_score_key
-        sentences_key = self.sentences_score_key
-        result[corpus_key] = 100 * mean(result["f1"])
-        result[sentences_key] = [score * 100 for score in result["f1"]]
-        return result
-
-
-bertscore_meta = BertScoreMeta(
+bertscore_meta = MetricMeta(
     name="BERTScore",
     metric_class="neural",
     full_name="",
@@ -215,6 +201,14 @@ bertscore_meta = BertScoreMeta(
             types=(int,),
             empty_str_is_none=True,
         ),
+        MetricOption(
+            name="batch_size",
+            description="How many sentences to process at once. The larger the batch size, the faster the scoring but the higher the memory usage. Do not change this unless you know what you are doing. If the value is set too high it will freeze your computer and potentially crash the app!",
+            default=4,
+            types=(int,),
+            disabled="auto",
+            is_init_arg=False,
+        ),
         # Not adding other options such as rescale_with_baseline or idf, because those require extra corpus input
         # to calculate baseline/idf scores on
     ),
@@ -223,24 +217,55 @@ bertscore_meta = BertScoreMeta(
 
 @dataclass
 class BertScoreMetric(NeuralMetric):
-    name = "bertscore"
-    meta = bertscore_meta
+    name: ClassVar[str] = "bertscore"
+    meta: ClassVar[MetricMeta] = bertscore_meta
+
+    lang: str | None = field(
+        default=None,
+        metadata={
+            "help": "Language of the translations. This is an optional shortcut, used to select a good default model for your language"
+        },
+    )
+    model_type: str | None = field(
+        default=None,
+        metadata={
+            "help": "BERTScore model to use. Benchmarked scores on to-English WMT data can be found [here](https://docs.google.com/spreadsheets/d/1RKOVpselB98Nnh_EOC4A2BYn8_201tmPODpNWu4w7xI/edit#gid=0)."
+        },
+    )
+    num_layers: int | None = field(
+        default=None,
+        metadata={
+            "help": "This layer's representation will be used. If empty, defaults to the best layer as tuned on WMT16"
+        },
+    )
 
     model: bert_score.BERTScorer = field(default=None, init=False)
 
     def __post_init__(self):
-        self.model = None
+        if self.model_type is None:
+            if self.lang is None:
+                raise ValueError(
+                    "Either 'lang' (e.g. 'en') or 'model_type' (e.g. 'microsoft/deberta-xlarge-mnli')"
+                    " must be specified"
+                )
+            self.model_type = bert_score.utils.lang2model[self.lang.lower()]
+
+        if self.num_layers is None:
+            self.num_layers = bert_score.utils.model2layers[self.model_type]
+
+        self.model = bert_score.BERTScorer(
+            model_type=self.model_type,
+            num_layers=self.num_layers,
+            lang=self.lang,
+        )
 
     def compute(
         self,
         references: list[str],
         predictions: list[str],
-        lang: str | None = None,
-        model_type: str | None = None,
-        num_layers: int | None = None,
-        batch_size: int = 1,
-        device: str | int | None = None,
-    ) -> Any:
+        batch_size: int = 16,
+        **kwargs,
+    ) -> dict:
         """Predicts the score for a batch of references and hypotheses. BertScore is a bit different from the others in that initialization happens inside
         this compute function but the scorer is cached for the next call.
 
@@ -250,61 +275,57 @@ class BertScoreMetric(NeuralMetric):
         :param model_type: BERTScore model to use. Benchmarked scores on to-English WMT data can be found [here](https://docs.google.com/spreadsheets/d/1RKOVpselB98Nnh_EOC4A2BYn8_201tmPODpNWu4w7xI/edit#gid=0).
         :param num_layers: This layer's representation will be used. If empty, defaults to the best layer as tuned on WMT16
         :param batch_size: batch size for scoring
-        :param device: device to use for scoring (e.g. "cuda", "cpu", 0, 1, etc.). If None, will use the default device.
+        :param kwargs: additional arguments for the model prediction
         :return: score result (dictionary)
         """
         if len(references) != len(predictions):
             raise ValueError("The lengths of references and hypotheses must be the same.")
 
-        get_hash = bert_score.utils.get_hash
-        scorer = bert_score.BERTScorer
-
-        get_hash = functools.partial(get_hash, use_fast_tokenizer=False)
-        scorer = functools.partial(scorer, use_fast_tokenizer=False)
-
-        if model_type is None:
-            if lang is None:
-                raise ValueError(
-                    "Either 'lang' (e.g. 'en') or 'model_type' (e.g. 'microsoft/deberta-xlarge-mnli')"
-                    " must be specified"
-                )
-            model_type = bert_score.utils.lang2model[lang.lower()]
-
-        if num_layers is None:
-            num_layers = bert_score.utils.model2layers[model_type]
-
-        hashcode = get_hash(
-            model=model_type, num_layers=num_layers, idf=False, rescale_with_baseline=False, use_custom_baseline=False
-        )
-
-        if self.model is None or self.model.hash != hashcode:
-            print(f"Cache not found, creating new scorer for {model_type} BertScore model")
-            self.model = scorer(
-                model_type=model_type,
-                num_layers=num_layers,
-                batch_size=batch_size,
-                nthreads=4,
-                all_layers=False,
-                idf=False,
-                idf_sents=None,
-                device=device,
-                lang=lang,
-                rescale_with_baseline=False,
-                baseline_path=None,
-            )
-
-        print(f"Using {self.model.hash} model for BERTScore scoring.")
         P, R, F = self.model.score(
             cands=predictions,
             refs=references,
             verbose=False,
             batch_size=batch_size,
+            **kwargs,
         )
 
         output_dict = {
             "precision": P.tolist(),
             "recall": R.tolist(),
             "f1": F.tolist(),
-            "hashcode": hashcode,
         }
         return output_dict
+
+    @classmethod
+    def postprocess_result(cls, result: dict[str, Any]):
+        """Post-processes the result that is retrieved from a computed metric.
+
+        :param result: score result (dictionary)
+        :return: modified score result
+        """
+        corpus_key = cls.meta.corpus_score_key
+        sentences_key = cls.meta.sentences_score_key
+        result[corpus_key] = 100 * mean(result["f1"])
+        result[sentences_key] = [score * 100 for score in result["f1"]]
+        return result
+
+
+@st.cache_resource(show_spinner=False, max_entries=2, ttl=60 * 60 * 24 * 30)
+def get_bertscore_metric(
+    lang: str | None = None,
+    model_type: str | None = None,
+    num_layers: int | None = None,
+) -> BertScoreMetric:
+    """Get a BERTScore metric instance.
+
+    :param lang: Language of the translations. This is an optional shortcut, used to select a good default model for your language
+    :param model_type: BERTScore model to use. Benchmarked scores on to-English WMT data can be found [here](https://docs.google.com/spreadsheets/d/1RKOVpselB98Nnh_EOC4A2BYn8_201tmPODpNWu4w7xI/edit#gid=0).
+    :param num_layers: This layer's representation will be used. If empty, defaults to the best layer as tuned on WMT16
+    :param device: Device to use for scoring (e.g. "cuda", "cpu"). If None, will use the default device.
+    :return: BERTScore metric instance
+    """
+    return BertScoreMetric(
+        lang=lang,
+        model_type=model_type,
+        num_layers=num_layers,
+    )

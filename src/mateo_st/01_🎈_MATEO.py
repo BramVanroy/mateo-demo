@@ -1,4 +1,5 @@
 import streamlit as st
+
 from mateo_st import __version__ as mateo_version
 from mateo_st.utils import cli_args, get_local_img, load_css, print_citation_info
 

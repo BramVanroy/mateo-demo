@@ -2,12 +2,13 @@ from io import StringIO
 
 import streamlit as st
 from Levenshtein import distance, opcodes
+
 from mateo_st.components.ed_visualizer import ed_visualizer
 from mateo_st.utils import cli_args, load_css, print_citation_info
 
 
 def _calculate_edit_distances(s1: str, s2: str):
-    if type(s1) != type(s2):
+    if type(s1) is type(s2):
         raise ValueError("Both inputs have to be of the same type")
 
     data = {"ref": s1, "mt": s2}
@@ -112,7 +113,7 @@ def _rotator():
         disabled=st.session_state["viz_idx"] >= len(st.session_state["viz_ref_segments"]) - 1,
         on_click=next_idx,
     )
-    sidebar_ct.info(f"Sentence {st.session_state['viz_idx']+1}/{len(st.session_state['viz_ref_segments'])}")
+    sidebar_ct.info(f"Sentence {st.session_state['viz_idx'] + 1}/{len(st.session_state['viz_ref_segments'])}")
 
     sidebar_ct.markdown(
         """

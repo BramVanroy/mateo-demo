@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, Dict, Literal, Optional, Tuple, Type
+from typing import Any, ClassVar, Literal, Optional, Tuple, Type
 
 from sacrebleu.metrics.base import Metric as SbMetric
 
@@ -12,8 +12,11 @@ class MetricOption:
     default: Any
     choices: Optional[Tuple] = None
     demo_choices: Optional[Tuple] = None
-    types: Optional[Tuple[Type, ...]] = field(default_factory=tuple)
+    types: Optional[tuple[Type, ...]] = field(default_factory=tuple)
     empty_str_is_none: bool = False
+    # "auto" will disable the option if we're in demo mode
+    disabled: bool | Literal["auto"] = False
+    is_init_arg: bool = True
 
     def __post_init__(self):
         if not self.choices and not self.types:
@@ -39,21 +42,12 @@ class MetricMeta:
     is_default_selected: bool = False
     higher_better: bool = True
     version: Optional[str] = None
-    options: Optional[Tuple[MetricOption, ...]] = field(default_factory=tuple)
+    options: Optional[tuple[MetricOption, ...]] = field(default_factory=tuple)
     requires_source: bool = False
     sb_class: Optional[Type[SbMetric]] = None
     corpus_score_key: str = "score"
     sentences_score_key: Optional[str] = None
     segment_level: bool = True
-    use_pseudo_batching: bool = True
-
-    def postprocess_result(self, result: Dict[str, Any]):
-        """Post-processes the result that is retrieved from a computed metric.
-
-        :param result: score result (dictionary)
-        :return: modified score result
-        """
-        return result
 
 
 @dataclass
@@ -70,3 +64,12 @@ class NeuralMetric(ABC):
         :return: the output of the underlying metric (e.g., a score, a dictionary, etc.)
         """
         raise NotImplementedError("compute must be implemented in subclasses")
+
+    @classmethod
+    def postprocess_result(cls, result: dict[str, Any]):
+        """Post-processes the result that is retrieved from a computed metric.
+
+        :param result: score result (dictionary)
+        :return: modified score result
+        """
+        return result

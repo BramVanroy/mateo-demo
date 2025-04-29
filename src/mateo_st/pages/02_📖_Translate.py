@@ -4,6 +4,7 @@ from math import ceil
 import numpy as np
 import pandas as pd
 import streamlit as st
+
 from mateo_st.translator import TRANS_LANG2KEY, TRANS_SIZE2MODEL, Translator, update_translator_lang
 from mateo_st.utils import cli_args, create_download_link, get_uploaded_file_as_strio, load_css, print_citation_info
 
@@ -161,8 +162,7 @@ def _translate():
             list(zip(sentences, all_translations)),
             columns=[
                 f"src ({st.session_state['src_lang_key']})",
-                f"mt ({st.session_state['tgt_lang_key']}):"
-                f" {st.session_state['translator'].model_name.split('/')[-1]}",
+                f"mt ({st.session_state['tgt_lang_key']}): {st.session_state['translator'].model_name.split('/')[-1]}",
             ],
         )
         df.index = np.arange(1, len(df) + 1)  # Index starting at number 1

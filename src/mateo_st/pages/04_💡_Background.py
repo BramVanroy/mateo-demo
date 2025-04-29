@@ -1,6 +1,7 @@
 import re
 
 import streamlit as st
+
 from mateo_st.metrics.metrics_constants import METRICS_META
 from mateo_st.metrics.metrics_lang_support import SUPPORTED_LANGS
 from mateo_st.utils import cli_args, load_css
@@ -17,7 +18,7 @@ def main():
     st.markdown(
         "We currently support the following evaluation metrics. A short description is given alongside"
         " references to their paper 📝, and the original underlying implementation 💻. We use"
-        " [`sacrebleu`](https://github.com/mjpost/sacrebleu) to calculate BLEU, TER and ChrF." \
+        " [`sacrebleu`](https://github.com/mjpost/sacrebleu) to calculate BLEU, TER and ChrF."
         " The other metrics are implemented with their original libraries."
     )
     st.markdown(

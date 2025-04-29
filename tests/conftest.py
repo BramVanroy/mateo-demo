@@ -3,8 +3,9 @@ from pathlib import Path
 
 import pytest
 import streamlit as st
-from mateo_st.translator import DEFAULT_MODEL_SIZE, TRANS_SIZE2MODEL
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+from mateo_st.translator import DEFAULT_MODEL_SIZE, TRANS_SIZE2MODEL
 
 
 def predownload_models():
@@ -28,8 +29,6 @@ def streamlit_server(request):
             "8505",
             "--server.headless",
             "true",
-            "--browser.gatherUsageStats",
-            "false",
         ],
         stdout=subprocess.PIPE,
         universal_newlines=True,

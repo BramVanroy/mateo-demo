@@ -1,3 +1,7 @@
+from collections import defaultdict
+from typing import Any
+
+
 def build_signature(paired_bs_n: int, seed: int, library_version: str, metric_options: dict) -> str:
     """Builds a signature for a metric that does not support it out of the box (SacreBLEU does). Note that the MATEO
     version is added later on, in `03_📏_Evaluate._evaluate`
@@ -35,3 +39,17 @@ def build_signature(paired_bs_n: int, seed: int, library_version: str, metric_op
     sig += f"|version:{library_version}"
 
     return sig
+
+
+def merge_batched_results(results: list[dict[str, Any]]):
+    """Merges the results of batched computations into a single result."""
+    result = defaultdict(list)
+    for batch_result in results:
+        # score_key is something like "f1" or "scores"
+        for score_key, scores in batch_result.items():
+            if isinstance(scores, list):
+                result[score_key].extend(scores)
+            else:
+                result[score_key].append(scores)
+
+    return dict(result)

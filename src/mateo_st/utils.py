@@ -1,5 +1,4 @@
 import base64
-import json
 import logging
 import os
 from argparse import Namespace
@@ -12,13 +11,14 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import torch
+from matplotlib.image import imread
+
 from mateo_st.translator import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_MAX_LENGTH,
     DEFAULT_MODEL_SIZE,
     DEFAULT_NUM_BEAMS,
 )
-from matplotlib.image import imread
 
 
 def create_download_link(

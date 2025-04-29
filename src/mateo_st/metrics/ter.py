@@ -1,6 +1,7 @@
-from mateo_st.metrics.base import MetricMeta, MetricOption
 from sacrebleu import TER
 from sacrebleu import __version__ as sb_version
+
+from mateo_st.metrics.base import MetricMeta, MetricOption
 
 
 ter_meta = MetricMeta(
@@ -40,5 +41,4 @@ ter_meta = MetricMeta(
         ),
     ),
     segment_level=False,
-    use_pseudo_batching=False,
 )

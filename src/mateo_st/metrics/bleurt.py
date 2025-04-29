@@ -2,29 +2,16 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import mean
-from typing import Any, Dict
+from typing import Any, ClassVar
 
+import streamlit as st
 from bleurt import score as bleurt_score
 from huggingface_hub import snapshot_download
+
 from mateo_st.metrics.base import MetricMeta, MetricOption, NeuralMetric
 
 
-@dataclass
-class BleurtMeta(MetricMeta):
-    def postprocess_result(self, result: Dict[str, Any]):
-        """Post-processes the result that is retrieved from a computed metric.
-
-        :param result: score result (dictionary)
-        :return: modified score result
-        """
-        corpus_key = self.corpus_score_key
-        sentences_key = self.sentences_score_key
-        result[corpus_key] = 100 * mean(result["scores"])
-        result[sentences_key] = [score * 100 for score in result["scores"]]
-        return result
-
-
-bleurt_meta = BleurtMeta(
+bleurt_meta = MetricMeta(
     name="BLEURT",
     metric_class="neural",
     full_name="Bilingual Evaluation Understudy with Representations from Transformers",
@@ -42,7 +29,7 @@ bleurt_meta = BleurtMeta(
     sentences_score_key="scores",
     options=(
         MetricOption(
-            name="config_name",
+            name="model_name",
             description="BLEURT trained model to use. See"
             " [this overview](https://github.com/google-research/bleurt/blob/master/checkpoints.md#distilled-models)"
             " for more information about the models. Note that the default model is very slow and you may"
@@ -61,11 +48,18 @@ bleurt_meta = BleurtMeta(
                 "BLEURT-20",
             ),
             demo_choices=(
-                "BLEURT-20-D3",
-                "BLEURT-20-D6",
-                "BLEURT-20-D12",
+                "bleurt-base-128",
+                "bleurt-base-512",
                 "BLEURT-20",
             ),
+        ),
+        MetricOption(
+            name="batch_size",
+            description="How many sentences to process at once. The larger the batch size, the faster the scoring but the higher the memory usage. Do not change this unless you know what you are doing. If the value is set too high it will freeze your computer and potentially crash the app!",
+            default=4,
+            types=(int,),
+            disabled="auto",
+            is_init_arg=False,
         ),
     ),
 )
@@ -73,8 +67,8 @@ bleurt_meta = BleurtMeta(
 
 @dataclass
 class BleurtMetric(NeuralMetric):
-    name = "bleurt"
-    meta = bleurt_meta
+    name: ClassVar[str] = "bleurt"
+    meta: ClassVar[MetricMeta] = bleurt_meta
 
     model_name: str = bleurt_meta.options[0].default
     model: bleurt_score.BleurtScorer = field(default=None, init=False)
@@ -88,7 +82,7 @@ class BleurtMetric(NeuralMetric):
         model_path = snapshot_download(repo_id=f"BramVanroy/{self.model_name}", local_dir=local_dir)
         self.model = bleurt_score.BleurtScorer(model_path)
 
-    def compute(self, references: list[str], predictions: list[str], batch_size: int = 1) -> Any:
+    def compute(self, references: list[str], predictions: list[str], batch_size: int = 4) -> dict:
         """Predicts the score for a batch of references and hypotheses.
 
         :param references: list of reference sentences
@@ -96,14 +90,38 @@ class BleurtMetric(NeuralMetric):
         :param batch_size: batch size for processing
         :return: score result (dictionary)
         """
-        print(f"Using {self.model_name} model for BLEURT scoring.")
         if len(references) != len(predictions):
             raise ValueError("The lengths of references and hypotheses must be the same.")
 
-        return {
-            "scores": self.model.score(
-                references=references,
-                candidates=predictions,
-                batch_size=batch_size,
-            )
-        }
+        scores = self.model.score(
+            references=references,
+            candidates=predictions,
+            batch_size=batch_size,
+        )
+
+        return {"scores": scores}
+
+    @classmethod
+    def postprocess_result(cls, result: dict[str, Any]):
+        """Post-processes the result that is retrieved from a computed metric.
+
+        :param result: score result (dictionary)
+        :return: modified score result
+        """
+        corpus_key = cls.meta.corpus_score_key
+        sentences_key = cls.meta.sentences_score_key
+        result[corpus_key] = 100 * mean(result["scores"])
+        result[sentences_key] = [score * 100 for score in result["scores"]]
+        return result
+
+
+@st.cache_resource(show_spinner=False, max_entries=2, ttl=60 * 60 * 24 * 30)
+def get_bleurt_metric(
+    model_name: str = "BLEURT-20",
+) -> BleurtMetric:
+    """Get the BLEURT metric instance.
+
+    :param model_name: name of the COMET model to use
+    :return: BLEURT metric instance
+    """
+    return BleurtMetric(model_name=model_name)
