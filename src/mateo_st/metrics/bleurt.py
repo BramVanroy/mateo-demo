@@ -88,7 +88,7 @@ class BleurtMetric(NeuralMetric):
         model_path = snapshot_download(repo_id=f"BramVanroy/{self.model_name}", local_dir=local_dir)
         self.model = bleurt_score.BleurtScorer(model_path)
 
-    def compute(self, references: list[str], predictions: list[str], batch_size: int = 8) -> Any:
+    def compute(self, references: list[str], predictions: list[str], batch_size: int = 1) -> Any:
         """Predicts the score for a batch of references and hypotheses.
 
         :param references: list of reference sentences

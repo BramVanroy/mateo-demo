@@ -43,9 +43,9 @@ if [ "$PRELOAD_METRICS" = "true" ]; then
     echo "Downloading/verifying Unbabel/wmt22-comet-da..."
     python -c "import comet; from comet import download_model; download_model('Unbabel/wmt22-comet-da')" && \
     echo "Downloading/verifying bleurt/BLEURT-20..."
-    python -c "import evaluate; evaluate.load('bleurt', 'BLEURT-20')" && \
+    python -c "import os; from huggingface_hub import snapshot_download; from pathlib import Path; l = Path(os.getenv('HF_HOME', Path.home() / '.cache' / 'huggingface')) / 'hub' / 'BLEURT-20'; l.mkdir(parents=True, exist_ok=True); snapshot_download(repo_id=f'BramVanroy/BLEURT-20', local_dir=l)" && \
     echo "Finished optional model preloading." || \
-    echo "Warning: Model preloading failed for one or more models. Check logs above. Application will continue."
+    echo "Warning: Model preloading failed for one or more models. Check logs above. Application will continue."    
 
 else
     echo "PRELOAD_METRICS is not 'true'. Skipping model preloading."
