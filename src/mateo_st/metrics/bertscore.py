@@ -238,7 +238,7 @@ class BertScoreMetric(NeuralMetric):
         lang: str | None = None,
         model_type: str | None = None,
         num_layers: int | None = None,
-        batch_size: int = 32,
+        batch_size: int = 1,
         device: str | int | None = None,
     ) -> Any:
         """Predicts the score for a batch of references and hypotheses. BertScore is a bit different from the others in that initialization happens inside

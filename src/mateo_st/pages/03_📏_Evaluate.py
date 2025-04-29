@@ -2,16 +2,14 @@ import logging
 import warnings
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Type, Union
-
+from random import shuffle
 import altair as alt
-import evaluate
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from evaluate import EvaluationModule
 from mateo_st import __version__ as mateo_version
-from mateo_st.metrics.base import MetricMeta, MetricOption
+from mateo_st.metrics.base import MetricMeta, MetricOption, NeuralMetric
 from mateo_st.metrics.metrics_constants import METRICS_META, NEURAL_METRICS, merge_batched_results
 from mateo_st.metrics.significance import get_bootstrap_dataframe
 from mateo_st.utils import (
@@ -304,9 +302,9 @@ def _validate_cached_metric(cached_metric):
         return True
 
 
-@st.cache_resource(show_spinner=False, max_entries=6, validate=_validate_cached_metric)
-def _load_metric(metric_name: str, config_name: Optional[str] = None) -> EvaluationModule:
-    """Load an individual metric with `evaluate`
+def _load_metric(metric_name: str, config_name: Optional[str] = None) -> NeuralMetric:
+    """Load an individual neural metric
+    
     :param metric_name: metric name
     :param config_name: optional config
     :return: loaded metric
@@ -350,7 +348,7 @@ def _compute_metric(
     config_name: Optional[str] = None,
     sb_class: Optional[Type[SbMetric]] = None,
     _sys_idx: Optional[int] = None,
-    dummy_batch_size: int = 4,
+    dummy_batch_size: int = 1,
     **kwargs,
 ):
     pbar = st.empty()
@@ -419,9 +417,16 @@ def _compute_metrics():
         if got_exception:
             break
         results[sys_idx] = {}
-        for metric_evaluate_name, opts in st.session_state["metrics"].items():
+        # Shuffle metrics in hopes of not simultaneously using the same metric, especially in class room settings
+        # where similar jobs will be executed at the same time. We don't want to overload the server
+        # when everyone is suddenly calculating BLEURT at the same time. So if we can shuffle the order of the metrics
+        # some of them will first calculate bertscore or BLEU or BLEURT, etc.
+        shuffled_metrics = list(st.session_state["metrics"].items())
+        shuffle(shuffled_metrics)
+
+        for metric_name, opts in shuffled_metrics:
             opts: Dict[str, Union[MetricOption, MetricMeta]] = opts.copy()  # Copy to not pop globally
-            meta = METRICS_META[metric_evaluate_name]
+            meta = METRICS_META[metric_name]
 
             if sys_idx == 1:
                 msg = f"(Down)loading metric <code>{meta.name}</code> and evaluating system #{sys_idx}."
@@ -442,7 +447,7 @@ def _compute_metrics():
 
             try:
                 result = _compute_metric(
-                    metric_evaluate_name,
+                    metric_name,
                     predictions=sys_segs,
                     references=st.session_state["ref_segments"],
                     sources=st.session_state["src_segments"] if meta.requires_source else None,
@@ -460,7 +465,7 @@ def _compute_metrics():
                 break
             else:
                 error_ct.empty()
-                results[sys_idx][metric_evaluate_name] = {
+                results[sys_idx][metric_name] = {
                     "corpus": result[meta.corpus_score_key],
                     "sentences": result[meta.sentences_score_key] if meta.sentences_score_key else None,
                 }
