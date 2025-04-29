@@ -17,8 +17,8 @@ def main():
     st.markdown(
         "We currently support the following evaluation metrics. A short description is given alongside"
         " references to their paper 📝, and the original underlying implementation 💻. We use"
-        " [`sacrebleu`](https://github.com/mjpost/sacrebleu) and"
-        " [`evaluate`](https://github.com/huggingface/evaluate) as the main evaluation frameworks."
+        " [`sacrebleu`](https://github.com/mjpost/sacrebleu) to calculate BLEU, TER and ChrF." \
+        " The other metrics are implemented with their original libraries."
     )
     st.markdown(
         """
