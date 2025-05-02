@@ -35,7 +35,7 @@ fi
 # Check the PRELOAD_METRICS environment variable (case-sensitive "true")
 if [ "$PRELOAD_METRICS" = "true" ]; then
     echo "PRELOAD_METRICS is true. Starting model preloading..."
-    python "$APP_HOME/scripts/patch_index_html.py" --config_file "$APP_HOME/configs/precache-demo.json" --precache_translation
+    python "$APP_HOME/scripts/precache_metrics.py" --config_file "$APP_HOME/configs/precache-demo.json" --precache_translation
 else
     echo "PRELOAD_METRICS is not 'true'. Skipping model preloading."
     echo "Models will be downloaded by the application on first use."
