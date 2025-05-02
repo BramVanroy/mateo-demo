@@ -79,7 +79,7 @@ The Docker images can be configured using build arguments (during `docker build`
     docker build -t mateo-demo:cpu -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
 
     # Specifying a different branch/tag
-    docker build --build-arg REPO_BRANCH=v1.7.1 -t mateo-demo:cpu-main -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
+    docker build --build-arg REPO_BRANCH=v1.7.3 -t mateo-demo:cpu-main -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
     ```
 
 *   **GPU Image:**
