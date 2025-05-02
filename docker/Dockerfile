@@ -26,16 +26,18 @@ RUN git clone --depth 1 --branch ${REPO_BRANCH} https://github.com/BramVanroy/ma
 WORKDIR $HOME/mateo-demo
 
 ARG USE_CUDA=false
+ARG TORCH_CUDA_VERSION="126"
+ARG TORCH_VERSION="2.7.0"
+# Conditionally install PyTorch (CPU or CUDA 12.1)
 RUN uv venv .venv --python 3.11 \
     && . .venv/bin/activate \
     && uv pip install --no-cache-dir --upgrade pip wheel setuptools \
-        # Conditionally install PyTorch (CPU or CUDA 12.1)
     && if [ "$USE_CUDA" = "true" ]; then \
         echo "Installing PyTorch with CUDA 12.1 support"; \
-        uv pip install --no-cache-dir torch==2.2.1 --index-url https://download.pytorch.org/whl/cu121; \
+        uv pip install --no-cache-dir torch=="$TORCH_VERSION" --index-url "https://download.pytorch.org/whl/cu${TORCH_CUDA_VERSION}"; \
     else \
         echo "Installing PyTorch with CPU support"; \
-        uv pip install --no-cache-dir torch==2.2.1+cpu --index-url https://download.pytorch.org/whl/cpu; \
+        uv pip install --no-cache-dir torch=="${TORCH_VERSION}+cpu" --index-url https://download.pytorch.org/whl/cpu; \
     fi \
     && uv pip install --no-cache-dir --upgrade $HOME/mateo-demo[patch] \
     && uv cache clean
