@@ -21,6 +21,7 @@ class Translator:
     model_size: str = DEFAULT_MODEL_SIZE
     no_cuda: bool = True
     quantize: bool = True
+    model_name: str = field(default=None, init=False)
     model: Any = field(default=None, init=False)
     tokenizer: Any = field(default=None, init=False)
     src_lang_key: str = field(default=None, init=False)

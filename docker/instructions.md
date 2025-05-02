@@ -57,7 +57,7 @@ The Docker images can be configured using build arguments (during `docker build`
     *   **Example:** usually not overridden manually, rely on the correct image tag.
 
 *   **`PRELOAD_METRICS`**
-    *   **Purpose:** if set to `true`, the `entrypoint.sh` script will attempt to download required models/metrics when the container starts, before Streamlit is started. Otherwise, models are downloaded by the application on first use but this will lead to the first user having to wait while models/metrics are being downloaded.
+    *   **Purpose:** if set to `true`, the `entrypoint.sh` script will download all the models/metrics that are relevant for the demo mode before the Streamlit app starts to ensure a smooth start up (the user will not have to wait until the download is complete). Otherwise, models are downloaded by the application on first use but this will lead to the first user having to wait while models/metrics are being downloaded.
     *   **Default:** `true`
     *   **Example:** `docker run -e PRELOAD_METRICS=false ... mateo-demo:cpu` (to disable preloading)
 
@@ -79,7 +79,7 @@ The Docker images can be configured using build arguments (during `docker build`
     docker build -t mateo-demo:cpu -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
 
     # Specifying a different branch/tag
-    docker build --build-arg REPO_BRANCH=v1.6 -t mateo-demo:cpu-main -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
+    docker build --build-arg REPO_BRANCH=v1.7.0 -t mateo-demo:cpu-main -f https://raw.githubusercontent.com/BramVanroy/mateo-demo/refs/heads/main/docker/Dockerfile .
     ```
 
 *   **GPU Image:**

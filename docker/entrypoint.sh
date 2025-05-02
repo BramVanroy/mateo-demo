@@ -35,18 +35,7 @@ fi
 # Check the PRELOAD_METRICS environment variable (case-sensitive "true")
 if [ "$PRELOAD_METRICS" = "true" ]; then
     echo "PRELOAD_METRICS is true. Starting model preloading..."
-
-    echo "Downloading/verifying bert-base-multilingual-cased for BERTScore..."
-    python -c "from transformers import AutoTokenizer, AutoModel; m = 'google-bert/bert-base-multilingual-cased'; AutoModel.from_pretrained(m); AutoTokenizer.from_pretrained(m)" && \
-    echo "Downloading/verifying NLLB distilled 600M..."
-    python -c "from transformers import AutoTokenizer, AutoModelForSeq2SeqLM; m = 'facebook/nllb-200-distilled-600M'; AutoModelForSeq2SeqLM.from_pretrained(m); AutoTokenizer.from_pretrained(m)" && \
-    echo "Downloading/verifying Unbabel/wmt22-comet-da..."
-    python -c "import comet; from comet import download_model; download_model('Unbabel/wmt22-comet-da')" && \
-    echo "Downloading/verifying bleurt/BLEURT-20..."
-    python -c "import os; from huggingface_hub import snapshot_download; from pathlib import Path; l = Path(os.getenv('HF_HOME', Path.home() / '.cache' / 'huggingface')) / 'hub' / 'BLEURT-20'; l.mkdir(parents=True, exist_ok=True); snapshot_download(repo_id=f'BramVanroy/BLEURT-20', local_dir=l)" && \
-    echo "Finished optional model preloading." || \
-    echo "Warning: Model preloading failed for one or more models. Check logs above. Application will continue."    
-
+    python "$APP_HOME/scripts/patch_index_html.py" --config_file "$APP_HOME/configs/precache-demo.json" --precache_translation
 else
     echo "PRELOAD_METRICS is not 'true'. Skipping model preloading."
     echo "Models will be downloaded by the application on first use."

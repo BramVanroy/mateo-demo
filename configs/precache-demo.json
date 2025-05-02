@@ -1,0 +1,18 @@
+{
+    "bertscore": [
+        {"lang": "other"},
+        {"lang": "en"},
+        {"lang": "zh"},
+        {"lang": "tr"},
+        {"lang": "en-sci"}
+    ],
+    "bleurt": [
+        {"model_name": "bleurt-base-128"},
+        {"model_name": "bleurt-base-512"},
+        {"model_name": "BLEURT-20"}
+    ],
+    "comet": [
+        {"model_name": "Unbabel/wmt22-comet-da"},
+        {"model_name": "eamt22-cometinho-da"}
+    ]
+}
