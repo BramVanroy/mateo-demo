@@ -20,7 +20,7 @@ ENV HOME="/home/mateo_user"
 WORKDIR $HOME
 
 # --- Application Code & Dependencies ---
-ARG REPO_BRANCH=v1.7.3
+ARG REPO_BRANCH=v1.8.0
 RUN git clone --depth 1 --branch ${REPO_BRANCH} https://github.com/BramVanroy/mateo-demo.git $HOME/mateo-demo
 
 WORKDIR $HOME/mateo-demo
