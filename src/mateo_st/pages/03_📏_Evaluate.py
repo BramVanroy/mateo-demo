@@ -337,6 +337,7 @@ def batchify(predictions: list[str], references: list[str], sources: Optional[li
         yield batch
 
 
+@st.cache_data(show_spinner=False, ttl=21600, max_entries=1024)
 def _compute_metric(
     metric_name: str,
     init_kwargs: dict[str, Any] = {},
