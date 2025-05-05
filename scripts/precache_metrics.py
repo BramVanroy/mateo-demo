@@ -1,8 +1,10 @@
 import json
 from os import PathLike
 from pathlib import Path
+
 from mateo_st.metrics.metrics_constants import NEURAL_METRIC_GETTERS
 from mateo_st.translator import Translator
+
 
 def main(config_file: str | PathLike, precache_translation: bool = False) -> None:
     metric_options = json.loads(Path(config_file).read_text(encoding="utf-8"))
@@ -13,7 +15,7 @@ def main(config_file: str | PathLike, precache_translation: bool = False) -> Non
                 metric_getter(**metric_options)
         else:
             print(f"Metric {metric_name} is not a neural metric or not supported. Ignoring...")
-    
+
     if precache_translation:
         # Downloads the default translation model for the app
         Translator(
@@ -25,7 +27,9 @@ def main(config_file: str | PathLike, precache_translation: bool = False) -> Non
 if __name__ == "__main__":
     import argparse
 
-    cparser = argparse.ArgumentParser(description="Precache neural metrics so that they are immediately available in the app and do not require an additional download.")
+    cparser = argparse.ArgumentParser(
+        description="Precache neural metrics so that they are immediately available in the app and do not require an additional download."
+    )
     cparser.add_argument(
         "--config_file",
         required=True,
