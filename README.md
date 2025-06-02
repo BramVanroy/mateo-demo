@@ -56,7 +56,7 @@ or, if that does not work, follow these steps:
 
 ### Install locally with Python
 
-You can clone and install the library on your own device (laptop, computer, server). I recommend to run this in a new 
+You can clone and install the library on your own device (laptop, computer, server). I recommend to run this in a new
 virtual environment. It requires `python >= 3.10`.
 
 Run the following commands:
@@ -65,6 +65,12 @@ Run the following commands:
 git clone https://github.com/BramVanroy/mateo-demo.git
 cd mateo-demo
 python -m pip install .
+```
+
+or using `uv` (recommended, faster):
+
+```shell
+uv pip install .
 ```
 
 **Added in v1.6**: an optional, advanced option has been added in version 1.6 that allows you to insert arbitrary HTML in the `<head>` of your web app. If you do not need that functionality you can skip this step.
@@ -94,10 +100,10 @@ streamlit run 01_🎈_MATEO.py
 ```
 
 The streamlit server will then start on your own computer. You can access the website via a local address,
-[http://localhost:8501](http://localhost:8501) by default. 
+[http://localhost:8501](http://localhost:8501) by default.
 
 Configuration options specific to Streamlit can be found
-[here](https://docs.streamlit.io/library/advanced-features/configuration). They are more related to server-side configurations
+[on their website](https://docs.streamlit.io/library/advanced-features/configuration). They are more related to server-side configurations
 that you typically do not need when you are running this directly through Python. But you may need them when you are
 using Docker, e.g. setting the `--server.port` that streamlit is running on (see [Docker](#running-with-docker)).
 
@@ -121,7 +127,6 @@ streamlit run 01_🎈_MATEO.py --server.port 1234 -- --demo_mode
 Note the separating `--` in the middle so that streamlit can distinguish between streamlit's own options and the MATEO
 configuration parameters.
 
-
 ### Running with Docker
 
 MATEO is easily run with Docker. For more information see the instructions in [docker/instructions.md](docker/instructions.md).
@@ -132,6 +137,12 @@ The tests are run using `pytest` and `playwright`. To ensure that the right depe
 
 ```shell
 python -m pip install -e .[dev]
+```
+
+or using `uv` (recommended):
+
+```shell
+uv pip install -e .[dev]
 ```
 
 Then, install the appropriate chromium version for playwright. You can do this by running the following command.
