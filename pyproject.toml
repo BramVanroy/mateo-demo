@@ -7,10 +7,10 @@ name = "mateo_st"
 # Also update version in init and dockerfiles!
 version = "1.8.0"
 authors = [
-    {name = "Bram Vanroy", email = "bramvanroy@hotmail.com"},
+    {name = "Bram Vanroy", email = "bram.vanroy@ivdnt.org"},
 ]
 maintainers = [
-    {name = "Bram Vanroy", email = "bramvanroy@hotmail.com"},
+    {name = "Bram Vanroy", email = "bram.vanroy@ivdnt.org"},
 ]
 description = "An interface for machine translation evaluation"
 readme = "README.md"
