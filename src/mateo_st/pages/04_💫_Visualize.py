@@ -8,9 +8,6 @@ from mateo_st.utils import cli_args, load_css, print_citation_info
 
 
 def _calculate_edit_distances(s1: str, s2: str):
-    if type(s1) is type(s2):
-        raise ValueError("Both inputs have to be of the same type")
-
     data = {"ref": s1, "mt": s2}
     for unit in ("char", "token"):
         if unit == "token":
@@ -65,25 +62,20 @@ def _init():
     )
 
 
-def _data_input():
-    # inp_data_heading, input_col = st.columns((3, 1))
-    # inp_data_heading.markdown("## 📄 Input data")
-
+def _data_input():    
     fupload_check = st.checkbox("File upload?")
 
-    def reset_index():
-        st.session_state["viz_idx"] = 0
-
-    ref_col, mt_col = st.columns(2)
+    form = st.form(key="viz_form", enter_to_submit=False, border=False)
+    ref_col, mt_col = form.columns(2)
     if fupload_check:
-        uploaded_ref_file = ref_col.file_uploader("Reference file", on_change=reset_index)
+        uploaded_ref_file = ref_col.file_uploader("Reference file")
         if uploaded_ref_file is not None:
             stringio = StringIO(uploaded_ref_file.getvalue().decode("utf-8"))
             st.session_state["viz_ref_segments"] = stringio.read().splitlines()
         else:
             st.session_state["viz_ref_segments"] = []
 
-        uploaded_mt_file = mt_col.file_uploader("MT file", on_change=reset_index)
+        uploaded_mt_file = mt_col.file_uploader("MT file")
         if uploaded_mt_file is not None:
             stringio = StringIO(uploaded_mt_file.getvalue().decode("utf-8"))
             st.session_state["viz_mt_segments"] = stringio.read().splitlines()
@@ -91,11 +83,21 @@ def _data_input():
             st.session_state["viz_mt_segments"] = []
     else:
         st.session_state["viz_ref_segments"] = ref_col.text_area(
-            label="Reference sentences", on_change=reset_index
+            label="Reference sentences"
         ).splitlines()
         st.session_state["viz_mt_segments"] = mt_col.text_area(
-            label="MT sentences", on_change=reset_index
+            label="MT sentences"
         ).splitlines()
+    
+    submitted = form.form_submit_button(
+        "Visualize",
+        type="primary",
+        use_container_width=False,
+    )
+
+    if submitted:
+        # To avoid index errors
+        st.session_state["viz_idx"] = 0
 
 
 def _rotator():
@@ -117,7 +119,7 @@ def _rotator():
 
     sidebar_ct.markdown(
         """
-        <aside class="ed-legend">
+        <aside class="ed-legend" aria-label="legend">
         <ul>
             <li><span class="ed-sub-ref">substitution ref</span></li>
             <li><span class="ed-sub-mt">substitution MT</span></li>
