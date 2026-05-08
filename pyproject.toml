@@ -43,6 +43,8 @@ dependencies = [
     # Include ja/ko tokenization options
     "sacrebleu[ja,ko]==2.5.1",
     "streamlit==1.44.1",
+    # https://github.com/Unbabel/COMET/issues/267#issuecomment-3972993148
+    "setuptools<82.0.0",
     "tensorflow==2.19.0",
     # Also update TORCH_VERSION in dockerfile!
     "torch==2.7.0",
