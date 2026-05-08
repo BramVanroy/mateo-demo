@@ -40,6 +40,8 @@ dependencies = [
     "plotly==5.24.1",
     # Include ja/ko tokenization options
     "sacrebleu[ja,ko]==2.5.1",
+    # comet->pytorch_lightning->torchmetrics requires setuptools pkg_resources
+    "setuptools",
     "streamlit==1.44.1",
     "tensorflow==2.19.0",
     # Also update TORCH_VERSION in dockerfile!
